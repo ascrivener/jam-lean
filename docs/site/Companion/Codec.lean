@@ -33,7 +33,7 @@ them (§C.2).
 
 In the model the encoders are functions to `List UInt8`, in the namespace `JAM.Codec`
 (`JAM/Codec.lean`). The natural-number encodings $`\mathcal{E}` and $`\mathcal{E}_l` are defined once in the
-PVM model (`PVM.Blob.encodeNat`, `PVM.Num.encodeLE`), so the program blob of Appendix A and the rest of
+PVM model (`PVM.Blob.encodeNat`, `PVM.Num.encodeLE`), so the program blob of {ref "pvm"}[Appendix A] and the rest of
 the protocol use the same definitions. The decoders are in `JAM/Decode.lean`.
 
 # Trivial encodings (§C.1.1)
@@ -136,19 +136,19 @@ $$`\mathcal{E}(b \in \mathbb{b}) \equiv \begin{cases} [\,] & \text{if } b = [\,]
 The model builds the $`\lceil |b| / 8 \rceil` octets directly instead of recursing; a bit past the end of $`b`
 counts as 0, so the high bits of a short last octet are zero, as the sum in eq. (C.10) leaves them.
 The model uses it in the assurances extrinsic (eq. (C.21)) and to build the message an assurance signs
-(§11.2).
+({ref "reports"}[§11.2]).
 
 # Dictionaries and sets (§C.1.5, §C.1.6)
 %%%
 tag := "codec-dicts"
 %%%
 
-$$`\forall K, V\colon \mathcal{E}(d \in \langle K \to V \rangle) \equiv \mathcal{E}\left(\updownarrow\left[\, (\mathcal{E}(k), \mathcal{E}(d[k])) \;\middle|\; k \in \mathcal{K}(d) \wr k \,\right]\right) \qquad \text{(C.11)}`
+$$`\forall K, V\colon \mathcal{E}(d \in \langle\!|\, K \to V \,|\!\rangle) \equiv \mathcal{E}\left(\updownarrow\left[\, (\mathcal{E}(k), \mathcal{E}(d[k])) \;\middle|\; k \in \mathcal{K}(d) \wr k \,\right]\right) \qquad \text{(C.11)}`
 
 $$`\mathcal{E}(\{a, b, c, \dots\}) \equiv \mathcal{E}(a) \frown \mathcal{E}(b) \frown \mathcal{E}(c) \frown \dots \quad \text{where } a < b < c < \dots \qquad \text{(C.12)}`
 
 A dictionary is encoded as its pairs in key order, with a length; a set as its elements in order.
-Where the paper uses a set of hashes $`\left\{\mkern-5mu\left[\,\mathbb{H}\,\right]\mkern-5mu\right\}` or a dictionary $`\langle \mathbb{H} \to \mathbb{H} \rangle`, the model holds it as
+Where the paper uses a set of hashes $`\left\{\mkern-5mu\left[\,\mathbb{H}\,\right]\mkern-5mu\right\}` or a dictionary $`\langle\!|\, \mathbb{H} \to \mathbb{H} \,|\!\rangle`, the model holds it as
 {api}`JAM.OctetSet` or {api}`JAM.OctetDict`. Both are extensional search trees over octet lists, so
 iterating over one already gives the elements in ascending order, and no sort is needed:
 
@@ -158,7 +158,7 @@ iterating over one already gives the elements in ascending order, and no sort is
 
 The sets in the terms of blocks, work packages and the state, such as the prerequisites $`\mathbf{p}` of a
 refinement context, are written with a length discriminator, so the model's set encoder for them is
-$`\mathcal{E}(\updownarrow[\dots])` of the ordered elements. Not every set in the paper is: the set §17.3 encodes for an
+$`\mathcal{E}(\updownarrow[\dots])` of the ordered elements. Not every set in the paper is: the set {ref "auditing"}[§17.3] encodes for an
 audit announcement has none (see the {ref "auditing"}[auditing chapter]).
 
 Dictionaries need care. Eq. (C.11) already gives a dictionary its length, and eq. (C.30) writes the

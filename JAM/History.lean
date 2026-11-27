@@ -23,7 +23,7 @@ abbrev MMR := List (Option (List UInt8))
 
 namespace MMR
 
-/-- The zero hash $\mathbb{H}_0$. -/
+/-- The zero hash $\zerohash$. -/
 def zeroHash : List UInt8 := List.replicate 32 0
 
 /-- $P(\mathbf{r}, l, n, H)$ of the append function (GP eq. `mmrappend`): carry $l$ up from peak $n$.
@@ -44,7 +44,7 @@ def append (H : ByteArray → ByteArray) (r : MMR) (l : List UInt8) : MMR := pla
 /-- The prefix `$peak`. -/
 def peakPrefix : List UInt8 := "peak".toUTF8.toList
 
-/-- $\mathcal{M}_R$ on the present peaks $\mathbf{h}$, given last-first: $\mathbb{H}_0$ for none, $\mathbf{h}_0$ for one, and
+/-- $\mathcal{M}_R$ on the present peaks $\mathbf{h}$, given last-first: $\zerohash$ for none, $\mathbf{h}_0$ for one, and
     $\mathcal{H}_K(\mathtt{\$peak} \frown \mathcal{M}_R(\mathbf{h}_{\dots|\mathbf{h}|-1}) \frown \mathbf{h}_{|\mathbf{h}|-1})$ otherwise. -/
 def superPeakRev : List (List UInt8) → List UInt8
   | [] => zeroHash
@@ -96,7 +96,7 @@ def Recent.withParentRoot (h : List RecentBlock) (parentStateRoot : List UInt8) 
 /-- The recent-history transition $\beta \mapsto \beta'$ (GP §7): correct the last state root (eq.
     `correctlaststateroot`), append the accumulation-output root to the belt with $\mathcal{A}$ and Keccak
     (eq. `accoutbeltdef`), and append the new block's entry, keeping the last $\mathsf{H}$
-    (eq. `recenthistorydef`). The new entry's state root is $\mathbb{H}_0$. -/
+    (eq. `recenthistorydef`). The new entry's state root is $\zerohash$. -/
 def recentHistory (params : Params) (pre : Recent) (i : HistoryInput) : Recent :=
   let dagger := Recent.withParentRoot pre.history i.parentStateRoot
   let belt := MMR.append Keccak.keccak256 pre.belt i.accRoot

@@ -40,7 +40,7 @@ the code of services and authorizers. The appendix has ten sections, and this ch
 * §A.4, the single step $`\Psi_1`, with its gas charge, its memory checks and the jump rules;
 * §A.5, the instruction tables: how each instruction's operands are decoded and what it does;
 * §A.6–§A.8, the host-call loop $`\Psi_H`, the standard program initialization $`Y` and the
-  argument invocation $`\Psi_M`, which the invocations of Appendix B are built on;
+  argument invocation $`\Psi_M`, which the invocations of {ref "invocations"}[Appendix B] are built on;
 * §A.9–§A.10, the gas cost model: the cost of a basic block is the number of cycles a simulated
   CPU needs to run it.
 
@@ -183,8 +183,8 @@ $$`\Psi_1 \colon (\mathfrak{p}, \mathbf{k}, \mathbf{j}, \imath, \varrho, \tilde\
 
 The result is {api}`PVM.StepResult`, and the function is {api}`PVM.Program.step`. A
 {api}`PVM.Program` holds the code $`\mathbf{c}`, the bitmask $`\mathbf{k}` and the jump table $`\mathbf{j}`, so they need not be passed
-separately. The left side of (A.7) names the first argument $`\mathfrak{p}`, but the type of $`\Psi_1`, its call in (A.1)
-and the gas stage (A.8) all use the instruction data $`\mathbf{c}`; the model takes $`\mathbf{c}`.
+separately. The left side of (A.7) names the first argument $`\mathfrak{p}`, but its call in (A.1) and the gas stage
+(A.8) use the instruction data $`\mathbf{c}` (the type of $`\Psi_1` gives this argument only as $`\mathbb{B}`); the model takes $`\mathbf{c}`.
 
 {leanSource PVM.Program.step}
 
@@ -407,7 +407,7 @@ $$`\Psi_H(\mathfrak{p}, \imath, \varrho, \varphi, \mu, f, \mathfrak{x}) \equiv \
 $$`\Omega\langle X \rangle \equiv (\mathbb{N}, \mathbb{N}_G, \llbracket\mathbb{N}_R\rrbracket_{13}, \mathbb{M}, X) \to (\{\blacktriangleright, \text{☇}, \infty\}, \mathbb{N}_G, \llbracket\mathbb{N}_R\rrbracket_{13}, \mathbb{M}, X) \qquad \text{(A.40)}`
 
 A handler of type $`\Omega\langle X \rangle` is the model's {api}`PVM.HostFn`; its context $`X` is whatever the invocation needs
-(Appendix B, {ref "invocations"}[the next chapter]). Since v0.8.1 a handler can only continue, panic
+({ref "invocations"}[Appendix B], {ref "invocations"}[the next chapter]). Since v0.8.1 a handler can only continue, panic
 or run out of gas; it cannot halt the machine.
 
 {leanSource PVM.HostFn}
@@ -419,7 +419,7 @@ or run out of gas; it cannot halt the machine.
 {leanSource PVM.psiH}
 
 $`\Psi_H^*` is again a plain recursion. It terminates when the handler never returns more gas than it was
-given ({api}`PVM.HostFn.GasNonIncreasing`). The handlers of all three invocations of Appendix B have this
+given ({api}`PVM.HostFn.GasNonIncreasing`). The handlers of all three invocations of {ref "invocations"}[Appendix B] have this
 property ({api}`JAM.isAuthHostFn_gasNonIncreasing`, {api}`JAM.refineHostFn_gasNonIncreasing`,
 {api}`JAM.accHostFn_gasNonIncreasing`). Each
 continuing host call happens at a lower value of the measure that bounds $`\Psi`. For such handlers the
@@ -488,7 +488,7 @@ eq. (A.46) as a whole:
 tag := "pvm-args"
 %%%
 
-$`\Psi_M` is what the three invocations of Appendix B call: initialize with $`Y`, run $`\Psi_H`, and read the
+$`\Psi_M` is what the three invocations of {ref "invocations"}[Appendix B] call: initialize with $`Y`, run $`\Psi_H`, and read the
 output from the RAM range that $`\varphi_7` and $`\varphi_8` name when the program halts:
 
 $$`\Psi_M \colon (\mathbb{B}, \mathbb{N}_R, \mathbb{N}_G, \mathbb{B}_{:\mathsf{Z}_I}, \Omega\langle X \rangle, X) \to (\mathbb{N}_G, \mathbb{B} \cup \{\text{☇}, \infty\}, X)`
@@ -648,10 +648,10 @@ Most of these points are recorded in the model's
   The model follows the paper (`PVM.Result.pc`).
 * *Note 13, §A.6.* $`\Psi_H^*` need not terminate: a handler that returns more gas than it was given can
   make it recurse forever. The model proves termination for handlers that never add gas, which
-  covers the handlers of all three invocations of Appendix B; for any other handler, `psiHStar` returns ☇ when its fuel
+  covers the handlers of all three invocations of {ref "invocations"}[Appendix B]; for any other handler, `psiHStar` returns ☇ when its fuel
   runs out. Likewise $`\Psi_M`'s gas used, $`u = \varrho - \varrho'`, is computed with truncated subtraction
   ({api}`PVM.invocationResult`), which differs from the paper only if $`\varrho' > \varrho`; that needs a handler
-  that adds gas, and the three handlers of Appendix B are proved not to.
+  that adds gas, and the three handlers of {ref "invocations"}[Appendix B] are proved not to.
 * *Note 17, §A.7.* $`Y` takes arguments $`\mathbf{a} \in \mathbb{B}_{:\mathsf{Z}_I}`, and the paper does not say what happens to a longer
   argument. The model returns $`\emptyset` ({api}`PVM.validJamBlob?`), so $`\Psi_M` panics.
 * *Note v0.8.1-A35, §A.8.* $`\Psi_H` returns seven components, including the flag $`\tilde\varrho`, while $`R` in eq. (A.48) takes six. The

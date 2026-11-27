@@ -1,0 +1,4198 @@
+{
+ "approximate": {
+  "concatall": "\\concatall",
+  "is": "\\is",
+  "tricolon": "\\tricolon"
+ },
+ "generator": "scripts/gen_macros.py",
+ "macros": {
+  "A": {
+   "args": 0,
+   "body": "\\token{A}",
+   "paper": "\\A"
+  },
+  "ALU": {
+   "args": 0,
+   "body": "\\text{A}",
+   "paper": "\\ALU"
+  },
+  "Aries": {
+   "args": 0,
+   "body": "\\text{♈}",
+   "paper": "\\Aries"
+  },
+  "B": {
+   "args": 0,
+   "body": "\\theblock",
+   "paper": "\\B"
+  },
+  "Cassurancetimeoutperiod": {
+   "args": 0,
+   "body": "\\mathsf{U}",
+   "paper": "\\Cassurancetimeoutperiod"
+  },
+  "Cauditbiasfactor": {
+   "args": 0,
+   "body": "\\mathsf{F}",
+   "paper": "\\Cauditbiasfactor"
+  },
+  "Cauthpoolsize": {
+   "args": 0,
+   "body": "\\mathsf{O}",
+   "paper": "\\Cauthpoolsize"
+  },
+  "Cauthqueuesize": {
+   "args": 0,
+   "body": "\\mathsf{Q}",
+   "paper": "\\Cauthqueuesize"
+  },
+  "Cbasedeposit": {
+   "args": 0,
+   "body": "\\mathsf{B}_S",
+   "paper": "\\Cbasedeposit"
+  },
+  "Cblockaccgas": {
+   "args": 0,
+   "body": "\\mathsf{G}_T",
+   "paper": "\\Cblockaccgas"
+  },
+  "Cbytedeposit": {
+   "args": 0,
+   "body": "\\mathsf{B}_L",
+   "paper": "\\Cbytedeposit"
+  },
+  "Ccorecount": {
+   "args": 0,
+   "body": "\\mathsf{C}",
+   "paper": "\\Ccorecount"
+  },
+  "Cepochlen": {
+   "args": 0,
+   "body": "\\mathsf{E}",
+   "paper": "\\Cepochlen"
+  },
+  "Cepochtailstart": {
+   "args": 0,
+   "body": "\\mathsf{Y}",
+   "paper": "\\Cepochtailstart"
+  },
+  "Cexpungeperiod": {
+   "args": 0,
+   "body": "\\mathsf{D}",
+   "paper": "\\Cexpungeperiod"
+  },
+  "CgasA": {
+   "args": 0,
+   "body": "\\mathsf{M}_A",
+   "paper": "\\CgasA"
+  },
+  "CgasAriesconst": {
+   "args": 0,
+   "body": "\\mathsf{M}_{\\text{♈},c}",
+   "paper": "\\CgasAriesconst"
+  },
+  "CgasArieslinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{\\text{♈},\\ell}",
+   "paper": "\\CgasArieslinear"
+  },
+  "CgasBconst": {
+   "args": 0,
+   "body": "\\mathsf{M}_{B,c}",
+   "paper": "\\CgasBconst"
+  },
+  "CgasBlinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{B,\\ell}",
+   "paper": "\\CgasBlinear"
+  },
+  "CgasC": {
+   "args": 0,
+   "body": "\\mathsf{M}_C",
+   "paper": "\\CgasC"
+  },
+  "CgasDconst": {
+   "args": 0,
+   "body": "\\mathsf{M}_{D,c}",
+   "paper": "\\CgasDconst"
+  },
+  "CgasDlinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{D,\\ell}",
+   "paper": "\\CgasDlinear"
+  },
+  "CgasE": {
+   "args": 0,
+   "body": "\\mathsf{M}_E",
+   "paper": "\\CgasE"
+  },
+  "CgasF": {
+   "args": 0,
+   "body": "\\mathsf{M}_F",
+   "paper": "\\CgasF"
+  },
+  "CgasG": {
+   "args": 0,
+   "body": "\\mathsf{M}_G",
+   "paper": "\\CgasG"
+  },
+  "CgasGammadbconst": {
+   "args": 0,
+   "body": "\\mathsf{M}_{\\Gamma,\\mathrm{d},c}",
+   "paper": "\\CgasGammadbconst"
+  },
+  "CgasGammadblinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{\\Gamma,\\mathrm{d},\\ell}",
+   "paper": "\\CgasGammadblinear"
+  },
+  "CgasGammamemconst": {
+   "args": 0,
+   "body": "\\mathsf{M}_{\\Gamma,\\mathrm{m},c}",
+   "paper": "\\CgasGammamemconst"
+  },
+  "CgasGammamemlinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{\\Gamma,\\mathrm{m},\\ell}",
+   "paper": "\\CgasGammamemlinear"
+  },
+  "CgasGeminiconst": {
+   "args": 0,
+   "body": "\\mathsf{M}_{\\text{♊},c}",
+   "paper": "\\CgasGeminiconst"
+  },
+  "CgasGeminilinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{\\text{♊},p}",
+   "paper": "\\CgasGeminilinear"
+  },
+  "CgasHconst": {
+   "args": 0,
+   "body": "\\mathsf{M}_{H,c}",
+   "paper": "\\CgasHconst"
+  },
+  "CgasHlinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{H,\\ell}",
+   "paper": "\\CgasHlinear"
+  },
+  "CgasI": {
+   "args": 0,
+   "body": "\\mathsf{M}_I",
+   "paper": "\\CgasI"
+  },
+  "CgasJ": {
+   "args": 0,
+   "body": "\\mathsf{M}_J",
+   "paper": "\\CgasJ"
+  },
+  "CgasK": {
+   "args": 0,
+   "body": "\\mathsf{M}_K",
+   "paper": "\\CgasK"
+  },
+  "CgasLconst": {
+   "args": 0,
+   "body": "\\mathsf{M}_{L,c}",
+   "paper": "\\CgasLconst"
+  },
+  "CgasLlinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{L,\\ell}",
+   "paper": "\\CgasLlinear"
+  },
+  "CgasM": {
+   "args": 0,
+   "body": "\\mathsf{M}_{M}",
+   "paper": "\\CgasM"
+  },
+  "CgasN": {
+   "args": 0,
+   "body": "\\mathsf{M}_N",
+   "paper": "\\CgasN"
+  },
+  "CgasOconst": {
+   "args": 0,
+   "body": "\\mathsf{M}_{O,c}",
+   "paper": "\\CgasOconst"
+  },
+  "CgasOlinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{O,\\ell}",
+   "paper": "\\CgasOlinear"
+  },
+  "CgasPconst": {
+   "args": 0,
+   "body": "\\mathsf{M}_{P,c}",
+   "paper": "\\CgasPconst"
+  },
+  "CgasPlinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{P,\\ell}",
+   "paper": "\\CgasPlinear"
+  },
+  "CgasQ": {
+   "args": 0,
+   "body": "\\mathsf{M}_Q",
+   "paper": "\\CgasQ"
+  },
+  "CgasRconst": {
+   "args": 0,
+   "body": "\\mathsf{M}_{R,c}",
+   "paper": "\\CgasRconst"
+  },
+  "CgasRkeylinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{R,\\mathrm{k},\\ell}",
+   "paper": "\\CgasRkeylinear"
+  },
+  "CgasRvallinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{R,\\mathrm{v},\\ell}",
+   "paper": "\\CgasRvallinear"
+  },
+  "CgasS": {
+   "args": 0,
+   "body": "\\mathsf{M}_S",
+   "paper": "\\CgasS"
+  },
+  "CgasT": {
+   "args": 0,
+   "body": "\\mathsf{M}_T",
+   "paper": "\\CgasT"
+  },
+  "CgasTaurus": {
+   "args": 0,
+   "body": "\\mathsf{M}_{\\text{♉}}",
+   "paper": "\\CgasTaurus"
+  },
+  "CgasU": {
+   "args": 0,
+   "body": "\\mathsf{M}_U",
+   "paper": "\\CgasU"
+  },
+  "CgasV": {
+   "args": 0,
+   "body": "\\mathsf{M}_V",
+   "paper": "\\CgasV"
+  },
+  "CgasWconst": {
+   "args": 0,
+   "body": "\\mathsf{M}_{W,c}",
+   "paper": "\\CgasWconst"
+  },
+  "CgasWkeylinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{W,\\mathrm{k},\\ell}",
+   "paper": "\\CgasWkeylinear"
+  },
+  "CgasWvallinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{W,\\mathrm{v},\\ell}",
+   "paper": "\\CgasWvallinear"
+  },
+  "CgasX": {
+   "args": 0,
+   "body": "\\mathsf{M}_X",
+   "paper": "\\CgasX"
+  },
+  "CgasYc": {
+   "args": 1,
+   "body": "\\mathsf{M}_{Y,#1,c}",
+   "paper": "\\CgasYc"
+  },
+  "CgasYl": {
+   "args": 1,
+   "body": "\\mathsf{M}_{Y,#1,\\ell}",
+   "paper": "\\CgasYl"
+  },
+  "CgasYunknown": {
+   "args": 0,
+   "body": "\\mathsf{M}_{Y,\\none}",
+   "paper": "\\CgasYunknown"
+  },
+  "CgasZallocconst": {
+   "args": 0,
+   "body": "\\mathsf{M}_{Z,a,c}",
+   "paper": "\\CgasZallocconst"
+  },
+  "CgasZalloclinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{Z,a,p}",
+   "paper": "\\CgasZalloclinear"
+  },
+  "CgasZfreeconst": {
+   "args": 0,
+   "body": "\\mathsf{M}_{Z,f,c}",
+   "paper": "\\CgasZfreeconst"
+  },
+  "CgasZfreelinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{Z,f,p}",
+   "paper": "\\CgasZfreelinear"
+  },
+  "CgasZinvalid": {
+   "args": 0,
+   "body": "\\mathsf{M}_{Z,i}",
+   "paper": "\\CgasZinvalid"
+  },
+  "CgasZsetmodeconst": {
+   "args": 0,
+   "body": "\\mathsf{M}_{Z,s,c}",
+   "paper": "\\CgasZsetmodeconst"
+  },
+  "CgasZsetmodelinear": {
+   "args": 0,
+   "body": "\\mathsf{M}_{Z,s,p}",
+   "paper": "\\CgasZsetmodelinear"
+  },
+  "Cgasunknown": {
+   "args": 0,
+   "body": "\\mathsf{M}_\\none",
+   "paper": "\\Cgasunknown"
+  },
+  "Citemdeposit": {
+   "args": 0,
+   "body": "\\mathsf{B}_I",
+   "paper": "\\Citemdeposit"
+  },
+  "Cmaxauthcodesize": {
+   "args": 0,
+   "body": "\\mathsf{W}_A",
+   "paper": "\\Cmaxauthcodesize"
+  },
+  "Cmaxblocktickets": {
+   "args": 0,
+   "body": "\\mathsf{K}",
+   "paper": "\\Cmaxblocktickets"
+  },
+  "Cmaxbundlesize": {
+   "args": 0,
+   "body": "\\mathsf{W}_B",
+   "paper": "\\Cmaxbundlesize"
+  },
+  "Cmaxextrinsicoffenses": {
+   "args": 0,
+   "body": "\\mathsf{N}_O",
+   "paper": "\\Cmaxextrinsicoffenses"
+  },
+  "Cmaxextrinsicverdicts": {
+   "args": 0,
+   "body": "\\mathsf{N}_V",
+   "paper": "\\Cmaxextrinsicverdicts"
+  },
+  "Cmaxinputsize": {
+   "args": 0,
+   "body": "\\mathsf{W}_I",
+   "paper": "\\Cmaxinputsize"
+  },
+  "Cmaxlookupanchorage": {
+   "args": 0,
+   "body": "\\mathsf{L}",
+   "paper": "\\Cmaxlookupanchorage"
+  },
+  "Cmaxpackageexports": {
+   "args": 0,
+   "body": "\\mathsf{W}_X",
+   "paper": "\\Cmaxpackageexports"
+  },
+  "Cmaxpackageimports": {
+   "args": 0,
+   "body": "\\mathsf{W}_M",
+   "paper": "\\Cmaxpackageimports"
+  },
+  "Cmaxpackageitems": {
+   "args": 0,
+   "body": "\\mathsf{I}",
+   "paper": "\\Cmaxpackageitems"
+  },
+  "Cmaxpackagexts": {
+   "args": 0,
+   "body": "\\mathsf{T}",
+   "paper": "\\Cmaxpackagexts"
+  },
+  "Cmaxreportdeps": {
+   "args": 0,
+   "body": "\\mathsf{J}",
+   "paper": "\\Cmaxreportdeps"
+  },
+  "Cmaxreportvarsize": {
+   "args": 0,
+   "body": "\\mathsf{W}_R",
+   "paper": "\\Cmaxreportvarsize"
+  },
+  "Cmaxservicecodesize": {
+   "args": 0,
+   "body": "\\mathsf{W}_C",
+   "paper": "\\Cmaxservicecodesize"
+  },
+  "Cmaxxtpreimagesdatasize": {
+   "args": 0,
+   "body": "\\mathsf{N}_D",
+   "paper": "\\Cmaxxtpreimagesdatasize"
+  },
+  "Cmaxxtpreimageslen": {
+   "args": 0,
+   "body": "\\mathsf{N}_P",
+   "paper": "\\Cmaxxtpreimageslen"
+  },
+  "Cmemosize": {
+   "args": 0,
+   "body": "\\mathsf{W}_T",
+   "paper": "\\Cmemosize"
+  },
+  "Cminpublicindex": {
+   "args": 0,
+   "body": "\\mathsf{S}",
+   "paper": "\\Cminpublicindex"
+  },
+  "Cpackageauthgas": {
+   "args": 0,
+   "body": "\\mathsf{G}_I",
+   "paper": "\\Cpackageauthgas"
+  },
+  "Cpackagerefgas": {
+   "args": 0,
+   "body": "\\mathsf{G}_R",
+   "paper": "\\Cpackagerefgas"
+  },
+  "Cpvmdynaddralign": {
+   "args": 0,
+   "body": "\\mathsf{Z}_A",
+   "paper": "\\Cpvmdynaddralign"
+  },
+  "Cpvminitinputsize": {
+   "args": 0,
+   "body": "\\mathsf{Z}_I",
+   "paper": "\\Cpvminitinputsize"
+  },
+  "Cpvminitzonesize": {
+   "args": 0,
+   "body": "\\mathsf{Z}_Z",
+   "paper": "\\Cpvminitzonesize"
+  },
+  "Cpvmmaxcodesize": {
+   "args": 0,
+   "body": "\\mathsf{Z}_C",
+   "paper": "\\Cpvmmaxcodesize"
+  },
+  "Cpvmmaxjumptableentries": {
+   "args": 0,
+   "body": "\\mathsf{Z}_J",
+   "paper": "\\Cpvmmaxjumptableentries"
+  },
+  "Cpvmpagesize": {
+   "args": 0,
+   "body": "\\mathsf{Z}_P",
+   "paper": "\\Cpvmpagesize"
+  },
+  "Crecenthistorylen": {
+   "args": 0,
+   "body": "\\mathsf{H}",
+   "paper": "\\Crecenthistorylen"
+  },
+  "Creportaccgas": {
+   "args": 0,
+   "body": "\\mathsf{G}_A",
+   "paper": "\\Creportaccgas"
+  },
+  "Crotationperiod": {
+   "args": 0,
+   "body": "\\mathsf{R}",
+   "paper": "\\Crotationperiod"
+  },
+  "Csegmentfootprint": {
+   "args": 0,
+   "body": "\\mathsf{W}_F",
+   "paper": "\\Csegmentfootprint"
+  },
+  "Csegmentsize": {
+   "args": 0,
+   "body": "\\mathsf{W}_G",
+   "paper": "\\Csegmentsize"
+  },
+  "Cslotseconds": {
+   "args": 0,
+   "body": "\\mathsf{P}",
+   "paper": "\\Cslotseconds"
+  },
+  "Ctrancheseconds": {
+   "args": 0,
+   "body": "\\mathsf{A}",
+   "paper": "\\Ctrancheseconds"
+  },
+  "DIV": {
+   "args": 0,
+   "body": "\\text{D}",
+   "paper": "\\DIV"
+  },
+  "Eg": {
+   "args": 0,
+   "body": "E.g.",
+   "paper": "\\Eg"
+  },
+  "Fskip": {
+   "args": 0,
+   "body": "\\text{skip}",
+   "paper": "\\Fskip"
+  },
+  "Gemini": {
+   "args": 0,
+   "body": "\\text{♊}",
+   "paper": "\\Gemini"
+  },
+  "H": {
+   "args": 0,
+   "body": "\\theheader",
+   "paper": "\\H"
+  },
+  "Ie": {
+   "args": 0,
+   "body": "I.e.",
+   "paper": "\\Ie"
+  },
+  "LOAD": {
+   "args": 0,
+   "body": "\\text{L}",
+   "paper": "\\LOAD"
+  },
+  "MUL": {
+   "args": 0,
+   "body": "\\text{M}",
+   "paper": "\\MUL"
+  },
+  "N": {
+   "args": 0,
+   "body": "\\mathbb{N}",
+   "paper": "\\N"
+  },
+  "Nbits": {
+   "args": 1,
+   "body": "\\Nmax{2^{#1}}",
+   "paper": "\\Nbits"
+  },
+  "Nclamp": {
+   "args": 2,
+   "body": "\\N_{#1 \\dots #2}",
+   "paper": "\\Nclamp"
+  },
+  "Nmax": {
+   "args": 1,
+   "body": "\\N_{#1}",
+   "paper": "\\Nmax"
+  },
+  "Nrange": {
+   "args": 2,
+   "body": "\\N_{#1 \\dots+ #2}",
+   "paper": "\\Nrange"
+  },
+  "QQauthorbskey": {
+   "args": 0,
+   "body": "A",
+   "paper": "\\¬authorbskey"
+  },
+  "QQauthorindex": {
+   "args": 0,
+   "body": "I",
+   "paper": "\\¬authorindex"
+  },
+  "QQauthorizer": {
+   "args": 0,
+   "body": "a",
+   "paper": "\\¬authorizer"
+  },
+  "QQauthtrace": {
+   "args": 0,
+   "body": "\\mathbf{t}",
+   "paper": "\\¬authtrace"
+  },
+  "QQbundlelen": {
+   "args": 0,
+   "body": "l",
+   "paper": "\\¬bundlelen"
+  },
+  "QQcodehash": {
+   "args": 0,
+   "body": "c",
+   "paper": "\\¬codehash"
+  },
+  "QQcontext": {
+   "args": 0,
+   "body": "\\mathbf{c}",
+   "paper": "\\¬context"
+  },
+  "QQcore": {
+   "args": 0,
+   "body": "c",
+   "paper": "\\¬core"
+  },
+  "QQentryindex": {
+   "args": 0,
+   "body": "e",
+   "paper": "\\¬entryindex"
+  },
+  "QQepochmark": {
+   "args": 0,
+   "body": "E",
+   "paper": "\\¬epochmark"
+  },
+  "QQexportcount": {
+   "args": 0,
+   "body": "e",
+   "paper": "\\¬exportcount"
+  },
+  "QQextrinsichash": {
+   "args": 0,
+   "body": "X",
+   "paper": "\\¬extrinsichash"
+  },
+  "QQgaslimit": {
+   "args": 0,
+   "body": "g",
+   "paper": "\\¬gaslimit"
+  },
+  "QQgasused": {
+   "args": 0,
+   "body": "u",
+   "paper": "\\¬gasused"
+  },
+  "QQimportcount": {
+   "args": 0,
+   "body": "i",
+   "paper": "\\¬importcount"
+  },
+  "QQoffenderindex": {
+   "args": 0,
+   "body": "f",
+   "paper": "\\¬offenderindex"
+  },
+  "QQoffendersmark": {
+   "args": 0,
+   "body": "O",
+   "paper": "\\¬offendersmark"
+  },
+  "QQpackagehash": {
+   "args": 0,
+   "body": "p",
+   "paper": "\\¬packagehash"
+  },
+  "QQparent": {
+   "args": 0,
+   "body": "P",
+   "paper": "\\¬parent"
+  },
+  "QQpartialstate": {
+   "args": 0,
+   "body": "\\mathbf{e}",
+   "paper": "\\¬partialstate"
+  },
+  "QQpayload": {
+   "args": 0,
+   "body": "\\mathbf{y}",
+   "paper": "\\¬payload"
+  },
+  "QQpayloadhash": {
+   "args": 0,
+   "body": "y",
+   "paper": "\\¬payloadhash"
+  },
+  "QQpriorstateroot": {
+   "args": 0,
+   "body": "R",
+   "paper": "\\¬priorstateroot"
+  },
+  "QQreporthash": {
+   "args": 0,
+   "body": "r",
+   "paper": "\\¬reporthash"
+  },
+  "QQresult": {
+   "args": 0,
+   "body": "\\mathbf{l}",
+   "paper": "\\¬result"
+  },
+  "QQsealsig": {
+   "args": 0,
+   "body": "S",
+   "paper": "\\¬sealsig"
+  },
+  "QQsegroot": {
+   "args": 0,
+   "body": "e",
+   "paper": "\\¬segroot"
+  },
+  "QQserviceindex": {
+   "args": 0,
+   "body": "s",
+   "paper": "\\¬serviceindex"
+  },
+  "QQsignature": {
+   "args": 0,
+   "body": "s",
+   "paper": "\\¬signature"
+  },
+  "QQtimeslot": {
+   "args": 0,
+   "body": "T",
+   "paper": "\\¬timeslot"
+  },
+  "QQvalidity": {
+   "args": 0,
+   "body": "v",
+   "paper": "\\¬validity"
+  },
+  "QQvrfsig": {
+   "args": 0,
+   "body": "V",
+   "paper": "\\¬vrfsig"
+  },
+  "QQwinnersmark": {
+   "args": 0,
+   "body": "W",
+   "paper": "\\¬winnersmark"
+  },
+  "QQworkreport": {
+   "args": 0,
+   "body": "\\mathbf{r}",
+   "paper": "\\¬workreport"
+  },
+  "QQxtcount": {
+   "args": 0,
+   "body": "x",
+   "paper": "\\¬xtcount"
+  },
+  "QQxtsize": {
+   "args": 0,
+   "body": "z",
+   "paper": "\\¬xtsize"
+  },
+  "RA": {
+   "args": 0,
+   "body": "\\token{RA}",
+   "paper": "\\RA"
+  },
+  "S": {
+   "args": 0,
+   "body": "\\token{S}",
+   "paper": "\\S"
+  },
+  "SP": {
+   "args": 0,
+   "body": "\\token{SP}",
+   "paper": "\\SP"
+  },
+  "STORE": {
+   "args": 0,
+   "body": "\\text{S}",
+   "paper": "\\STORE"
+  },
+  "T": {
+   "args": 0,
+   "body": "\\token{T}",
+   "paper": "\\T"
+  },
+  "Taurus": {
+   "args": 0,
+   "body": "\\text{♉}",
+   "paper": "\\Taurus"
+  },
+  "XT": {
+   "args": 0,
+   "body": "\\theextrinsic",
+   "paper": "\\XT"
+  },
+  "Xannounce": {
+   "args": 0,
+   "body": "\\mathsf{X}_I",
+   "paper": "\\Xannounce"
+  },
+  "Xaudit": {
+   "args": 0,
+   "body": "\\mathsf{X}_U",
+   "paper": "\\Xaudit"
+  },
+  "Xavailable": {
+   "args": 0,
+   "body": "\\mathsf{X}_A",
+   "paper": "\\Xavailable"
+  },
+  "Xbeefy": {
+   "args": 0,
+   "body": "\\mathsf{X}_B",
+   "paper": "\\Xbeefy"
+  },
+  "Xentropy": {
+   "args": 0,
+   "body": "\\mathsf{X}_E",
+   "paper": "\\Xentropy"
+  },
+  "Xfallback": {
+   "args": 0,
+   "body": "\\mathsf{X}_F",
+   "paper": "\\Xfallback"
+  },
+  "Xguarantee": {
+   "args": 0,
+   "body": "\\mathsf{X}_G",
+   "paper": "\\Xguarantee"
+  },
+  "Xinvalid": {
+   "args": 0,
+   "body": "\\mathsf{X}_\\bot",
+   "paper": "\\Xinvalid"
+  },
+  "Xticket": {
+   "args": 0,
+   "body": "\\mathsf{X}_T",
+   "paper": "\\Xticket"
+  },
+  "Xvalid": {
+   "args": 0,
+   "body": "\\mathsf{X}_\\top",
+   "paper": "\\Xvalid"
+  },
+  "Xvalidif": {
+   "args": 1,
+   "body": "\\mathsf{X}_{#1}",
+   "paper": "\\Xvalidif"
+  },
+  "Z": {
+   "args": 0,
+   "body": "\\mathbb{Z}",
+   "paper": "\\Z"
+  },
+  "aaQQguarantee": {
+   "args": 0,
+   "body": "\\mathbf{g}",
+   "paper": "\\aa¬guarantee"
+  },
+  "aaQQtimestamp": {
+   "args": 0,
+   "body": "t",
+   "paper": "\\aa¬timestamp"
+  },
+  "aaX": {
+   "args": 0,
+   "body": "\\mathbf{a}",
+   "paper": "\\aaX"
+  },
+  "abracegroup": {
+   "args": 2,
+   "body": "\\bracegroup{#1\\begin{aligned}#2\\end{aligned}}",
+   "default": "",
+   "paper": "\\abracegroup"
+  },
+  "abracegroupboth": {
+   "args": 2,
+   "body": "\\bracegroupboth{#1\\begin{aligned}#2\\end{aligned}}",
+   "default": "",
+   "paper": "\\abracegroupboth"
+  },
+  "abracegrouptwo": {
+   "args": 2,
+   "body": "\\left\\{\n  \\begin{array}{l}\n    \\begin{aligned}\n      #1\n    \\end{aligned}\n    \\\\[14pt]\n    \\hspace{8pt}\\begin{aligned}\n      #2\n    \\end{aligned}\n  \\end{array}\n  \\right.",
+   "paper": "\\abracegrouptwo"
+  },
+  "accone": {
+   "args": 0,
+   "body": "\\accumulate_1",
+   "paper": "\\accone"
+  },
+  "acconeout": {
+   "args": 0,
+   "body": "\\mathbb{O}",
+   "paper": "\\acconeout"
+  },
+  "accounts": {
+   "args": 0,
+   "body": "\\delta",
+   "paper": "\\accounts"
+  },
+  "accountspost": {
+   "args": 0,
+   "body": "\\accounts'",
+   "paper": "\\accountspost"
+  },
+  "accountspostacc": {
+   "args": 0,
+   "body": "\\accounts^\\dagger",
+   "paper": "\\accountspostacc"
+  },
+  "accountspostpreimage": {
+   "args": 0,
+   "body": "\\accounts'",
+   "paper": "\\accountspostpreimage"
+  },
+  "accountspostxfer": {
+   "args": 0,
+   "body": "\\accounts^\\ddagger",
+   "paper": "\\accountspostxfer"
+  },
+  "accountspre": {
+   "args": 0,
+   "body": "\\accounts",
+   "paper": "\\accountspre"
+  },
+  "accoutbelt": {
+   "args": 0,
+   "body": "\\recent_B",
+   "paper": "\\accoutbelt"
+  },
+  "accoutcommitment": {
+   "args": 1,
+   "body": "\\mathbf{F}_{#1}",
+   "paper": "\\accoutcommitment"
+  },
+  "accpar": {
+   "args": 0,
+   "body": "\\accumulate_*",
+   "paper": "\\accpar"
+  },
+  "accseq": {
+   "args": 0,
+   "body": "\\accumulate_+",
+   "paper": "\\accseq"
+  },
+  "accumulate": {
+   "args": 0,
+   "body": "\\Delta",
+   "paper": "\\accumulate"
+  },
+  "accumulated": {
+   "args": 0,
+   "body": "\\xi",
+   "paper": "\\accumulated"
+  },
+  "accumulatedcup": {
+   "args": 0,
+   "body": "\\overbrace{\\accumulated}",
+   "paper": "\\accumulatedcup"
+  },
+  "accumulationstatistics": {
+   "args": 0,
+   "body": "\\mathbf{S}",
+   "paper": "\\accumulationstatistics"
+  },
+  "activeset": {
+   "args": 0,
+   "body": "\\kappa",
+   "paper": "\\activeset"
+  },
+  "activity": {
+   "args": 0,
+   "body": "\\pi",
+   "paper": "\\activity"
+  },
+  "allexports": {
+   "args": 0,
+   "body": "\\overline{\\mathbf{e}}",
+   "paper": "\\allexports"
+  },
+  "allvalkeys": {
+   "args": 0,
+   "body": "\\sequence[\\valcount]{\\valkey}",
+   "paper": "\\allvalkeys"
+  },
+  "also": {
+   "args": 0,
+   "body": "\\text{and }",
+   "paper": "\\also"
+  },
+  "alwaysaccers": {
+   "args": 0,
+   "body": "\\privileges_\\prQQalwaysaccers",
+   "paper": "\\alwaysaccers"
+  },
+  "ancestors": {
+   "args": 0,
+   "body": "\\mathbf{A}",
+   "paper": "\\ancestors"
+  },
+  "ang": {
+   "args": 1,
+   "body": "\\left\\langle#1\\right\\rangle",
+   "paper": "\\ang"
+  },
+  "anglebar": {
+   "args": 1,
+   "body": "\\left\\langle\\!\\left|#1\\right|\\!\\right\\rangle",
+   "paper": "\\anglebar"
+  },
+  "aoQQdefxfers": {
+   "args": 0,
+   "body": "\\mathbf{t}",
+   "paper": "\\ao¬defxfers"
+  },
+  "aoQQgasused": {
+   "args": 0,
+   "body": "\\QQgasused",
+   "paper": "\\ao¬gasused"
+  },
+  "aoQQmodifiedaccounts": {
+   "args": 0,
+   "body": "\\mathbf{w}",
+   "paper": "\\ao¬modifiedaccounts"
+  },
+  "aoQQpoststate": {
+   "args": 0,
+   "body": "\\QQpartialstate",
+   "paper": "\\ao¬poststate"
+  },
+  "aoQQprovisions": {
+   "args": 0,
+   "body": "\\mathbf{p}",
+   "paper": "\\ao¬provisions"
+  },
+  "aoQQyield": {
+   "args": 0,
+   "body": "y",
+   "paper": "\\ao¬yield"
+  },
+  "append": {
+   "args": 0,
+   "body": "\\doubleplus",
+   "paper": "\\append"
+  },
+  "asQQbundlelen": {
+   "args": 0,
+   "body": "\\QQbundlelen",
+   "paper": "\\as¬bundlelen"
+  },
+  "asQQerasureroot": {
+   "args": 0,
+   "body": "u",
+   "paper": "\\as¬erasureroot"
+  },
+  "asQQerasureshards": {
+   "args": 0,
+   "body": "v",
+   "paper": "\\as¬erasureshards"
+  },
+  "asQQpackagehash": {
+   "args": 0,
+   "body": "\\QQpackagehash",
+   "paper": "\\as¬packagehash"
+  },
+  "asQQsegcount": {
+   "args": 0,
+   "body": "n",
+   "paper": "\\as¬segcount"
+  },
+  "asQQsegroot": {
+   "args": 0,
+   "body": "\\QQsegroot",
+   "paper": "\\as¬segroot"
+  },
+  "asX": {
+   "args": 0,
+   "body": "\\mathbf{x}",
+   "paper": "\\asX"
+  },
+  "assigners": {
+   "args": 0,
+   "body": "\\privileges_\\prQQassigners",
+   "paper": "\\assigners"
+  },
+  "authpool": {
+   "args": 0,
+   "body": "\\alpha",
+   "paper": "\\authpool"
+  },
+  "authqueue": {
+   "args": 0,
+   "body": "\\phi",
+   "paper": "\\authqueue"
+  },
+  "availassignments": {
+   "args": 0,
+   "body": "\\rho",
+   "paper": "\\availassignments"
+  },
+  "availassignmentspostassurances": {
+   "args": 0,
+   "body": "\\availassignments^\\ddagger",
+   "paper": "\\availassignmentspostassurances"
+  },
+  "availassignmentspostguarantees": {
+   "args": 0,
+   "body": "\\availassignments'",
+   "paper": "\\availassignmentspostguarantees"
+  },
+  "availassignmentspostjudgment": {
+   "args": 0,
+   "body": "\\availassignments^\\dagger",
+   "paper": "\\availassignmentspostjudgment"
+  },
+  "availassignmentspre": {
+   "args": 0,
+   "body": "\\availassignments",
+   "paper": "\\availassignmentspre"
+  },
+  "avspec": {
+   "args": 0,
+   "body": "\\mathbb{Y}",
+   "paper": "\\avspec"
+  },
+  "badexports": {
+   "args": 0,
+   "body": "\\circledcirc",
+   "paper": "\\badexports"
+  },
+  "badset": {
+   "args": 0,
+   "body": "\\disputes_B",
+   "paper": "\\badset"
+  },
+  "balance": {
+   "args": 0,
+   "body": "\\N_B",
+   "paper": "\\balance"
+  },
+  "banderout": {
+   "args": 1,
+   "body": "\\fnbanderout\\left(#1\\right)",
+   "paper": "\\banderout"
+  },
+  "basicblocks": {
+   "args": 0,
+   "body": "\\varpi",
+   "paper": "\\basicblocks"
+  },
+  "best": {
+   "args": 0,
+   "body": "\\flat",
+   "paper": "\\best"
+  },
+  "bits": {
+   "args": 1,
+   "body": "\\bitsn{8}{#1}",
+   "paper": "\\bits"
+  },
+  "bitsfunc": {
+   "args": 1,
+   "body": "\\fnoctetstobits_{#1}",
+   "paper": "\\bitsfunc"
+  },
+  "bitsn": {
+   "args": 2,
+   "body": "\\bitsfunc{#1}(#2)",
+   "paper": "\\bitsn"
+  },
+  "bitstring": {
+   "args": 1,
+   "body": "\\text{𝕓}_{#1}",
+   "default": "",
+   "paper": "\\bitstring"
+  },
+  "blake": {
+   "args": 1,
+   "body": "\\fnblake\\left(#1\\right)",
+   "paper": "\\blake"
+  },
+  "blakemany": {
+   "args": 1,
+   "body": "\\fnblake^\\#\\left(#1\\right)",
+   "paper": "\\blakemany"
+  },
+  "blob": {
+   "args": 1,
+   "body": "\\mathbb{B}_{#1}",
+   "default": "",
+   "paper": "\\blob"
+  },
+  "bloblength": {
+   "args": 0,
+   "body": "\\N_L",
+   "paper": "\\bloblength"
+  },
+  "block": {
+   "args": 0,
+   "body": "\\mathbf{B}",
+   "paper": "\\block"
+  },
+  "blskey": {
+   "args": 0,
+   "body": "\\overset{\\mathrm{B\\!L\\!S}}{\\blob}",
+   "paper": "\\blskey"
+  },
+  "blssignature": {
+   "args": 2,
+   "body": "\\blssignaturebase_{#1}\\ang{#2}",
+   "paper": "\\blssignature"
+  },
+  "blssignaturebase": {
+   "args": 0,
+   "body": "\\overset{\\mathrm{B\\!L\\!S}}{\\signaturebase}",
+   "paper": "\\blssignaturebase"
+  },
+  "blssigndata": {
+   "args": 2,
+   "body": "\\overset{\\mathrm{B\\!L\\!S}}{\\fnsigndata}_{#1}\\left(#2\\right)",
+   "paper": "\\blssigndata"
+  },
+  "bool": {
+   "args": 0,
+   "body": "{\\set{\\bot, \\top}}",
+   "paper": "\\bool"
+  },
+  "bracegroup": {
+   "args": 1,
+   "body": "\\left\\{ #1 \\right.",
+   "paper": "\\bracegroup"
+  },
+  "bracegroupboth": {
+   "args": 1,
+   "body": "\\left\\{ #1 \\right\\}",
+   "paper": "\\bracegroupboth"
+  },
+  "branchcost": {
+   "args": 0,
+   "body": "\\mathfrak{b}",
+   "paper": "\\branchcost"
+  },
+  "bskey": {
+   "args": 0,
+   "body": "\\overset{\\backsim}{\\hash}",
+   "paper": "\\bskey"
+  },
+  "bsringproof": {
+   "args": 3,
+   "body": "\\bsringproofbase_{#1}^{#3}\\ang{#2}",
+   "paper": "\\bsringproof"
+  },
+  "bsringproofbase": {
+   "args": 0,
+   "body": "\\overset{\\circ}{\\signaturebase}",
+   "paper": "\\bsringproofbase"
+  },
+  "bssignature": {
+   "args": 3,
+   "body": "\\bssignaturebase_{#1}^{#3}\\ang{#2}",
+   "paper": "\\bssignature"
+  },
+  "bssignaturebase": {
+   "args": 0,
+   "body": "\\overset{\\backsim}{\\signaturebase}",
+   "paper": "\\bssignaturebase"
+  },
+  "build": {
+   "args": 2,
+   "body": "#1 \\with #2",
+   "paper": "\\build"
+  },
+  "cX": {
+   "args": 0,
+   "body": "c",
+   "paper": "\\cX"
+  },
+  "ceil": {
+   "args": 1,
+   "body": "\\left\\lceil#1\\right\\rceil",
+   "paper": "\\ceil"
+  },
+  "computereport": {
+   "args": 0,
+   "body": "\\Xi",
+   "paper": "\\computereport"
+  },
+  "concat": {
+   "args": 0,
+   "body": "\\frown",
+   "paper": "\\concat"
+  },
+  "concatall": {
+   "args": 1,
+   "body": "\\overparen{#1}",
+   "paper": "\\concatall"
+  },
+  "constQQmaxdecodepercycle": {
+   "args": 0,
+   "body": "4",
+   "paper": "\\const¬maxdecodepercycle"
+  },
+  "constQQmaxstartpercycle": {
+   "args": 0,
+   "body": "5",
+   "paper": "\\const¬maxstartpercycle"
+  },
+  "context": {
+   "args": 0,
+   "body": "\\mathfrak{x}",
+   "paper": "\\context"
+  },
+  "contextmutator": {
+   "args": 1,
+   "body": "\\Omega\\ang{#1}",
+   "paper": "\\contextmutator"
+  },
+  "continue": {
+   "args": 0,
+   "body": "\\blacktriangleright",
+   "paper": "\\continue"
+  },
+  "coreindex": {
+   "args": 0,
+   "body": "\\Nmax{\\Ccorecount}",
+   "paper": "\\coreindex"
+  },
+  "corestats": {
+   "args": 0,
+   "body": "\\activity_C",
+   "paper": "\\corestats"
+  },
+  "costQQcycles": {
+   "args": 0,
+   "body": "\\check{c}",
+   "paper": "\\cost¬cycles"
+  },
+  "costQQdecodeslots": {
+   "args": 0,
+   "body": "\\check{d}",
+   "paper": "\\cost¬decodeslots"
+  },
+  "costQQexecunits": {
+   "args": 0,
+   "body": "\\check{x}",
+   "paper": "\\cost¬execunits"
+  },
+  "countupexports": {
+   "args": 0,
+   "body": "I",
+   "paper": "\\countupexports"
+  },
+  "csQQbundlelen": {
+   "args": 0,
+   "body": "\\QQbundlelen",
+   "paper": "\\cs¬bundlelen"
+  },
+  "csQQdaload": {
+   "args": 0,
+   "body": "d",
+   "paper": "\\cs¬daload"
+  },
+  "csQQexportcount": {
+   "args": 0,
+   "body": "\\QQexportcount",
+   "paper": "\\cs¬exportcount"
+  },
+  "csQQgasused": {
+   "args": 0,
+   "body": "\\QQgasused",
+   "paper": "\\cs¬gasused"
+  },
+  "csQQimportcount": {
+   "args": 0,
+   "body": "\\QQimportcount",
+   "paper": "\\cs¬importcount"
+  },
+  "csQQpopularity": {
+   "args": 0,
+   "body": "p",
+   "paper": "\\cs¬popularity"
+  },
+  "csQQxtcount": {
+   "args": 0,
+   "body": "\\QQxtcount",
+   "paper": "\\cs¬xtcount"
+  },
+  "csQQxtsize": {
+   "args": 0,
+   "body": "\\QQxtsize",
+   "paper": "\\cs¬xtsize"
+  },
+  "ctrQQcycles": {
+   "args": 0,
+   "body": "c",
+   "paper": "\\ctr¬cycles"
+  },
+  "cyclic": {
+   "args": 1,
+   "body": "{#1}^\\circlearrowleft",
+   "paper": "\\cyclic"
+  },
+  "deblob": {
+   "args": 0,
+   "body": "\\text{deblob}",
+   "paper": "\\deblob"
+  },
+  "decode": {
+   "args": 2,
+   "body": "\\fndecode[#1]\\left(#2\\right)",
+   "default": "",
+   "paper": "\\decode"
+  },
+  "deffunc": {
+   "args": 1,
+   "body": "\\abracegroup[\\,]{#1\\vphantom{x'_i}}",
+   "paper": "\\deffunc"
+  },
+  "defxfer": {
+   "args": 0,
+   "body": "\\text{𝕥}",
+   "paper": "\\defxfer"
+  },
+  "defxfers": {
+   "args": 0,
+   "body": "\\sequence\\defxfer",
+   "paper": "\\defxfers"
+  },
+  "delegator": {
+   "args": 0,
+   "body": "\\privileges_\\prQQdelegator",
+   "paper": "\\delegator"
+  },
+  "dictionary": {
+   "args": 2,
+   "body": "\\anglebar{#1\\to#2}",
+   "paper": "\\dictionary"
+  },
+  "disputes": {
+   "args": 0,
+   "body": "\\psi",
+   "paper": "\\disputes"
+  },
+  "doubleplus": {
+   "args": 0,
+   "body": "\\mathbin{+\\!\\!+}",
+   "paper": "\\doubleplus"
+  },
+  "dxQQamount": {
+   "args": 0,
+   "body": "a",
+   "paper": "\\dx¬amount"
+  },
+  "dxQQdest": {
+   "args": 0,
+   "body": "d",
+   "paper": "\\dx¬dest"
+  },
+  "dxQQdestsupervisor": {
+   "args": 0,
+   "body": "u",
+   "paper": "\\dx¬destsupervisor"
+  },
+  "dxQQgas": {
+   "args": 0,
+   "body": "g",
+   "paper": "\\dx¬gas"
+  },
+  "dxQQmemo": {
+   "args": 0,
+   "body": "m",
+   "paper": "\\dx¬memo"
+  },
+  "dxQQsource": {
+   "args": 0,
+   "body": "s",
+   "paper": "\\dx¬source"
+  },
+  "dxX": {
+   "args": 0,
+   "body": "x",
+   "paper": "\\dxX"
+  },
+  "ecrecover": {
+   "args": 3,
+   "body": "\\fnecrecover{#1}{#2}\\left(#3\\right)",
+   "paper": "\\ecrecover"
+  },
+  "edkey": {
+   "args": 0,
+   "body": "\\bar{\\hash}",
+   "paper": "\\edkey"
+  },
+  "edsignature": {
+   "args": 2,
+   "body": "\\edsignaturebase_{#1}\\ang{#2}",
+   "paper": "\\edsignature"
+  },
+  "edsignaturebase": {
+   "args": 0,
+   "body": "\\bar{\\signaturebase}",
+   "paper": "\\edsignaturebase"
+  },
+  "edsigndata": {
+   "args": 2,
+   "body": "\\bar{\\fnsigndata}_{#1}\\left(#2\\right)",
+   "paper": "\\edsigndata"
+  },
+  "effectivesupervisor": {
+   "args": 2,
+   "body": "#1\\subb{#2}_e",
+   "paper": "\\effectivesupervisor"
+  },
+  "eg": {
+   "args": 0,
+   "body": "e.g.",
+   "paper": "\\eg"
+  },
+  "emset": {
+   "args": 0,
+   "body": "\\left\\{\\right\\}",
+   "paper": "\\emset"
+  },
+  "encode": {
+   "args": 2,
+   "body": "\\fnencode[#1]\\left(#2\\right)",
+   "default": "",
+   "paper": "\\encode"
+  },
+  "encodeassurances": {
+   "args": 1,
+   "body": "\\encode[A]{#1}",
+   "paper": "\\encodeassurances"
+  },
+  "encodecredentials": {
+   "args": 1,
+   "body": "\\encode[C]{#1}",
+   "paper": "\\encodecredentials"
+  },
+  "encodedisputes": {
+   "args": 1,
+   "body": "\\encode[D]{#1}",
+   "paper": "\\encodedisputes"
+  },
+  "encodeepochmark": {
+   "args": 1,
+   "body": "\\encode[E]{#1}",
+   "paper": "\\encodeepochmark"
+  },
+  "encodeguarantees": {
+   "args": 1,
+   "body": "\\encode[G]{#1}",
+   "paper": "\\encodeguarantees"
+  },
+  "encodeimportref": {
+   "args": 1,
+   "body": "I\\left(#1\\right)",
+   "paper": "\\encodeimportref"
+  },
+  "encodeimportrefs": {
+   "args": 1,
+   "body": "I^\\#\\left(#1\\right)",
+   "paper": "\\encodeimportrefs"
+  },
+  "encodepreimages": {
+   "args": 1,
+   "body": "\\encode[P]{#1}",
+   "paper": "\\encodepreimages"
+  },
+  "encoderesult": {
+   "args": 1,
+   "body": "O\\left(#1\\right)",
+   "paper": "\\encoderesult"
+  },
+  "encodetickets": {
+   "args": 1,
+   "body": "\\encode[T]{#1}",
+   "paper": "\\encodetickets"
+  },
+  "encodeunsignedheader": {
+   "args": 1,
+   "body": "\\encode[U]{#1}",
+   "paper": "\\encodeunsignedheader"
+  },
+  "entropy": {
+   "args": 0,
+   "body": "\\eta",
+   "paper": "\\entropy"
+  },
+  "entropyaccumulator": {
+   "args": 0,
+   "body": "\\eta_0",
+   "paper": "\\entropyaccumulator"
+  },
+  "epochindex": {
+   "args": 0,
+   "body": "\\Nmax{\\Cepochlen}",
+   "paper": "\\epochindex"
+  },
+  "epochroot": {
+   "args": 0,
+   "body": "\\gamma_Z",
+   "paper": "\\epochroot"
+  },
+  "erasurecode": {
+   "args": 3,
+   "body": "\\fnerasurecode{#1}{#2}\\left(#3\\right)",
+   "paper": "\\erasurecode"
+  },
+  "erasurecodemany": {
+   "args": 3,
+   "body": "\\fnerasurecode{#1\\#}{#2}\\left(#3\\right)",
+   "paper": "\\erasurecodemany"
+  },
+  "error": {
+   "args": 0,
+   "body": "\\nabla",
+   "paper": "\\error"
+  },
+  "etc": {
+   "args": 0,
+   "body": "\\&c.",
+   "paper": "\\etc"
+  },
+  "exc": {
+   "args": 0,
+   "body": "\\text{ except }",
+   "paper": "\\exc"
+  },
+  "execst": {
+   "args": 0,
+   "body": "\\varepsilon",
+   "paper": "\\execst"
+  },
+  "execunitsQQty": {
+   "args": 0,
+   "body": "\\mathbb{E}",
+   "paper": "\\execunits¬ty"
+  },
+  "extrinsic": {
+   "args": 0,
+   "body": "\\mathbf{E}",
+   "paper": "\\extrinsic"
+  },
+  "extrinsicdata": {
+   "args": 0,
+   "body": "X",
+   "paper": "\\extrinsicdata"
+  },
+  "fault": {
+   "args": 0,
+   "body": "\\Finv",
+   "paper": "\\fault"
+  },
+  "ffrac": {
+   "args": 2,
+   "body": "\\left\\lfloor\\frac{#1}{#2}\\right\\rfloor",
+   "paper": "\\ffrac"
+  },
+  "final": {
+   "args": 0,
+   "body": "\\natural",
+   "paper": "\\final"
+  },
+  "findQQreadytostart": {
+   "args": 0,
+   "body": "\\mathfrak{S}",
+   "paper": "\\find¬readytostart"
+  },
+  "finitefield": {
+   "args": 0,
+   "body": "\\mathbb{F}",
+   "paper": "\\finitefield"
+  },
+  "floor": {
+   "args": 1,
+   "body": "\\left\\lfloor#1\\right\\rfloor",
+   "paper": "\\floor"
+  },
+  "fnbanderout": {
+   "args": 0,
+   "body": "\\mathcal{Y}",
+   "paper": "\\fnbanderout"
+  },
+  "fnblake": {
+   "args": 0,
+   "body": "\\mathcal{H}",
+   "paper": "\\fnblake"
+  },
+  "fndecode": {
+   "args": 1,
+   "body": "\\mathcal{E}^{-1}_{#1}",
+   "default": "",
+   "paper": "\\fndecode"
+  },
+  "fnecoriginalshards": {
+   "args": 0,
+   "body": "\\mathcal{D}",
+   "paper": "\\fnecoriginalshards"
+  },
+  "fnecrecover": {
+   "args": 2,
+   "body": "\\mathcal{R}^{#1}_{#2}",
+   "paper": "\\fnecrecover"
+  },
+  "fnencode": {
+   "args": 1,
+   "body": "\\mathcal{E}_{#1}",
+   "default": "",
+   "paper": "\\fnencode"
+  },
+  "fnencodeunsignedheader": {
+   "args": 0,
+   "body": "\\fnencode[U]",
+   "paper": "\\fnencodeunsignedheader"
+  },
+  "fnerasurecode": {
+   "args": 2,
+   "body": "\\mathcal{C}^{#1}_{#2}",
+   "paper": "\\fnerasurecode"
+  },
+  "fnfrac": {
+   "args": 2,
+   "body": "\\left\\lfloor\\tfrac{#1}{#2}\\right\\rfloor",
+   "paper": "\\fnfrac"
+  },
+  "fnfyshuffle": {
+   "args": 0,
+   "body": "\\mathcal{F}",
+   "paper": "\\fnfyshuffle"
+  },
+  "fngetparent": {
+   "args": 0,
+   "body": "P",
+   "paper": "\\fngetparent"
+  },
+  "fngetringroot": {
+   "args": 0,
+   "body": "\\mathcal{O}",
+   "paper": "\\fngetringroot"
+  },
+  "fnkeccak": {
+   "args": 0,
+   "body": "\\mathcal{H}_K",
+   "paper": "\\fnkeccak"
+  },
+  "fnmemgas": {
+   "args": 0,
+   "body": "\\mathcal{G}",
+   "paper": "\\fnmemgas"
+  },
+  "fnmerklejustsubpath": {
+   "args": 1,
+   "body": "\\mathcal{J}_{#1}",
+   "paper": "\\fnmerklejustsubpath"
+  },
+  "fnmerklesubtreepage": {
+   "args": 1,
+   "body": "\\mathcal{L}_{#1}",
+   "paper": "\\fnmerklesubtreepage"
+  },
+  "fnmerklizecd": {
+   "args": 0,
+   "body": "\\mathcal{M}",
+   "paper": "\\fnmerklizecd"
+  },
+  "fnmerklizestate": {
+   "args": 0,
+   "body": "\\mathcal{M}_\\sigma",
+   "paper": "\\fnmerklizestate"
+  },
+  "fnmerklizewb": {
+   "args": 0,
+   "body": "\\mathcal{M}_B",
+   "paper": "\\fnmerklizewb"
+  },
+  "fnmmrappend": {
+   "args": 0,
+   "body": "\\mathcal{A}",
+   "paper": "\\fnmmrappend"
+  },
+  "fnmmrencode": {
+   "args": 0,
+   "body": "\\fnencode[M]",
+   "paper": "\\fnmmrencode"
+  },
+  "fnmmrsuperpeak": {
+   "args": 0,
+   "body": "\\mathcal{M}_R",
+   "paper": "\\fnmmrsuperpeak"
+  },
+  "fnoctetstobits": {
+   "args": 0,
+   "body": "\\mathcal{B}",
+   "paper": "\\fnoctetstobits"
+  },
+  "fnseqfromhash": {
+   "args": 1,
+   "body": "\\mathcal{Q}_{#1}",
+   "paper": "\\fnseqfromhash"
+  },
+  "fnsext": {
+   "args": 1,
+   "body": "\\mathcal{X}_{#1}",
+   "paper": "\\fnsext"
+  },
+  "fnsigndata": {
+   "args": 0,
+   "body": "\\mathcal{S}",
+   "paper": "\\fnsigndata"
+  },
+  "fnsubifnone": {
+   "args": 0,
+   "body": "\\mathcal{U}",
+   "paper": "\\fnsubifnone"
+  },
+  "fntosigned": {
+   "args": 1,
+   "body": "\\mathcal{Z}_{#1}",
+   "paper": "\\fntosigned"
+  },
+  "fnzeropad": {
+   "args": 1,
+   "body": "\\mathcal{P}_{#1}",
+   "paper": "\\fnzeropad"
+  },
+  "fold": {
+   "args": 0,
+   "body": "\\ \\thicksim\\mathchoice{\\!\\!\\!\\!\\!\\!\\!}{\\!\\!\\!\\!\\!\\!}{\\!\\!\\!\\!\\!\\!}{\\!\\!\\!\\!\\!\\!}\\int",
+   "paper": "\\fold"
+  },
+  "fyshuffle": {
+   "args": 1,
+   "body": "\\fnfyshuffle\\left(#1\\right)",
+   "paper": "\\fyshuffle"
+  },
+  "gQQcredential": {
+   "args": 0,
+   "body": "a",
+   "paper": "\\g¬credential"
+  },
+  "gQQtimeslot": {
+   "args": 0,
+   "body": "t",
+   "paper": "\\g¬timeslot"
+  },
+  "gQQworkreport": {
+   "args": 0,
+   "body": "\\QQworkreport",
+   "paper": "\\g¬workreport"
+  },
+  "gX": {
+   "args": 0,
+   "body": "\\mathbf{g}",
+   "paper": "\\gX"
+  },
+  "gas": {
+   "args": 0,
+   "body": "\\N_G",
+   "paper": "\\gas"
+  },
+  "gasQQsim": {
+   "args": 0,
+   "body": "\\mathfrak{X}",
+   "paper": "\\gas¬sim"
+  },
+  "gasQQsimQQstate": {
+   "args": 0,
+   "body": "\\mathbf{x}",
+   "paper": "\\gas¬sim¬state"
+  },
+  "gasQQsimQQty": {
+   "args": 0,
+   "body": "\\mathbb{S}",
+   "paper": "\\gas¬sim¬ty"
+  },
+  "gaschargedflag": {
+   "args": 0,
+   "body": "\\tilde{\\gascounter}",
+   "paper": "\\gaschargedflag"
+  },
+  "gascostforblock": {
+   "args": 0,
+   "body": "\\gascounter^{\\Delta}",
+   "paper": "\\gascostforblock"
+  },
+  "gascounter": {
+   "args": 0,
+   "body": "\\varrho",
+   "paper": "\\gascounter"
+  },
+  "genesisheader": {
+   "args": 0,
+   "body": "\\header^0",
+   "paper": "\\genesisheader"
+  },
+  "genesisstate": {
+   "args": 0,
+   "body": "\\sigma^0",
+   "paper": "\\genesisstate"
+  },
+  "getparent": {
+   "args": 1,
+   "body": "\\fngetparent\\left(#1\\right)",
+   "paper": "\\getparent"
+  },
+  "getringroot": {
+   "args": 1,
+   "body": "\\fngetringroot\\left(#1\\right)",
+   "paper": "\\getringroot"
+  },
+  "goodset": {
+   "args": 0,
+   "body": "\\disputes_G",
+   "paper": "\\goodset"
+  },
+  "guarantee": {
+   "args": 0,
+   "body": "\\mathbb{G}",
+   "paper": "\\guarantee"
+  },
+  "guarantorassignments": {
+   "args": 0,
+   "body": "\\mathbf{M}",
+   "paper": "\\guarantorassignments"
+  },
+  "guarantorassignmentsunderlastrotation": {
+   "args": 0,
+   "body": "\\mathbf{M}^*",
+   "paper": "\\guarantorassignmentsunderlastrotation"
+  },
+  "halt": {
+   "args": 0,
+   "body": "\\blacksquare",
+   "paper": "\\halt"
+  },
+  "hash": {
+   "args": 1,
+   "body": "\\mathbb{H}_{#1}",
+   "default": "",
+   "paper": "\\hash"
+  },
+  "header": {
+   "args": 0,
+   "body": "\\mathbf{H}",
+   "paper": "\\header"
+  },
+  "histlookup": {
+   "args": 0,
+   "body": "\\Lambda",
+   "paper": "\\histlookup"
+  },
+  "host": {
+   "args": 0,
+   "body": "\\hbar",
+   "paper": "\\host"
+  },
+  "ie": {
+   "args": 0,
+   "body": "i.e.",
+   "paper": "\\ie"
+  },
+  "ifdstandsrcoverlap": {
+   "args": 2,
+   "body": "\\mathfrak{P}(#1, #2)",
+   "paper": "\\ifdstandsrcoverlap"
+  },
+  "ifdstandsrcoverlapshift": {
+   "args": 2,
+   "body": "\\mathfrak{P}_{S}(#1, #2)",
+   "paper": "\\ifdstandsrcoverlapshift"
+  },
+  "imQQid": {
+   "args": 0,
+   "body": "s",
+   "paper": "\\im¬id"
+  },
+  "imQQmodifiedaccounts": {
+   "args": 0,
+   "body": "\\mathbf{w}",
+   "paper": "\\im¬modifiedaccounts"
+  },
+  "imQQnextfreeid": {
+   "args": 0,
+   "body": "i",
+   "paper": "\\im¬nextfreeid"
+  },
+  "imQQprovisions": {
+   "args": 0,
+   "body": "\\mathbf{p}",
+   "paper": "\\im¬provisions"
+  },
+  "imQQself": {
+   "args": 0,
+   "body": "\\mathbf{s}",
+   "paper": "\\im¬self"
+  },
+  "imQQstate": {
+   "args": 0,
+   "body": "\\QQpartialstate",
+   "paper": "\\im¬state"
+  },
+  "imQQxfers": {
+   "args": 0,
+   "body": "\\mathbf{t}",
+   "paper": "\\im¬xfers"
+  },
+  "imQQyield": {
+   "args": 0,
+   "body": "y",
+   "paper": "\\im¬yield"
+  },
+  "imX": {
+   "args": 0,
+   "body": "\\mathbf{x}",
+   "paper": "\\imX"
+  },
+  "imXY": {
+   "args": 0,
+   "body": "\\tup{\\imX, \\imY}",
+   "paper": "\\imXY"
+  },
+  "imY": {
+   "args": 0,
+   "body": "\\mathbf{y}",
+   "paper": "\\imY"
+  },
+  "immed": {
+   "args": 0,
+   "body": "\\nu",
+   "paper": "\\immed"
+  },
+  "implications": {
+   "args": 0,
+   "body": "\\mathbb{L}",
+   "paper": "\\implications"
+  },
+  "implicationspair": {
+   "args": 0,
+   "body": "\\tuple{\\implications, \\implications}",
+   "paper": "\\implicationspair"
+  },
+  "importsegmentdata": {
+   "args": 0,
+   "body": "S",
+   "paper": "\\importsegmentdata"
+  },
+  "inQQrob": {
+   "args": 0,
+   "body": "{\\gasQQsimQQstate_{\\rob}}",
+   "paper": "\\in¬rob"
+  },
+  "inQQrobQQentry": {
+   "args": 1,
+   "body": "{\\inQQrob\\subb{#1}}",
+   "paper": "\\in¬rob¬entry"
+  },
+  "inQQrobQQfield": {
+   "args": 2,
+   "body": "\\inQQrobQQentry{#1}_{#2}",
+   "paper": "\\in¬rob¬field"
+  },
+  "inQQrobQQlen": {
+   "args": 0,
+   "body": "\\N_{\\len{\\inQQrob}}",
+   "paper": "\\in¬rob¬len"
+  },
+  "incomingreports": {
+   "args": 0,
+   "body": "\\mathbf{I}",
+   "paper": "\\incomingreports"
+  },
+  "instQQdstregs": {
+   "args": 0,
+   "body": "\\check{r}",
+   "paper": "\\inst¬dstregs"
+  },
+  "instQQsrcregs": {
+   "args": 0,
+   "body": "\\check{s}",
+   "paper": "\\inst¬srcregs"
+  },
+  "instr": {
+   "args": 1,
+   "body": "\\text{{\\small \\texttt{#1}}}",
+   "paper": "\\instr"
+  },
+  "instrlen": {
+   "args": 0,
+   "body": "\\ell",
+   "paper": "\\instrlen"
+  },
+  "instructions": {
+   "args": 0,
+   "body": "\\zeta",
+   "paper": "\\instructions"
+  },
+  "interval": {
+   "args": 2,
+   "body": "_{#1 \\dots #2}",
+   "paper": "\\interval"
+  },
+  "is": {
+   "args": 2,
+   "body": "#1\\tricolon#2",
+   "paper": "\\is"
+  },
+  "isa": {
+   "args": 2,
+   "body": "#1\\in #2",
+   "paper": "\\isa"
+  },
+  "isaudited": {
+   "args": 0,
+   "body": "\\mathbf{U}",
+   "paper": "\\isaudited"
+  },
+  "isticketed": {
+   "args": 0,
+   "body": "\\mathbf{T}",
+   "paper": "\\isticketed"
+  },
+  "itemtodigest": {
+   "args": 0,
+   "body": "C",
+   "paper": "\\itemtodigest"
+  },
+  "jamQQblob": {
+   "args": 0,
+   "body": "\\mathfrak{j}",
+   "paper": "\\jam¬blob"
+  },
+  "join": {
+   "args": 0,
+   "body": "\\text{join}",
+   "paper": "\\join"
+  },
+  "justbecameavailable": {
+   "args": 0,
+   "body": "\\mathbf{R}",
+   "paper": "\\justbecameavailable"
+  },
+  "justifysegmentdata": {
+   "args": 0,
+   "body": "J",
+   "paper": "\\justifysegmentdata"
+  },
+  "keccak": {
+   "args": 1,
+   "body": "\\fnkeccak\\left(#1\\right)",
+   "paper": "\\keccak"
+  },
+  "keys": {
+   "args": 1,
+   "body": "\\mathcal{K}\\left(#1\\right)",
+   "paper": "\\keys"
+  },
+  "keyvalue": {
+   "args": 2,
+   "body": "\\tuple{#1 \\to #2}",
+   "paper": "\\keyvalue"
+  },
+  "kv": {
+   "args": 2,
+   "body": "\\tup{#1 \\mapsto #2}",
+   "paper": "\\kv"
+  },
+  "lastaccout": {
+   "args": 0,
+   "body": "\\theta",
+   "paper": "\\lastaccout"
+  },
+  "len": {
+   "args": 1,
+   "body": "\\left\\vert#1\\right\\vert",
+   "paper": "\\len"
+  },
+  "llbracket": {
+   "args": 0,
+   "body": "[\\![",
+   "paper": "\\llbracket"
+  },
+  "loadcost": {
+   "args": 0,
+   "body": "\\mathfrak{m}",
+   "paper": "\\loadcost"
+  },
+  "localQQacc": {
+   "args": 0,
+   "body": "\\accumulate",
+   "paper": "\\local¬acc"
+  },
+  "localQQaccounts": {
+   "args": 0,
+   "body": "\\mathbf{d}",
+   "paper": "\\local¬accounts"
+  },
+  "localQQauthqueue": {
+   "args": 0,
+   "body": "\\mathbf{q}",
+   "paper": "\\local¬authqueue"
+  },
+  "localQQbasestate": {
+   "args": 0,
+   "body": "\\aoQQpoststate",
+   "paper": "\\local¬basestate"
+  },
+  "localQQcounter": {
+   "args": 0,
+   "body": "n",
+   "paper": "\\local¬counter"
+  },
+  "localQQdesiredid": {
+   "args": 0,
+   "body": "i",
+   "paper": "\\local¬desiredid"
+  },
+  "localQQfngasused": {
+   "args": 0,
+   "body": "U",
+   "paper": "\\local¬fngasused"
+  },
+  "localQQfnpartitionxfers": {
+   "args": 0,
+   "body": "T",
+   "paper": "\\local¬fnpartitionxfers"
+  },
+  "localQQfnprovidable": {
+   "args": 0,
+   "body": "Y",
+   "paper": "\\local¬fnprovidable"
+  },
+  "localQQfnprovide": {
+   "args": 0,
+   "body": "I",
+   "paper": "\\local¬fnprovide"
+  },
+  "localQQfnservouts": {
+   "args": 0,
+   "body": "B",
+   "paper": "\\local¬fnservouts"
+  },
+  "localQQfnsrmap": {
+   "args": 0,
+   "body": "P",
+   "paper": "\\local¬fnsrmap"
+  },
+  "localQQincomingcontexts": {
+   "args": 0,
+   "body": "\\mathbf{x}",
+   "paper": "\\local¬incomingcontexts"
+  },
+  "localQQincomingpackagehashes": {
+   "args": 0,
+   "body": "\\mathbf{p}",
+   "paper": "\\local¬incomingpackagehashes"
+  },
+  "localQQnumberofreportsaccumulated": {
+   "args": 0,
+   "body": "n",
+   "paper": "\\local¬numberofreportsaccumulated"
+  },
+  "localQQpostxferstate": {
+   "args": 0,
+   "body": "\\mathbf{s}",
+   "paper": "\\local¬postxferstate"
+  },
+  "localQQprocessedtransfers": {
+   "args": 0,
+   "body": "\\mathbf{t}",
+   "paper": "\\local¬processedtransfers"
+  },
+  "localQQreports": {
+   "args": 0,
+   "body": "\\mathbf{q}",
+   "paper": "\\local¬reports"
+  },
+  "localQQseed": {
+   "args": 0,
+   "body": "s",
+   "paper": "\\local¬seed"
+  },
+  "localQQservicegasused": {
+   "args": 0,
+   "body": "\\mathbf{u}",
+   "paper": "\\local¬servicegasused"
+  },
+  "localQQservicesactive": {
+   "args": 0,
+   "body": "\\mathbf{s}",
+   "paper": "\\local¬servicesactive"
+  },
+  "localQQservicesprovided": {
+   "args": 0,
+   "body": "\\mathbf{s}^P",
+   "paper": "\\local¬servicesprovided"
+  },
+  "localQQservicesreported": {
+   "args": 0,
+   "body": "\\mathbf{s}^R",
+   "paper": "\\local¬servicesreported"
+  },
+  "localQQstagingset": {
+   "args": 0,
+   "body": "\\mathbf{i}",
+   "paper": "\\local¬stagingset"
+  },
+  "localQQtheitem": {
+   "args": 0,
+   "body": "m",
+   "paper": "\\local¬theitem"
+  },
+  "localQQtranche": {
+   "args": 0,
+   "body": "\\mathbf{a}",
+   "paper": "\\local¬tranche"
+  },
+  "makebundle": {
+   "args": 0,
+   "body": "B",
+   "paper": "\\makebundle"
+  },
+  "manager": {
+   "args": 0,
+   "body": "\\privileges_\\prQQmanager",
+   "paper": "\\manager"
+  },
+  "marshallrefine": {
+   "args": 0,
+   "body": "R",
+   "paper": "\\marshallrefine"
+  },
+  "maybe": {
+   "args": 1,
+   "body": "\\mathord{\\text{¿}}#1",
+   "paper": "\\maybe"
+  },
+  "mem": {
+   "args": 0,
+   "body": "{\\memory}",
+   "paper": "\\mem"
+  },
+  "memo": {
+   "args": 0,
+   "body": "\\blob[\\Cmemosize]",
+   "paper": "\\memo"
+  },
+  "memory": {
+   "args": 0,
+   "body": "\\mu",
+   "paper": "\\memory"
+  },
+  "memr": {
+   "args": 0,
+   "body": "\\cyclic{\\mem}",
+   "paper": "\\memr"
+  },
+  "memwr": {
+   "args": 0,
+   "body": "\\cyclic{\\mem'}",
+   "paper": "\\memwr"
+  },
+  "merklejustsubpath": {
+   "args": 2,
+   "body": "\\fnmerklejustsubpath{#1}\\left(#2\\right)",
+   "paper": "\\merklejustsubpath"
+  },
+  "merklesubtreepage": {
+   "args": 2,
+   "body": "\\fnmerklesubtreepage{#1}\\left(#2\\right)",
+   "paper": "\\merklesubtreepage"
+  },
+  "merklizecd": {
+   "args": 1,
+   "body": "\\fnmerklizecd\\left(#1\\right)",
+   "paper": "\\merklizecd"
+  },
+  "merklizestate": {
+   "args": 1,
+   "body": "\\fnmerklizestate\\left(#1\\right)",
+   "paper": "\\merklizestate"
+  },
+  "merklizewb": {
+   "args": 1,
+   "body": "\\fnmerklizewb\\left(#1\\right)",
+   "paper": "\\merklizewb"
+  },
+  "merklizewbmany": {
+   "args": 1,
+   "body": "\\fnmerklizewb^\\#\\left(#1\\right)",
+   "paper": "\\merklizewbmany"
+  },
+  "metadatakey": {
+   "args": 0,
+   "body": "\\blob[128]",
+   "paper": "\\metadatakey"
+  },
+  "mmrappend": {
+   "args": 1,
+   "body": "\\fnmmrappend\\left(#1\\right)",
+   "paper": "\\mmrappend"
+  },
+  "mmrencode": {
+   "args": 1,
+   "body": "\\fnmmrencode\\left(#1\\right)",
+   "paper": "\\mmrencode"
+  },
+  "mmrsuperpeak": {
+   "args": 1,
+   "body": "\\fnmmrsuperpeak\\left(#1\\right)",
+   "paper": "\\mmrsuperpeak"
+  },
+  "nb": {
+   "args": 0,
+   "body": "\\text{nb}",
+   "paper": "\\nb"
+  },
+  "newavailabilityspecifier": {
+   "args": 0,
+   "body": "A",
+   "paper": "\\newavailabilityspecifier"
+  },
+  "none": {
+   "args": 0,
+   "body": "\\emptyset",
+   "paper": "\\none"
+  },
+  "nullvalkey": {
+   "args": 0,
+   "body": "\\valkey[0]",
+   "paper": "\\nullvalkey"
+  },
+  "offenders": {
+   "args": 0,
+   "body": "\\disputes_O",
+   "paper": "\\offenders"
+  },
+  "onethird": {
+   "args": 0,
+   "body": "{\\tfrac{1}{3}}",
+   "paper": "\\onethird"
+  },
+  "oog": {
+   "args": 0,
+   "body": "\\infty",
+   "paper": "\\oog"
+  },
+  "operandtuple": {
+   "args": 0,
+   "body": "\\mathbb{U}",
+   "paper": "\\operandtuple"
+  },
+  "optional": {
+   "args": 1,
+   "body": "#1\\boldsymbol{?}",
+   "paper": "\\optional"
+  },
+  "order": {
+   "args": 1,
+   "body": "\\left[#1\\right]",
+   "paper": "\\order"
+  },
+  "orderedin": {
+   "args": 0,
+   "body": "\\mathrel{<\\!\\!\\!-}",
+   "paper": "\\orderedin"
+  },
+  "otQQauthorizer": {
+   "args": 0,
+   "body": "\\QQauthorizer",
+   "paper": "\\ot¬authorizer"
+  },
+  "otQQauthtrace": {
+   "args": 0,
+   "body": "\\QQauthtrace",
+   "paper": "\\ot¬authtrace"
+  },
+  "otQQgaslimit": {
+   "args": 0,
+   "body": "\\QQgaslimit",
+   "paper": "\\ot¬gaslimit"
+  },
+  "otQQpackagehash": {
+   "args": 0,
+   "body": "\\QQpackagehash",
+   "paper": "\\ot¬packagehash"
+  },
+  "otQQpayloadhash": {
+   "args": 0,
+   "body": "\\QQpayloadhash",
+   "paper": "\\ot¬payloadhash"
+  },
+  "otQQresult": {
+   "args": 0,
+   "body": "\\QQresult",
+   "paper": "\\ot¬result"
+  },
+  "otQQsegroot": {
+   "args": 0,
+   "body": "\\QQsegroot",
+   "paper": "\\ot¬segroot"
+  },
+  "otX": {
+   "args": 0,
+   "body": "\\mathbf{x}",
+   "paper": "\\otX"
+  },
+  "otherwhen": {
+   "args": 0,
+   "body": "\\text{otherwise if }",
+   "paper": "\\otherwhen"
+  },
+  "otherwise": {
+   "args": 0,
+   "body": "\\text{otherwise}",
+   "paper": "\\otherwise"
+  },
+  "oversize": {
+   "args": 0,
+   "body": "\\circleddash",
+   "paper": "\\oversize"
+  },
+  "pagedproofs": {
+   "args": 0,
+   "body": "P",
+   "paper": "\\pagedproofs"
+  },
+  "panic": {
+   "args": 0,
+   "body": "\\text{☇}",
+   "paper": "\\panic"
+  },
+  "parentheader": {
+   "args": 1,
+   "body": "{#1}^-",
+   "paper": "\\parentheader"
+  },
+  "partialstate": {
+   "args": 0,
+   "body": "\\mathbb{S}",
+   "paper": "\\partialstate"
+  },
+  "pendingset": {
+   "args": 0,
+   "body": "\\gamma_P",
+   "paper": "\\pendingset"
+  },
+  "pgQQcode": {
+   "args": 0,
+   "body": "\\pvmQQblob",
+   "paper": "\\pg¬code"
+  },
+  "pgQQgaschargedflag": {
+   "args": 0,
+   "body": "\\tilde{g}",
+   "paper": "\\pg¬gaschargedflag"
+  },
+  "pgQQhandle": {
+   "args": 0,
+   "body": "h",
+   "paper": "\\pg¬handle"
+  },
+  "pgQQpc": {
+   "args": 0,
+   "body": "i",
+   "paper": "\\pg¬pc"
+  },
+  "pgQQram": {
+   "args": 0,
+   "body": "\\mathbf{u}",
+   "paper": "\\pg¬ram"
+  },
+  "prQQalwaysaccers": {
+   "args": 0,
+   "body": "\\mathbf{z}",
+   "paper": "\\pr¬alwaysaccers"
+  },
+  "prQQassigners": {
+   "args": 0,
+   "body": "\\mathbf{a}",
+   "paper": "\\pr¬assigners"
+  },
+  "prQQdelegator": {
+   "args": 0,
+   "body": "v",
+   "paper": "\\pr¬delegator"
+  },
+  "prQQmanager": {
+   "args": 0,
+   "body": "m",
+   "paper": "\\pr¬manager"
+  },
+  "prQQregistrar": {
+   "args": 0,
+   "body": "r",
+   "paper": "\\pr¬registrar"
+  },
+  "preimagelen": {
+   "args": 0,
+   "body": "\\N_P",
+   "paper": "\\preimagelen"
+  },
+  "previousset": {
+   "args": 0,
+   "body": "\\lambda",
+   "paper": "\\previousset"
+  },
+  "privileges": {
+   "args": 0,
+   "body": "\\chi",
+   "paper": "\\privileges"
+  },
+  "privilegestype": {
+   "args": 0,
+   "body": "\\mathbb{X}",
+   "paper": "\\privilegestype"
+  },
+  "protoset": {
+   "args": 1,
+   "body": "\\left\\{\\mkern-5mu\\left[\\,#1\\,\\right]\\mkern-5mu\\right\\}",
+   "paper": "\\protoset"
+  },
+  "psQQaccounts": {
+   "args": 0,
+   "body": "\\mathbf{d}",
+   "paper": "\\ps¬accounts"
+  },
+  "psQQauthqueue": {
+   "args": 0,
+   "body": "\\mathbf{q}",
+   "paper": "\\ps¬authqueue"
+  },
+  "psQQprivileges": {
+   "args": 0,
+   "body": "\\mathbf{x}",
+   "paper": "\\ps¬privileges"
+  },
+  "psQQstagingset": {
+   "args": 0,
+   "body": "\\mathbf{i}",
+   "paper": "\\ps¬stagingset"
+  },
+  "psX": {
+   "args": 0,
+   "body": "\\mathbf{e}",
+   "paper": "\\psX"
+  },
+  "pvmQQblob": {
+   "args": 0,
+   "body": "\\mathfrak{p}",
+   "paper": "\\pvm¬blob"
+  },
+  "pvmQQinstance": {
+   "args": 0,
+   "body": "\\mathbb{I}",
+   "paper": "\\pvm¬instance"
+  },
+  "pvmQQmodule": {
+   "args": 0,
+   "body": "\\blob",
+   "paper": "\\pvm¬module"
+  },
+  "pvmQQmoduleQQmap": {
+   "args": 0,
+   "body": "\\mathbf{c}",
+   "paper": "\\pvm¬module¬map"
+  },
+  "pvmreg": {
+   "args": 0,
+   "body": "\\N_R",
+   "paper": "\\pvmreg"
+  },
+  "ram": {
+   "args": 0,
+   "body": "\\mathbb{M}",
+   "paper": "\\ram"
+  },
+  "ramQQaccess": {
+   "args": 0,
+   "body": "\\mathbf{a}",
+   "paper": "\\ram¬access"
+  },
+  "ramQQvalue": {
+   "args": 0,
+   "body": "\\mathbf{v}",
+   "paper": "\\ram¬value"
+  },
+  "ramaccess": {
+   "args": 1,
+   "body": "\\mathbb{V}_{#1}",
+   "default": "",
+   "paper": "\\ramaccess"
+  },
+  "readable": {
+   "args": 1,
+   "body": "\\ramaccess[#1]",
+   "paper": "\\readable"
+  },
+  "ready": {
+   "args": 0,
+   "body": "\\omega",
+   "paper": "\\ready"
+  },
+  "recent": {
+   "args": 0,
+   "body": "\\beta",
+   "paper": "\\recent"
+  },
+  "recenthistory": {
+   "args": 0,
+   "body": "\\recent_H",
+   "paper": "\\recenthistory"
+  },
+  "recenthistorypostparentstaterootupdate": {
+   "args": 0,
+   "body": "\\recenthistory^\\dagger",
+   "paper": "\\recenthistorypostparentstaterootupdate"
+  },
+  "recentpostparentstaterootupdate": {
+   "args": 0,
+   "body": "\\recent^\\dagger",
+   "paper": "\\recentpostparentstaterootupdate"
+  },
+  "reg": {
+   "args": 0,
+   "body": "{\\registers}",
+   "paper": "\\reg"
+  },
+  "registers": {
+   "args": 0,
+   "body": "\\varphi",
+   "paper": "\\registers"
+  },
+  "registrar": {
+   "args": 0,
+   "body": "\\privileges_\\prQQregistrar",
+   "paper": "\\registrar"
+  },
+  "regs": {
+   "args": 0,
+   "body": "\\sequence[13]{\\pvmreg}",
+   "paper": "\\regs"
+  },
+  "rem": {
+   "args": 0,
+   "body": "\\ \\text{\\scriptsize{\\%}}\\ ",
+   "paper": "\\rem"
+  },
+  "remainder": {
+   "args": 0,
+   "body": "\\mathbin{\\mathsf{R}}",
+   "paper": "\\remainder"
+  },
+  "remainingQQdecodeslots": {
+   "args": 0,
+   "body": "d",
+   "paper": "\\remaining¬decodeslots"
+  },
+  "remainingQQexecunits": {
+   "args": 0,
+   "body": "t",
+   "paper": "\\remaining¬execunits"
+  },
+  "remainingQQstartpercycle": {
+   "args": 0,
+   "body": "e",
+   "paper": "\\remaining¬startpercycle"
+  },
+  "reporters": {
+   "args": 0,
+   "body": "\\mathbf{G}",
+   "paper": "\\reporters"
+  },
+  "revbitsfunc": {
+   "args": 1,
+   "body": "\\overleftarrow{\\fnoctetstobits}_{#1}",
+   "paper": "\\revbitsfunc"
+  },
+  "revunbitsfunc": {
+   "args": 1,
+   "body": "\\revbitsfunc{#1}^{-1}",
+   "paper": "\\revunbitsfunc"
+  },
+  "rhQQaccoutlogsuperpeak": {
+   "args": 0,
+   "body": "b",
+   "paper": "\\rh¬accoutlogsuperpeak"
+  },
+  "rhQQheaderhash": {
+   "args": 0,
+   "body": "h",
+   "paper": "\\rh¬headerhash"
+  },
+  "rhQQreportedpackagehashes": {
+   "args": 0,
+   "body": "\\mathbf{p}",
+   "paper": "\\rh¬reportedpackagehashes"
+  },
+  "rhQQstateroot": {
+   "args": 0,
+   "body": "s",
+   "paper": "\\rh¬stateroot"
+  },
+  "rhQQtimeslot": {
+   "args": 0,
+   "body": "t",
+   "paper": "\\rh¬timeslot"
+  },
+  "ringroot": {
+   "args": 0,
+   "body": "\\overset{\\circ}{\\blob}",
+   "paper": "\\ringroot"
+  },
+  "rnp": {
+   "args": 1,
+   "body": "P(#1)",
+   "paper": "\\rnp"
+  },
+  "rnq": {
+   "args": 1,
+   "body": "Z(#1)",
+   "paper": "\\rnq"
+  },
+  "rob": {
+   "args": 0,
+   "body": "\\mathbf{r}",
+   "paper": "\\rob"
+  },
+  "robQQcyclesleft": {
+   "args": 0,
+   "body": "c",
+   "paper": "\\rob¬cyclesleft"
+  },
+  "robQQdeps": {
+   "args": 0,
+   "body": "p",
+   "paper": "\\rob¬deps"
+  },
+  "robQQentry": {
+   "args": 2,
+   "body": "#1\\subb{#2}",
+   "paper": "\\rob¬entry"
+  },
+  "robQQentryQQfield": {
+   "args": 3,
+   "body": "\\robQQentry{#1}{#2}_{#3}",
+   "paper": "\\rob¬entry¬field"
+  },
+  "robQQentryQQty": {
+   "args": 0,
+   "body": "\\mathbb{R}",
+   "paper": "\\rob¬entry¬ty"
+  },
+  "robQQexecunits": {
+   "args": 0,
+   "body": "t",
+   "paper": "\\rob¬execunits"
+  },
+  "robQQregs": {
+   "args": 0,
+   "body": "r",
+   "paper": "\\rob¬regs"
+  },
+  "robQQstate": {
+   "args": 0,
+   "body": "s",
+   "paper": "\\rob¬state"
+  },
+  "robQQstateQQty": {
+   "args": 0,
+   "body": "\\set{\\stateQQdecoding, \\stateQQwaiting, \\stateQQexecuting, \\stateQQexecuted, \\none}",
+   "paper": "\\rob¬state¬ty"
+  },
+  "rrbracket": {
+   "args": 0,
+   "body": "]\\!]",
+   "paper": "\\rrbracket"
+  },
+  "rtz": {
+   "args": 0,
+   "body": "\\text{rtz}",
+   "paper": "\\rtz"
+  },
+  "saQQbalance": {
+   "args": 0,
+   "body": "b",
+   "paper": "\\sa¬balance"
+  },
+  "saQQcode": {
+   "args": 0,
+   "body": "\\mathbf{c}",
+   "paper": "\\sa¬code"
+  },
+  "saQQcodehash": {
+   "args": 0,
+   "body": "c",
+   "paper": "\\sa¬codehash"
+  },
+  "saQQcreated": {
+   "args": 0,
+   "body": "r",
+   "paper": "\\sa¬created"
+  },
+  "saQQgratis": {
+   "args": 0,
+   "body": "f",
+   "paper": "\\sa¬gratis"
+  },
+  "saQQitems": {
+   "args": 0,
+   "body": "i",
+   "paper": "\\sa¬items"
+  },
+  "saQQlastacc": {
+   "args": 0,
+   "body": "a",
+   "paper": "\\sa¬lastacc"
+  },
+  "saQQminaccgas": {
+   "args": 0,
+   "body": "g",
+   "paper": "\\sa¬minaccgas"
+  },
+  "saQQminbalance": {
+   "args": 0,
+   "body": "t",
+   "paper": "\\sa¬minbalance"
+  },
+  "saQQminmemogas": {
+   "args": 0,
+   "body": "m",
+   "paper": "\\sa¬minmemogas"
+  },
+  "saQQoctets": {
+   "args": 0,
+   "body": "o",
+   "paper": "\\sa¬octets"
+  },
+  "saQQparent": {
+   "args": 0,
+   "body": "p",
+   "paper": "\\sa¬parent"
+  },
+  "saQQpreimages": {
+   "args": 0,
+   "body": "\\mathbf{p}",
+   "paper": "\\sa¬preimages"
+  },
+  "saQQrequests": {
+   "args": 0,
+   "body": "\\mathbf{l}",
+   "paper": "\\sa¬requests"
+  },
+  "saQQstorage": {
+   "args": 0,
+   "body": "\\mathbf{s}",
+   "paper": "\\sa¬storage"
+  },
+  "saQQsupervisor": {
+   "args": 0,
+   "body": "u",
+   "paper": "\\sa¬supervisor"
+  },
+  "saQQsupervisorbalance": {
+   "args": 0,
+   "body": "x",
+   "paper": "\\sa¬supervisorbalance"
+  },
+  "saQQsupervisorcreated": {
+   "args": 0,
+   "body": "d",
+   "paper": "\\sa¬supervisorcreated"
+  },
+  "saX": {
+   "args": 0,
+   "body": "\\mathbf{a}",
+   "paper": "\\saX"
+  },
+  "safrole": {
+   "args": 0,
+   "body": "\\gamma",
+   "paper": "\\safrole"
+  },
+  "safroleticket": {
+   "args": 0,
+   "body": "\\mathbb{T}",
+   "paper": "\\safroleticket"
+  },
+  "sealtickets": {
+   "args": 0,
+   "body": "\\gamma_S",
+   "paper": "\\sealtickets"
+  },
+  "segment": {
+   "args": 0,
+   "body": "\\mathbb{J}",
+   "paper": "\\segment"
+  },
+  "segoff": {
+   "args": 0,
+   "body": "\\varsigma",
+   "paper": "\\segoff"
+  },
+  "segrootlookup": {
+   "args": 0,
+   "body": "L",
+   "paper": "\\segrootlookup"
+  },
+  "segsX": {
+   "args": 0,
+   "body": "\\mathbf{b}",
+   "paper": "\\segsX"
+  },
+  "seqfromhash": {
+   "args": 2,
+   "body": "\\fnseqfromhash{#1}\\left(#2\\right)",
+   "paper": "\\seqfromhash"
+  },
+  "sequence": {
+   "args": 2,
+   "body": "[\\![#2]\\!]_{#1}",
+   "default": "",
+   "paper": "\\sequence"
+  },
+  "serviceaccount": {
+   "args": 0,
+   "body": "\\mathbb{A}",
+   "paper": "\\serviceaccount"
+  },
+  "serviceid": {
+   "args": 0,
+   "body": "\\N_S",
+   "paper": "\\serviceid"
+  },
+  "servicestats": {
+   "args": 0,
+   "body": "\\activity_S",
+   "paper": "\\servicestats"
+  },
+  "set": {
+   "args": 1,
+   "body": "\\left\\{\\,#1\\,\\right\\}",
+   "paper": "\\set"
+  },
+  "sext": {
+   "args": 2,
+   "body": "\\fnsext{#1}\\left(#2\\right)",
+   "paper": "\\sext"
+  },
+  "signaturebase": {
+   "args": 0,
+   "body": "\\mathbb{V}",
+   "paper": "\\signaturebase"
+  },
+  "signed": {
+   "args": 1,
+   "body": "\\signedn{8}{#1}",
+   "paper": "\\signed"
+  },
+  "signedn": {
+   "args": 2,
+   "body": "\\signfunc{#1}(#2)",
+   "paper": "\\signedn"
+  },
+  "signfunc": {
+   "args": 1,
+   "body": "\\fntosigned{#1}",
+   "paper": "\\signfunc"
+  },
+  "smod": {
+   "args": 0,
+   "body": "\\text{smod}",
+   "paper": "\\smod"
+  },
+  "spl": {
+   "args": 1,
+   "body": "\\text{split}_{#1}",
+   "paper": "\\spl"
+  },
+  "sq": {
+   "args": 1,
+   "body": "\\left[#1\\right]",
+   "paper": "\\sq"
+  },
+  "ssQQaccumulation": {
+   "args": 0,
+   "body": "a",
+   "paper": "\\ss¬accumulation"
+  },
+  "ssQQexportcount": {
+   "args": 0,
+   "body": "\\QQexportcount",
+   "paper": "\\ss¬exportcount"
+  },
+  "ssQQimportcount": {
+   "args": 0,
+   "body": "\\QQimportcount",
+   "paper": "\\ss¬importcount"
+  },
+  "ssQQprovision": {
+   "args": 0,
+   "body": "p",
+   "paper": "\\ss¬provision"
+  },
+  "ssQQrefinement": {
+   "args": 0,
+   "body": "r",
+   "paper": "\\ss¬refinement"
+  },
+  "ssQQxferral": {
+   "args": 0,
+   "body": "t",
+   "paper": "\\ss¬xferral"
+  },
+  "ssQQxtcount": {
+   "args": 0,
+   "body": "\\QQxtcount",
+   "paper": "\\ss¬xtcount"
+  },
+  "ssQQxtsize": {
+   "args": 0,
+   "body": "\\QQxtsize",
+   "paper": "\\ss¬xtsize"
+  },
+  "stQQentryindex": {
+   "args": 0,
+   "body": "\\QQentryindex",
+   "paper": "\\st¬entryindex"
+  },
+  "stQQid": {
+   "args": 0,
+   "body": "y",
+   "paper": "\\st¬id"
+  },
+  "stX": {
+   "args": 0,
+   "body": "x",
+   "paper": "\\stX"
+  },
+  "stagingset": {
+   "args": 0,
+   "body": "\\iota",
+   "paper": "\\stagingset"
+  },
+  "startofbasicblock": {
+   "args": 0,
+   "body": "\\mathfrak{L}",
+   "paper": "\\startofbasicblock"
+  },
+  "stateQQdecoding": {
+   "args": 0,
+   "body": "\\text{DEC}",
+   "paper": "\\state¬decoding"
+  },
+  "stateQQexecuted": {
+   "args": 0,
+   "body": "\\text{FIN}",
+   "paper": "\\state¬executed"
+  },
+  "stateQQexecuting": {
+   "args": 0,
+   "body": "\\text{EXE}",
+   "paper": "\\state¬executing"
+  },
+  "stateQQwaiting": {
+   "args": 0,
+   "body": "\\text{WAIT}",
+   "paper": "\\state¬waiting"
+  },
+  "storecost": {
+   "args": 0,
+   "body": "25",
+   "paper": "\\storecost"
+  },
+  "sub": {
+   "args": 1,
+   "body": "_{#1}",
+   "paper": "\\sub"
+  },
+  "subb": {
+   "args": 1,
+   "body": "\\left[#1\\right]",
+   "paper": "\\subb"
+  },
+  "subifnone": {
+   "args": 1,
+   "body": "\\fnsubifnone\\left(#1\\right)",
+   "paper": "\\subifnone"
+  },
+  "subrange": {
+   "args": 2,
+   "body": "_{#1 \\dots+ #2}",
+   "paper": "\\subrange"
+  },
+  "suchthat": {
+   "args": 0,
+   "body": "\\text{ such that }",
+   "paper": "\\suchthat"
+  },
+  "theancestors": {
+   "args": 0,
+   "body": "\\ancestors",
+   "paper": "\\theancestors"
+  },
+  "theblock": {
+   "args": 0,
+   "body": "\\block",
+   "paper": "\\theblock"
+  },
+  "theextrinsic": {
+   "args": 0,
+   "body": "\\extrinsic",
+   "paper": "\\theextrinsic"
+  },
+  "theheader": {
+   "args": 0,
+   "body": "\\header",
+   "paper": "\\theheader"
+  },
+  "thestate": {
+   "args": 0,
+   "body": "\\sigma",
+   "paper": "\\thestate"
+  },
+  "thetime": {
+   "args": 0,
+   "body": "\\tau",
+   "paper": "\\thetime"
+  },
+  "ticketaccumulator": {
+   "args": 0,
+   "body": "\\gamma_A",
+   "paper": "\\ticketaccumulator"
+  },
+  "timeslot": {
+   "args": 0,
+   "body": "\\N_T",
+   "paper": "\\timeslot"
+  },
+  "token": {
+   "args": 1,
+   "body": "\\text{{\\small \\texttt{#1}}}",
+   "paper": "\\token"
+  },
+  "transitionstate": {
+   "args": 0,
+   "body": "\\Upsilon",
+   "paper": "\\transitionstate"
+  },
+  "transpose": {
+   "args": 0,
+   "body": "{}^\\text{T}",
+   "paper": "\\transpose"
+  },
+  "tricolon": {
+   "args": 0,
+   "body": "\\mathrel{\\genfrac{}{}{0pt}{3}{\\blacktriangleright}{\\blacktriangleright}}",
+   "paper": "\\tricolon"
+  },
+  "tup": {
+   "args": 1,
+   "body": "\\left(#1\\right)",
+   "paper": "\\tup"
+  },
+  "tuple": {
+   "args": 1,
+   "body": "\\!\\left\\lgroup#1\\right\\rgroup\\!",
+   "paper": "\\tuple"
+  },
+  "twothirds": {
+   "args": 0,
+   "body": "{\\tfrac{2}{3}}",
+   "paper": "\\twothirds"
+  },
+  "unbits": {
+   "args": 1,
+   "body": "\\unbitsn{8}{#1}",
+   "paper": "\\unbits"
+  },
+  "unbitsfunc": {
+   "args": 1,
+   "body": "\\bitsfunc{#1}^{-1}",
+   "paper": "\\unbitsfunc"
+  },
+  "unbitsn": {
+   "args": 2,
+   "body": "\\unbitsfunc{#1}(#2)",
+   "paper": "\\unbitsn"
+  },
+  "unsigned": {
+   "args": 1,
+   "body": "\\unsignedn{8}{#1}",
+   "paper": "\\unsigned"
+  },
+  "unsignedn": {
+   "args": 2,
+   "body": "\\unsignfunc{#1}(#2)",
+   "paper": "\\unsignedn"
+  },
+  "unsignfunc": {
+   "args": 1,
+   "body": "\\signfunc{#1}^{-1}",
+   "paper": "\\unsignfunc"
+  },
+  "using": {
+   "args": 0,
+   "body": "\\text{let }",
+   "paper": "\\using"
+  },
+  "valcount": {
+   "args": 0,
+   "body": "\\mathbb{V}",
+   "paper": "\\valcount"
+  },
+  "valkey": {
+   "args": 1,
+   "body": "\\mathbb{K}_{#1}",
+   "default": "",
+   "paper": "\\valkey"
+  },
+  "valstatsaccumulator": {
+   "args": 0,
+   "body": "\\activity_V",
+   "paper": "\\valstatsaccumulator"
+  },
+  "valstatsprevious": {
+   "args": 0,
+   "body": "\\activity_L",
+   "paper": "\\valstatsprevious"
+  },
+  "values": {
+   "args": 1,
+   "body": "\\mathcal{V}\\left(#1\\right)",
+   "paper": "\\values"
+  },
+  "var": {
+   "args": 1,
+   "body": "\\left\\updownarrow#1\\right.\\!",
+   "paper": "\\var"
+  },
+  "verdicts": {
+   "args": 0,
+   "body": "\\mathbf{v}",
+   "paper": "\\verdicts"
+  },
+  "vkQQbls": {
+   "args": 0,
+   "body": "l",
+   "paper": "\\vk¬bls"
+  },
+  "vkQQbs": {
+   "args": 0,
+   "body": "b",
+   "paper": "\\vk¬bs"
+  },
+  "vkQQed": {
+   "args": 0,
+   "body": "e",
+   "paper": "\\vk¬ed"
+  },
+  "vkQQmetadata": {
+   "args": 0,
+   "body": "m",
+   "paper": "\\vk¬metadata"
+  },
+  "vkX": {
+   "args": 0,
+   "body": "k",
+   "paper": "\\vkX"
+  },
+  "vsQQassurances": {
+   "args": 0,
+   "body": "a",
+   "paper": "\\vs¬assurances"
+  },
+  "vsQQblocks": {
+   "args": 0,
+   "body": "b",
+   "paper": "\\vs¬blocks"
+  },
+  "vsQQguarantees": {
+   "args": 0,
+   "body": "g",
+   "paper": "\\vs¬guarantees"
+  },
+  "vsQQpreimagecount": {
+   "args": 0,
+   "body": "p",
+   "paper": "\\vs¬preimagecount"
+  },
+  "vsQQpreimagesize": {
+   "args": 0,
+   "body": "d",
+   "paper": "\\vs¬preimagesize"
+  },
+  "vsQQreporthash": {
+   "args": 0,
+   "body": "\\QQreporthash",
+   "paper": "\\vs¬reporthash"
+  },
+  "vsQQtickets": {
+   "args": 0,
+   "body": "t",
+   "paper": "\\vs¬tickets"
+  },
+  "vsQQvalid": {
+   "args": 0,
+   "body": "v",
+   "paper": "\\vs¬valid"
+  },
+  "wallclock": {
+   "args": 0,
+   "body": "\\mathcal{T}",
+   "paper": "\\wallclock"
+  },
+  "wcQQanchoraccoutlog": {
+   "args": 0,
+   "body": "b",
+   "paper": "\\wc¬anchoraccoutlog"
+  },
+  "wcQQanchorhash": {
+   "args": 0,
+   "body": "a",
+   "paper": "\\wc¬anchorhash"
+  },
+  "wcQQanchorpoststate": {
+   "args": 0,
+   "body": "s",
+   "paper": "\\wc¬anchorpoststate"
+  },
+  "wcQQanchortime": {
+   "args": 0,
+   "body": "n",
+   "paper": "\\wc¬anchortime"
+  },
+  "wcQQlookupanchorhash": {
+   "args": 0,
+   "body": "l",
+   "paper": "\\wc¬lookupanchorhash"
+  },
+  "wcQQlookupanchorpoststate": {
+   "args": 0,
+   "body": "r",
+   "paper": "\\wc¬lookupanchorpoststate"
+  },
+  "wcQQlookupanchortime": {
+   "args": 0,
+   "body": "t",
+   "paper": "\\wc¬lookupanchortime"
+  },
+  "wcQQprerequisites": {
+   "args": 0,
+   "body": "\\mathbf{p}",
+   "paper": "\\wc¬prerequisites"
+  },
+  "wcX": {
+   "args": 0,
+   "body": "\\mathbf{x}",
+   "paper": "\\wcX"
+  },
+  "wdQQcodehash": {
+   "args": 0,
+   "body": "\\QQcodehash",
+   "paper": "\\wd¬codehash"
+  },
+  "wdQQexportcount": {
+   "args": 0,
+   "body": "\\QQexportcount",
+   "paper": "\\wd¬exportcount"
+  },
+  "wdQQgaslimit": {
+   "args": 0,
+   "body": "\\QQgaslimit",
+   "paper": "\\wd¬gaslimit"
+  },
+  "wdQQgasused": {
+   "args": 0,
+   "body": "\\QQgasused",
+   "paper": "\\wd¬gasused"
+  },
+  "wdQQimportcount": {
+   "args": 0,
+   "body": "\\QQimportcount",
+   "paper": "\\wd¬importcount"
+  },
+  "wdQQpayloadhash": {
+   "args": 0,
+   "body": "\\QQpayloadhash",
+   "paper": "\\wd¬payloadhash"
+  },
+  "wdQQresult": {
+   "args": 0,
+   "body": "\\QQresult",
+   "paper": "\\wd¬result"
+  },
+  "wdQQserviceindex": {
+   "args": 0,
+   "body": "\\QQserviceindex",
+   "paper": "\\wd¬serviceindex"
+  },
+  "wdQQxtcount": {
+   "args": 0,
+   "body": "\\QQxtcount",
+   "paper": "\\wd¬xtcount"
+  },
+  "wdQQxtsize": {
+   "args": 0,
+   "body": "\\QQxtsize",
+   "paper": "\\wd¬xtsize"
+  },
+  "wdX": {
+   "args": 0,
+   "body": "\\mathbf{d}",
+   "paper": "\\wdX"
+  },
+  "when": {
+   "args": 0,
+   "body": "\\text{if }",
+   "paper": "\\when"
+  },
+  "where": {
+   "args": 0,
+   "body": "\\text{where }",
+   "paper": "\\where"
+  },
+  "wiQQaccgaslimit": {
+   "args": 0,
+   "body": "a",
+   "paper": "\\wi¬accgaslimit"
+  },
+  "wiQQcodehash": {
+   "args": 0,
+   "body": "\\QQcodehash",
+   "paper": "\\wi¬codehash"
+  },
+  "wiQQexportcount": {
+   "args": 0,
+   "body": "\\QQexportcount",
+   "paper": "\\wi¬exportcount"
+  },
+  "wiQQextrinsics": {
+   "args": 0,
+   "body": "\\mathbf{x}",
+   "paper": "\\wi¬extrinsics"
+  },
+  "wiQQimportsegments": {
+   "args": 0,
+   "body": "\\mathbf{i}",
+   "paper": "\\wi¬importsegments"
+  },
+  "wiQQpayload": {
+   "args": 0,
+   "body": "\\QQpayload",
+   "paper": "\\wi¬payload"
+  },
+  "wiQQrefgaslimit": {
+   "args": 0,
+   "body": "g",
+   "paper": "\\wi¬refgaslimit"
+  },
+  "wiQQserviceindex": {
+   "args": 0,
+   "body": "\\QQserviceindex",
+   "paper": "\\wi¬serviceindex"
+  },
+  "wiX": {
+   "args": 0,
+   "body": "\\mathbf{w}",
+   "paper": "\\wiX"
+  },
+  "with": {
+   "args": 0,
+   "body": "\\;\\middle\\vert\\;",
+   "paper": "\\with"
+  },
+  "wonkyset": {
+   "args": 0,
+   "body": "\\disputes_W",
+   "paper": "\\wonkyset"
+  },
+  "workcontext": {
+   "args": 0,
+   "body": "\\mathbb{C}",
+   "paper": "\\workcontext"
+  },
+  "workdigest": {
+   "args": 0,
+   "body": "\\mathbb{D}",
+   "paper": "\\workdigest"
+  },
+  "workerror": {
+   "args": 0,
+   "body": "\\mathbb{E}",
+   "paper": "\\workerror"
+  },
+  "workitem": {
+   "args": 0,
+   "body": "\\mathbb{W}",
+   "paper": "\\workitem"
+  },
+  "workpackage": {
+   "args": 0,
+   "body": "\\mathbb{P}",
+   "paper": "\\workpackage"
+  },
+  "workreport": {
+   "args": 0,
+   "body": "\\mathbb{R}",
+   "paper": "\\workreport"
+  },
+  "workreports": {
+   "args": 0,
+   "body": "\\sequence{\\workreport}",
+   "paper": "\\workreports"
+  },
+  "wpQQauthcode": {
+   "args": 0,
+   "body": "\\mathbf{u}",
+   "paper": "\\wp¬authcode"
+  },
+  "wpQQauthcodehash": {
+   "args": 0,
+   "body": "u",
+   "paper": "\\wp¬authcodehash"
+  },
+  "wpQQauthcodehost": {
+   "args": 0,
+   "body": "h",
+   "paper": "\\wp¬authcodehost"
+  },
+  "wpQQauthconfig": {
+   "args": 0,
+   "body": "\\mathbf{f}",
+   "paper": "\\wp¬authconfig"
+  },
+  "wpQQauthorizer": {
+   "args": 0,
+   "body": "\\QQauthorizer",
+   "paper": "\\wp¬authorizer"
+  },
+  "wpQQauthtoken": {
+   "args": 0,
+   "body": "\\mathbf{j}",
+   "paper": "\\wp¬authtoken"
+  },
+  "wpQQcontext": {
+   "args": 0,
+   "body": "\\QQcontext",
+   "paper": "\\wp¬context"
+  },
+  "wpQQworkitems": {
+   "args": 0,
+   "body": "\\mathbf{w}",
+   "paper": "\\wp¬workitems"
+  },
+  "wpX": {
+   "args": 0,
+   "body": "\\mathbf{p}",
+   "paper": "\\wpX"
+  },
+  "wrQQauthgasused": {
+   "args": 0,
+   "body": "g",
+   "paper": "\\wr¬authgasused"
+  },
+  "wrQQauthorizer": {
+   "args": 0,
+   "body": "\\QQauthorizer",
+   "paper": "\\wr¬authorizer"
+  },
+  "wrQQauthtrace": {
+   "args": 0,
+   "body": "\\QQauthtrace",
+   "paper": "\\wr¬authtrace"
+  },
+  "wrQQavspec": {
+   "args": 0,
+   "body": "\\mathbf{s}",
+   "paper": "\\wr¬avspec"
+  },
+  "wrQQcontext": {
+   "args": 0,
+   "body": "\\QQcontext",
+   "paper": "\\wr¬context"
+  },
+  "wrQQcore": {
+   "args": 0,
+   "body": "\\QQcore",
+   "paper": "\\wr¬core"
+  },
+  "wrQQdigests": {
+   "args": 0,
+   "body": "\\mathbf{d}",
+   "paper": "\\wr¬digests"
+  },
+  "wrQQsrlookup": {
+   "args": 0,
+   "body": "\\mathbf{l}",
+   "paper": "\\wr¬srlookup"
+  },
+  "wrX": {
+   "args": 0,
+   "body": "\\mathbf{r}",
+   "paper": "\\wrX"
+  },
+  "writable": {
+   "args": 1,
+   "body": "\\ramaccess[#1]^*",
+   "paper": "\\writable"
+  },
+  "xaQQassurer": {
+   "args": 0,
+   "body": "v",
+   "paper": "\\xa¬assurer"
+  },
+  "xaQQavailabilities": {
+   "args": 0,
+   "body": "f",
+   "paper": "\\xa¬availabilities"
+  },
+  "xaQQsignature": {
+   "args": 0,
+   "body": "\\QQsignature",
+   "paper": "\\xa¬signature"
+  },
+  "xcQQoffenderindex": {
+   "args": 0,
+   "body": "\\QQoffenderindex",
+   "paper": "\\xc¬offenderindex"
+  },
+  "xcQQreporthash": {
+   "args": 0,
+   "body": "\\QQreporthash",
+   "paper": "\\xc¬reporthash"
+  },
+  "xcQQsignature": {
+   "args": 0,
+   "body": "\\QQsignature",
+   "paper": "\\xc¬signature"
+  },
+  "xfQQoffenderindex": {
+   "args": 0,
+   "body": "\\QQoffenderindex",
+   "paper": "\\xf¬offenderindex"
+  },
+  "xfQQreporthash": {
+   "args": 0,
+   "body": "\\QQreporthash",
+   "paper": "\\xf¬reporthash"
+  },
+  "xfQQsignature": {
+   "args": 0,
+   "body": "\\QQsignature",
+   "paper": "\\xf¬signature"
+  },
+  "xfQQvalidity": {
+   "args": 0,
+   "body": "\\QQvalidity",
+   "paper": "\\xf¬validity"
+  },
+  "xpQQdata": {
+   "args": 0,
+   "body": "\\mathbf{d}",
+   "paper": "\\xp¬data"
+  },
+  "xpQQserviceindex": {
+   "args": 0,
+   "body": "\\QQserviceindex",
+   "paper": "\\xp¬serviceindex"
+  },
+  "xtQQentryindex": {
+   "args": 0,
+   "body": "\\QQentryindex",
+   "paper": "\\xt¬entryindex"
+  },
+  "xtQQproof": {
+   "args": 0,
+   "body": "p",
+   "paper": "\\xt¬proof"
+  },
+  "xtassurances": {
+   "args": 0,
+   "body": "\\XT_A",
+   "paper": "\\xtassurances"
+  },
+  "xtculprits": {
+   "args": 0,
+   "body": "\\XT_C",
+   "paper": "\\xtculprits"
+  },
+  "xtdisputes": {
+   "args": 0,
+   "body": "\\XT_D",
+   "paper": "\\xtdisputes"
+  },
+  "xtfaults": {
+   "args": 0,
+   "body": "\\XT_F",
+   "paper": "\\xtfaults"
+  },
+  "xtguarantees": {
+   "args": 0,
+   "body": "\\XT_G",
+   "paper": "\\xtguarantees"
+  },
+  "xtpreimages": {
+   "args": 0,
+   "body": "\\XT_P",
+   "paper": "\\xtpreimages"
+  },
+  "xttickets": {
+   "args": 0,
+   "body": "\\XT_T",
+   "paper": "\\xttickets"
+  },
+  "xtverdicts": {
+   "args": 0,
+   "body": "\\XT_V",
+   "paper": "\\xtverdicts"
+  },
+  "xvQQepochindex": {
+   "args": 0,
+   "body": "a",
+   "paper": "\\xv¬epochindex"
+  },
+  "xvQQjudgments": {
+   "args": 0,
+   "body": "\\mathbf{j}",
+   "paper": "\\xv¬judgments"
+  },
+  "xvQQreporthash": {
+   "args": 0,
+   "body": "\\QQreporthash",
+   "paper": "\\xv¬reporthash"
+  },
+  "xvjQQjudgeindex": {
+   "args": 0,
+   "body": "i",
+   "paper": "\\xvj¬judgeindex"
+  },
+  "xvjQQsignature": {
+   "args": 0,
+   "body": "\\QQsignature",
+   "paper": "\\xvj¬signature"
+  },
+  "xvjQQvalidity": {
+   "args": 0,
+   "body": "\\QQvalidity",
+   "paper": "\\xvj¬validity"
+  },
+  "zerohash": {
+   "args": 0,
+   "body": "\\hash[0]",
+   "paper": "\\zerohash"
+  },
+  "zeropad": {
+   "args": 2,
+   "body": "\\fnzeropad{#1}\\left(#2\\right)",
+   "paper": "\\zeropad"
+  }
+ },
+ "optional": {
+  "abracegroup": "\\abracegroup",
+  "abracegroupboth": "\\abracegroupboth",
+  "bitstring": "\\bitstring",
+  "blob": "\\blob",
+  "decode": "\\decode",
+  "encode": "\\encode",
+  "fndecode": "\\fndecode",
+  "fnencode": "\\fnencode",
+  "hash": "\\hash",
+  "ramaccess": "\\ramaccess",
+  "sequence": "\\sequence",
+  "valkey": "\\valkey"
+ },
+ "package": {
+  "Aries": "\\Aries",
+  "Gemini": "\\Gemini",
+  "Taurus": "\\Taurus",
+  "llbracket": "\\llbracket",
+  "rrbracket": "\\rrbracket"
+ },
+ "sentinel": "QQ",
+ "source": "gavofyork/graypaper tag v0.8.1: preamble.tex and text/*.tex",
+ "unmapped": {
+  "Jam": {
+   "paper": "\\Jam",
+   "uses": [
+    "\\raisebox"
+   ],
+   "where": "preamble.tex"
+  },
+  "branch": {
+   "paper": "\\branch",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "branchimm": {
+   "paper": "\\branchimm",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "cmov": {
+   "paper": "\\cmov",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "cmovimm": {
+   "paper": "\\cmovimm",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "directload": {
+   "paper": "\\directload",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "directstore": {
+   "paper": "\\directstore",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "disjoint": {
+   "paper": "\\disjoint",
+   "uses": [
+    "\\downspoon"
+   ],
+   "where": "preamble.tex"
+  },
+  "divrem": {
+   "paper": "\\divrem",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "finish": {
+   "paper": "\\finish",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "indirectload": {
+   "paper": "\\indirectload",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "indirectstore": {
+   "paper": "\\indirectstore",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "indirectstoreimm": {
+   "paper": "\\indirectstoreimm",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "jamdraftversion": {
+   "paper": "\\jamdraftversion",
+   "uses": [
+    "\\jamdraftversionraw"
+   ],
+   "where": "preamble.tex"
+  },
+  "jamdraftversionstring": {
+   "paper": "\\jamdraftversionstring",
+   "uses": [
+    "\\jamdraftversion"
+   ],
+   "where": "preamble.tex"
+  },
+  "left": {
+   "paper": "\\left",
+   "uses": [
+    "LaTeX plumbing (EXCLUDE)"
+   ],
+   "where": "preamble.tex"
+  },
+  "makegpbackground": {
+   "paper": "\\makegpbackground",
+   "uses": [
+    "\\includegraphics"
+   ],
+   "where": "preamble.tex"
+  },
+  "minmax": {
+   "paper": "\\minmax",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "mrule": {
+   "paper": "\\mrule",
+   "uses": [
+    "LaTeX plumbing (EXCLUDE)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "orderby": {
+   "paper": "\\orderby",
+   "uses": [
+    "\\lwavy"
+   ],
+   "where": "preamble.tex"
+  },
+  "orderuniqby": {
+   "paper": "\\orderuniqby",
+   "uses": [
+    "\\lWavy"
+   ],
+   "where": "preamble.tex"
+  },
+  "regcomp": {
+   "paper": "\\regcomp",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "regcompimm": {
+   "paper": "\\regcompimm",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "right": {
+   "paper": "\\right",
+   "uses": [
+    "LaTeX plumbing (EXCLUDE)"
+   ],
+   "where": "preamble.tex"
+  },
+  "seqminusl": {
+   "paper": "\\seqminusl",
+   "uses": [
+    "\\nwspoon"
+   ],
+   "where": "preamble.tex"
+  },
+  "seqminusr": {
+   "paper": "\\seqminusr",
+   "uses": [
+    "\\sespoon"
+   ],
+   "where": "preamble.tex"
+  },
+  "shiftsandrotates": {
+   "paper": "\\shiftsandrotates",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "shiftsandrotatesalt": {
+   "paper": "\\shiftsandrotatesalt",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "shiftsandrotatesaltthirtytwo": {
+   "paper": "\\shiftsandrotatesaltthirtytwo",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "shiftsandrotatesthirtytwo": {
+   "paper": "\\shiftsandrotatesthirtytwo",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "simplealuthreeop": {
+   "paper": "\\simplealuthreeop",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "simplealuthreeopthirtytwo": {
+   "paper": "\\simplealuthreeopthirtytwo",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "simplealutwoop": {
+   "paper": "\\simplealutwoop",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "simplealutwoopthirtytwo": {
+   "paper": "\\simplealutwoopthirtytwo",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "sqorderby": {
+   "paper": "\\sqorderby",
+   "uses": [
+    "\\orderby"
+   ],
+   "where": "preamble.tex"
+  },
+  "sqorderuniqby": {
+   "paper": "\\sqorderuniqby",
+   "uses": [
+    "\\orderuniqby"
+   ],
+   "where": "preamble.tex"
+  },
+  "stackgap": {
+   "paper": "\\stackgap",
+   "uses": [
+    "LaTeX plumbing (EXCLUDE)"
+   ],
+   "where": "preamble.tex"
+  },
+  "stacktype": {
+   "paper": "\\stacktype",
+   "uses": [
+    "LaTeX plumbing (EXCLUDE)"
+   ],
+   "where": "preamble.tex"
+  },
+  "storeimm": {
+   "paper": "\\storeimm",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "superimpose": {
+   "paper": "\\superimpose",
+   "uses": [
+    "\\ooalign"
+   ],
+   "where": "preamble.tex"
+  },
+  "theequation": {
+   "paper": "\\theequation",
+   "uses": [
+    "LaTeX plumbing (EXCLUDE)"
+   ],
+   "where": "preamble.tex"
+  },
+  "trivialtwooponecycle": {
+   "paper": "\\trivialtwooponecycle",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  },
+  "trivialtwooptwocycles": {
+   "paper": "\\trivialtwooptwocycles",
+   "uses": [
+    "a table row (& cells)"
+   ],
+   "where": "text/pvm.tex"
+  }
+ }
+}

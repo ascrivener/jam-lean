@@ -129,7 +129,7 @@ end Decoder
 
 open Decoder
 
-/-- $\mathcal{E}^{-1}$ for $\mathbb{C}$, the refinement context. -/
+/-- $\mathcal{E}^{-1}$ for $\workcontext$, the refinement context. -/
 def RefineContext.decode : Decoder RefineContext := do
   return { anchorHash := ← bytes 32, anchorSlot := ← fixed 4, anchorStateRoot := ← bytes 32,
            anchorAccOutLog := ← bytes 32, lookupAnchorHash := ← bytes 32,
@@ -143,7 +143,7 @@ def decodeImport : Decoder (SegmentRoot × Nat) := do
   let i ← fixed 2
   return if i < 2 ^ 15 then (.root h, i) else (.package h, i - 2 ^ 15)
 
-/-- $\mathcal{E}^{-1}$ for $\mathbb{W}$, a work item. -/
+/-- $\mathcal{E}^{-1}$ for $\workitem$, a work item. -/
 def WorkItem.decode : Decoder WorkItem := do
   return { service := ← fixed 4, codeHash := ← bytes 32, refineGasLimit := ← fixed 8,
            accumulateGasLimit := ← fixed 8, exportCount := ← fixed 2, payload := ← var,
@@ -179,7 +179,7 @@ def AvailabilitySpec.decode : Decoder AvailabilitySpec := do
   return { packageHash := ← bytes 32, bundleLength := ← fixed 4, erasureRoot := ← bytes 32,
            erasureShards := ← fixed 2, segmentRoot := ← bytes 32, segmentCount := ← fixed 2 }
 
-/-- $\mathcal{E}^{-1}$ for $\mathbb{R}$, a work report. -/
+/-- $\mathcal{E}^{-1}$ for $\workreport$, a work report. -/
 def WorkReport.decode : Decoder WorkReport := do
   return { spec := ← AvailabilitySpec.decode, context := ← RefineContext.decode, core := ← nat,
            authorizerHash := ← bytes 32, authGasUsed := ← nat, authTrace := ← var,

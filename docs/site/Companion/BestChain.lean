@@ -39,7 +39,7 @@ tag := "bestchain-blocks"
 %%%
 
 The rule depends on data that is local to the node: which blocks it has seen, and its own view of
-whether each is audited (§17). The model makes this data explicit. A node knows a block through a
+whether each is audited ({ref "auditing"}[§17]). The model makes this data explicit. A node knows a block through a
 {api}`JAM.BestChain.BlockInfo`, and a *store*, a list of them, is the set of valid blocks it has seen:
 
 {leanSource JAM.BestChain.BlockInfo}
@@ -50,7 +50,7 @@ sequence $`\gamma'_S` is a sequence of tickets and 0 when it is fallback keys (e
 {leanSource JAM.BestChain.ticketedOf}
 
 The audited flag is the node's $`\mathbf{U}` (eq. (17.19)), which {api}`JAM.Auditing.blockAudited` computes, and the
-disregarded flag comes from §17.3's rule ({api}`JAM.BestChain.disregardedBlock`, see below).
+disregarded flag comes from {ref "auditing"}[§17.3]'s rule ({api}`JAM.BestChain.disregardedBlock`, see below).
 {api}`JAM.BestChain.BlockInfo.ofHeader` builds a `BlockInfo` from a model header.
 
 # Ancestors (§5)
@@ -77,8 +77,9 @@ timeslot condition is what makes the recursion terminate (the measure is the tim
 
 {leanSource JAM.BestChain.slotTimely}
 
-{api}`JAM.BestChain.slotTimely` states (5.8)'s rule for the caller. The best-chain functions do not apply it,
-since the store is taken to hold only valid blocks.
+{api}`JAM.BestChain.slotTimely` states (5.8)'s rule for the caller. The best-chain functions use only its
+first conjunct, $`P(\mathbf{H})_T < \mathbf{H}_T`, and only to stop following parents ({api}`JAM.BestChain.ancestry`). They do not
+check the wall-clock bound $`\mathbf{H}_T \cdot \mathsf{P} \le \mathcal{T}`, since the store is taken to hold only valid blocks.
 
 # Acceptable blocks (§19)
 %%%
@@ -95,7 +96,7 @@ $$`\not\exists \mathbf{H}^A, \mathbf{H}^B : \bigwedge \left\{ \begin{aligned} \m
 of its unfinalized ancestors shares its timeslot with another block the node has seen (an
 equivocation).
 
-§17.3 adds one more condition, outside §19's formulas: "we pointedly disregard chains which include
+{ref "auditing"}[§17.3] adds one more condition, outside §19's formulas: "we pointedly disregard chains which include
 the accumulation of a report which we know at least $`\tfrac{1}{3}` of validators judge as being invalid. Any
 chains including such a block are not eligible for authoring on." The model adds it to acceptability:
 
@@ -162,12 +163,12 @@ Where the paper leaves a point open, the model picks one meaning. The notes cite
 model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
 
 * *Audited: the head, or the chain (note v0.8.1-A21).* (19.2) asks only that the best block itself
-  be audited, while the list above it says the best block "is considered audited" and §17.3 asks a
+  be audited, while the list above it says the best block "is considered audited" and {ref "auditing"}[§17.3] asks a
   block to be audited before voting to finalize it. A chain whose head is audited can contain an unaudited
   unfinalized block. The model offers both readings: `AuditReading.head` is the formula, and
   `AuditReading.chain` also asks every unfinalized ancestor to be audited.
-* *The disregard rule (note v0.8.1-A22).* §17.3's rule is not among §19's formulas, and §4 words it
-  differently. The model adds §17.3's rule to acceptability as a flag per block, checked over all
+* *The disregard rule (note v0.8.1-A22).* {ref "auditing"}[§17.3]'s rule is not among §19's formulas, and {ref "overview"}[§4] words it
+  differently. The model adds {ref "auditing"}[§17.3]'s rule to acceptability as a flag per block, checked over all
   ancestors, finalized ones included, so a disregarded finalized block leaves no block acceptable.
 * *Equivocations (note v0.8.1-A23).* "Two valid blocks at the same timeslot": only $`\mathbf{H}^A` must be
   unfinalized, and $`\mathbf{H}^B` can be any block seen, on any fork. The model reads (19.3) literally, with
@@ -176,7 +177,7 @@ model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/do
   acceptable block is a candidate, not only the leaves: a child sealed with a fallback key ties with
   its parent. The model returns every maximiser ({api}`JAM.BestChain.bestHeads`); {api}`JAM.BestChain.bestHead?`
   takes the first in store order.
-* *How far back $`m` counts (note v0.8.1-A25).* $`m` sums $`\mathbf{T}` over all ancestors back to genesis, while §5
+* *How far back $`m` counts (note v0.8.1-A25).* $`m` sums $`\mathbf{T}` over all ancestors back to genesis, while {ref "overview"}[§5]
   lets nodes keep only the headers of the last 24 hours. The model counts the ancestors in the store.
   Every acceptable block extends $`\mathbf{H}^\natural`, so the ancestors from $`\mathbf{H}^\natural` back add the same amount to every
   candidate, as long as the store holds $`\mathbf{H}^\natural`'s ancestors consistently.

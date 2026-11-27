@@ -37,6 +37,7 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
   - Commit messages end with a `Co-Authored-By:` trailer for Claude and a `Claude-Session:` link.
   - PR bodies end with "🤖 Generated with [Claude Code](https://claude.com/claude-code)".
   - Don't name the model in commits or PRs.
+- A PR that changes the behaviour of a modelled function updates its companion chapter in the same PR.
 - **Findings.** Report disagreements between the paper and the test vectors, or between the model
   and the binary, in the PR body, and add them to `docs/upstream-candidates.md`.
 - **Build pitfalls.**
@@ -85,7 +86,12 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
   - a `gp-vX` tag for the last model of the old version and one for the first of the new. Sessions
     cannot push tags: ask Adam with the exact commit, then run Actions -> Release (`release.yml`)
     after his go-ahead, or he creates it in the GitHub UI;
+  - regenerate the GP macro table (`scripts/gen_macros.py`) and grep for glyphs of symbols whose
+    macros changed;
   - jam-lean-target's pin, image and release;
+  - an independent review of the companion book against the new paper (equations, readings, claims);
+  - the book's paper table: update `VERSION`/`COMMIT` in `scripts/gen_gp_labels.py` and regenerate
+    `docs/site/gp-labels.json`;
   - finally, read both repositories' front pages as a visitor would.
 - **Crypto** stays a parameter. SHA-512 is in plain Lean.
 - **JamCrypto** (moved from jam-lean-target, 2026-11-25) implements the crypto parameter in plain

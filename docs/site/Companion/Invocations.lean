@@ -35,7 +35,7 @@ invocation $`\Psi_A` (§B.4). Each one runs a standard program blob with $`\Psi_
 invocation, which calls $`\Psi_H` to run the machine and to hand each host call to a dispatcher
 $`F`. The dispatcher maps the host-call identifier to a host function $`\Omega_\square` (§B.5).
 
-$`\Psi_H`, the standard program initialization $`Y` and $`\Psi_M` are in Appendix A of v0.8.1
+$`\Psi_H`, the standard program initialization $`Y` and $`\Psi_M` are in {ref "pvm"}[Appendix A] of v0.8.1
 (§A.6–§A.8), so they are in the {ref "pvm"}[Appendix A chapter]. This chapter covers what Appendix B
 adds: the result constants, the three invocations with their dispatchers, and every host function.
 
@@ -89,7 +89,7 @@ $$`F \colon (n, \varrho, \varphi, \mu, \emptyset) \mapsto \begin{cases} \Omega_G
 $$`\text{where } \varphi' = \varphi \text{ except } \varphi'_7 = \mathtt{WHAT}`
 
 $`\mathbf{p}_\mathbf{u}` is the authorization code: the historical lookup, in the service
-$`\mathbf{p}_h`, of the code hash $`\mathbf{p}_u` at the lookup anchor (§14.3). The model computes it
+$`\mathbf{p}_h`, of the code hash $`\mathbf{p}_u` at the lookup anchor ({ref "work"}[§14.3]). The model computes it
 from an explicit account state $`\mathbf{d}`, the state the paper draws on implicitly:
 
 {leanSource JAM.WorkPackage.authCode}
@@ -262,8 +262,8 @@ each of those functions passes its own $`o`, $`f_0` and $`z`:
 
 In the entries below, "in" names the registers a function reads, "out" what it sets, and the outcomes
 are listed in the paper's order: the first that applies is the result. Where a function names a
-service by a register, the value $`2^{64} - 1` means the caller's own service, except in `eject`, where
-$`d = \varphi_7` as given.
+service by a register, the value $`2^{64} - 1` means the caller's own service, except in `eject` and `assign`, where
+the service is taken as given, and in `bless`, where it keeps the current holder.
 
 ## General functions (§B.5.1)
 %%%
@@ -421,7 +421,7 @@ $$`\mathfrak{x} \equiv (\mathbf{x}, \mathbf{y}), \quad \mathfrak{x}' \equiv (\ma
 
 $`\mathbf{d} = (\mathbf{x}_\mathbf{e})_\mathbf{d}` is the accounts of the current partial state. Many
 functions ask that the caller $`\mathbf{x}_s` be the service $`d` it changes or that service's effective
-supervisor $`\mathbf{d}[d]_e` (§9.5): in the model, {api}`JAM.AccHost.mayModify`. A function that changes
+supervisor $`\mathbf{d}[d]_e` ({ref "accounts"}[§9.5]): in the model, {api}`JAM.AccHost.mayModify`. A function that changes
 service $`d`'s account adds $`d` to $`\mathbf{x}_\mathbf{w}`.
 
 *`lookup` = 3*, $`\Omega_L`. In: $`\varphi_7` names the service, the hash is at $`h = \varphi_8`; then

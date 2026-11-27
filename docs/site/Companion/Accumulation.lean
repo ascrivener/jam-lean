@@ -33,7 +33,7 @@ $`\Delta_1` (§12.2); the posterior state (§12.3); and the integration of the p
 
 In the model, §12.1–§12.3 are `JAM/Accumulation.lean` (the transition is {api}`JAM.accumulate`) and
 §12.4 is `JAM/Preimages.lean` ({api}`JAM.preimages`). The accumulate invocation $`\Psi_A` and its host
-functions, which $`\Delta_1` calls, belong to Appendix B and are in `JAM/Accumulate.lean`. API pages:
+functions, which $`\Delta_1` calls, belong to {ref "invocations"}[Appendix B] and are in `JAM/Accumulate.lean`. API pages:
 [Accumulation](https://ascrivener.github.io/jam-lean/api/JAM/Accumulation.html),
 [Preimages](https://ascrivener.github.io/jam-lean/api/JAM/Preimages.html),
 [Accumulate](https://ascrivener.github.io/jam-lean/api/JAM/Accumulate.html).
@@ -226,10 +226,10 @@ How the code maps to the equation:
 
 * `ss` is $`\mathbf{s}`, sorted (a set in the paper, so any order is allowed; $`\mathbf{u}` and
   $`\mathbf{t}'` are built in ascending order of service).
-* `acc s` is $`\Delta(s)`. The paper evaluates $`\Delta_1` at every service in $`\mathbf{s}`, at
-  their effective supervisors, at the effective supervisor of every account in $`\mathcal{K}(\mathbf{d})`
-  (through $`M`), and at the privileged services $`m`, $`v`, $`r` and $`\mathbf{a}_c`. The model
-  runs $`\Delta_1` once for each service in that list (`needed`) and reuses the result. Any other
+* `acc s` is $`\Delta(s)`. The paper evaluates $`\Delta` at every service in $`\mathbf{s}`, at every
+  account in $`\mathcal{K}(\mathbf{d})` (through $`M`) and at $`m`, $`v`, $`r` and $`\mathbf{a}_c`,
+  and each $`\Delta(x)` evaluates $`\Delta_1` at $`x` and at its effective supervisor. The model runs
+  $`\Delta_1` only for the services in `needed` and reuses the result. Any other
   service gets the unchanged outcome (input state, nothing modified, no gas) without running
   $`\Psi_A`; that this equals $`\Delta_1` for a service with no inputs and no gas is argued in the
   docstring of {api}`JAM.accPar`, not proved.
@@ -343,7 +343,7 @@ How the code maps to the equations:
   $`{\omega'}^{\circlearrowleft}_{m-i}` with $`i = (m - \mathit{idx}) \bmod \mathsf{E}`, and the three branches
   are the cases of (12.34).
 * `theta` is $`\theta'`, and `root` is $`\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)`, the Keccak Merkle root over
-  $`\mathbf{s} = [\mathcal{E}_4(s) \frown \mathcal{E}(h) \mid (s, h) \mathrel{\mathrlap{<}{-}} \theta']` that §7 appends to the
+  $`\mathbf{s} = [\mathcal{E}_4(s) \frown \mathcal{E}(h) \mid (s, h) \mathrel{\mathrlap{<}{-}} \theta']` that {ref "history"}[§7] appends to the
   accumulation-output log (eqs. (7.6, 7.7)); $`\mathcal{E}(h)` of a hash is the hash itself.
 
 # Preimage integration (§12.4)
@@ -382,7 +382,7 @@ tag := "accumulation-checked"
 
 *Theorems.* No theorem is yet stated about $`\Delta_+`, $`\Delta_*`, $`T`, $`Q` or $`I`
 themselves. One theorem bounds what a single run of $`\Psi_A`, and so of $`\Delta_1`, can change.
-Let $`s` be a service whose code contains none of the host calls `bless`, `assign`, `designate`,
+Let $`s` be a service with an account whose code is present and contains none of the host calls `bless`, `assign`, `designate`,
 `new`, `eject` and `provide` (the list `reachingIds`), and suppose no other service has $`s` as
 its effective supervisor (`NoSupervisee`). Then $`\Psi_A` for $`s` leaves every other account, the
 staging keys, the authorizer queue and the privileges as they were in $`\mathbf{e}` (`Outside`), and
@@ -418,7 +418,7 @@ theorems. Among them:
   service without code, uses no gas.
 * *$`R`.* The manager and the delegator both change the delegator in the same round; the manager's
   choice is kept. When the manager does nothing, the delegator's own choice is kept.
-* *Self-transfers* (`transfer`, Appendix B). An immediate transfer from a service to itself counts
+* *Self-transfers* (`transfer`, {ref "invocations"}[Appendix B]). An immediate transfer from a service to itself counts
   the credit when the balance is checked against the threshold, and a deferred one does not.
 * *The bounds of $`\mathbf{E}_P`.* One pair too many, or one octet too many, is rejected.
 * *New-index conflicts.* {api}`JAM.collectNew` collects distinct new indices from two services'
@@ -434,9 +434,8 @@ suspended until v0.8.1 vectors exist.
 tag := "accumulation-readings"
 %%%
 
-The items marked with a note number are in the model's
-[notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues);
-the others are recorded only in this book:
+Each is a note in the model's
+[notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues):
 
 * *Note v0.8.1-A1, the post-state of $`N(\mathbf{o})`.* In (12.19), $`N(\mathbf{o})` gives every
   field a value except the post-state. The model takes the round's input state $`\mathbf{e}`
@@ -447,14 +446,14 @@ the others are recorded only in this book:
   supervisor's own run is also discarded (its own supervisor modified it too), both changes to the
   service are lost. This is filed as
   [graypaper#592](https://github.com/gavofyork/graypaper/issues/592).
-* *$`\theta'` as an ordered set.* $`\mathbf{b}` is a set of pairs, so (12.26) lists each pair once.
+* *Note v0.8.1-A46, $`\theta'` as an ordered set.* $`\mathbf{b}` is a set of pairs, so (12.26) lists each pair once.
   The model orders them by service and then by hash ({api}`JAM.accumulate`, `theta`), the order in
   which sets are serialized.
-* *Effective supervisor of a service with no account.* $`\mathbf{d}[s]_e` is defined only for
+* *Note v0.8.1-A45, the effective supervisor of a service with no account.* $`\mathbf{d}[s]_e` is defined only for
   $`s \in \mathcal{K}(\mathbf{d})`, but $`\mathbf{s}` can contain a service with no account (a digest or
   transfer for it). The model takes $`s` itself ({api}`JAM.effectiveSupervisor`), so
   $`\Delta(s) = \Delta_1(\ldots, s)`, which for a missing account changes nothing.
-* *Termination of $`\Delta_+` and $`Q`.* The paper gives no argument that the recursions end. The model
+* *Note v0.8.1-A47, termination of $`\Delta_+` and $`Q`.* The paper gives no argument that the recursions end. The model
   gives each a bound on the number of rounds: $`|\mathbf{q}| + 1` for $`Q`, and
   $`|\mathbf{R}^*| + \lfloor g / \mathsf{M}_T \rfloor + 2` for $`\Delta_+`, where $`\mathsf{M}_T`
   is the base gas of the `transfer` host call (Appendix B). If a bound were reached, the model would

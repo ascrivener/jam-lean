@@ -22,9 +22,9 @@ namespace JAM
 
 open Codec
 
-/-- Sizes of the fixed-length terms, in octets (GP §3.8: $\mathbb{H}$, $\overset{\backsim}{\mathbb{H}}$ and
-    $\bar{\mathbb{H}}$ keys, Ed25519 signatures $\bar{\mathbb{V}}$, Bandersnatch signatures
-    $\overset{\backsim}{\mathbb{V}}$ and ring proofs $\mathring{\mathbb{V}}$). -/
+/-- Sizes of the fixed-length terms, in octets (GP §3.8: $\mathbb{H}$, $\bskey$ and
+    $\edkey$ keys, Ed25519 signatures $\edsignaturebase$, Bandersnatch signatures
+    $\bssignaturebase$ and ring proofs $\bsringproofbase$). -/
 def hashSize : Nat := 32
 def keySize : Nat := 32
 def edSigSize : Nat := 64
@@ -183,12 +183,12 @@ def encodeTickets (xs : List TicketProof) : List UInt8 :=
 def encodePreimages (xs : List Preimage) : List UInt8 :=
   varSeq (fun p => fixed 4 p.requester ++ var p.blob) xs
 
-/-- $\mathcal{E}_C(a) = \mathcal{E}(\updownarrow[(\mathcal{E}_2(v), s) \mid (v, s) \leftarrow a])$, the credential
+/-- $\encodecredentials{a} = \mathcal{E}(\updownarrow[(\mathcal{E}_2(v), s) \mid (v, s) \leftarrow a])$, the credential
     encoding (GP v0.8.1 eq. 5.7 and Appendix C; #560 introduced it). -/
 def encodeCredential (a : List (Nat × Blob)) : List UInt8 :=
   varSeq (fun (v, s) => fixed 2 v ++ blob s) a
 
-/-- $\mathcal{E}(g \in \mathbb{G}) = \mathcal{E}(\mathbf{r}, \mathcal{E}_4(t), \mathcal{E}_C(a))$ (GP v0.8.1 Appendix C). -/
+/-- $\mathcal{E}(g \in \mathbb{G}) = \mathcal{E}(\mathbf{r}, \mathcal{E}_4(t), \encodecredentials{a})$ (GP v0.8.1 Appendix C). -/
 def Guarantee.encode (g : Guarantee) : List UInt8 :=
   g.report.encode ++ fixed 4 g.slot ++ encodeCredential g.credential
 
@@ -231,8 +231,8 @@ structure Block where
   header : Header
   extrinsic : Extrinsic
 
-/-- $\mathcal{E}(\mathbf{B}) = \mathcal{E}(\mathbf{H}, \mathcal{E}_T(\mathbf{E}_T), \mathcal{E}_P(\mathbf{E}_P), \mathcal{E}_G(\mathbf{E}_G), \mathcal{E}_A(\mathbf{E}_A), \mathcal{E}_D(\mathbf{E}_D))$
-    (GP Appendix C). -/
+/-- The block encoding (GP Appendix C):
+    $$\mathcal{E}(\mathbf{B}) = \mathcal{E}(\mathbf{H}, \mathcal{E}_T(\mathbf{E}_T), \mathcal{E}_P(\mathbf{E}_P), \mathcal{E}_G(\mathbf{E}_G), \mathcal{E}_A(\mathbf{E}_A), \mathcal{E}_D(\mathbf{E}_D))$$ -/
 def Block.encode (b : Block) : List UInt8 := b.header.encode ++ b.extrinsic.encode
 
 /-! ## Decoders -/

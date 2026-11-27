@@ -54,7 +54,7 @@ One reading appears in the model:
   (`SafroleInput.entropy`). The header condition it comes from, eq. (6.19), `vrfsigcheck`, is checked
   separately by {api}`JAM.sealValid`.
 
-$`\mathcal{H}` is Blake2b-256, the paper's hash function (§3.8), here {api}`JAM.blake`.
+$`\mathcal{H}` is Blake2b-256, the paper's hash function ({ref "primitives"}[§3.8]), here {api}`JAM.blake`.
 In {api}`JAM.safrole` these are the lines under `-- Entropy (§6.4)`: `eta0'` and the triple
 `(eta1', eta2', eta3')`.
 
@@ -81,7 +81,7 @@ $$`Z \colon \mathbf{s} \mapsto \left[\mathbf{s}_0, \mathbf{s}_{|\mathbf{s}|-1}, 
 {leanSource JAM.outsideIn}
 
 The paper gives $`Z` only by its first four entries. The model takes entry $`i` from index $`i/2` when $`i` is
-even and from index $`|\mathbf{s}| - 1 - \lfloor i/2 \rfloor` when $`i` is odd. The paper's typing $`\llbracket T\rrbracket_{\mathsf{E}} \to \llbracket T\rrbracket_{\mathsf{E}}` needs only
+even and from index $`|\mathbf{s}| - 1 - \lfloor i/2 \rfloor` when $`i` is odd. The paper's typing $`\llbracket \mathbb{T}\rrbracket_{\mathsf{E}} \to \llbracket \mathbb{T}\rrbracket_{\mathsf{E}}` needs only
 that the length is preserved; the theorems below show that, and also that this reading is a permutation:
 
 {mathdoc JAM.outsideIn_perm}

@@ -93,8 +93,9 @@ verdict's outcome:
 
 {leanSource JAM.checkVerdict}
 
-{api}`JAM.Xvalidif` gives $`\mathsf{X}_v`. The order of (10.8) is checked first in
-{api}`JAM.disputesTransition`, by {api}`JAM.orderedUniqBy`.
+{api}`JAM.Xvalidif` gives $`\mathsf{X}_v`. In {api}`JAM.disputesTransition` the order of (10.8) is
+checked by {api}`JAM.orderedUniqBy`, after the length bounds of (10.2) and before any verdict's own
+conditions.
 
 ## The verdict sequence v (eq. 10.12)
 %%%
@@ -111,7 +112,7 @@ $`V` is {api}`JAM.verdictOutcome`. It returns `none` where the paper's $`V` is u
 
 {leanSource JAM.verdictOutcome}
 
-The good-verdict count is the supermajority that §17's auditing uses: of `V` validators, `t` positive
+The good-verdict count is the supermajority that {ref "auditing"}[§17]'s auditing uses: of `V` validators, `t` positive
 judgments are more than two thirds ($`3t > 2V`) exactly when there are at least $`\lfloor 2V/3 \rfloor + 1` of them.
 In the theorem `V` is the validator count and `t` the number of positive judgments; `V` is not the
 function $`V` of (10.12).
@@ -152,7 +153,7 @@ accumulated:
 
 $$`\forall c \in \mathbb{N}_{\mathsf{C}} : \rho^\dagger[c] = \begin{cases} \emptyset & \text{if } \left(\mathcal{H}\left((\rho[c]_{\mathbf{g}})_{\mathbf{r}}\right), v\right) \in \mathbf{v}, v \in \{\bot, \emptyset\} \\ \rho[c] & \text{otherwise} \end{cases} \qquad \text{(10.14)}`
 
-The report is hashed through its encoding, as $`\mathcal{H}` applies to the codec's output (§3.8):
+The report is hashed through its encoding, as $`\mathcal{H}` applies to the codec's output ({ref "primitives"}[§3.8]):
 
 {leanSource JAM.clearNonPositive}
 
@@ -203,8 +204,8 @@ The first two points are note 29, and the others the notes they name, in the mod
   equivalences or as $`((r \in \psi'_B \Leftrightarrow r \notin \psi'_G) \Leftrightarrow v)`. The second reading would accept a fault
   with $`v = \top` on a report with a good verdict. The model reads a chain.
 * *Errors and their order.* The paper names no errors for an invalid disputes extrinsic and gives
-  no order between its conditions. The model uses the test vectors' error names
-  ({api}`JAM.DisputesError`). It checks the length bounds of (10.2) first, then each part's order
+  no order between its conditions. The model uses the test vectors' error names where they
+  exist ({api}`JAM.DisputesError`). It checks the length bounds of (10.2) first, then each part's order
   before the conditions on its elements: the order of the verdicts (10.8); then, for each verdict, its epoch index (the type
   $`\lfloor \tau/\mathsf{E} \rfloor - \mathbb{N}_2` of (10.2)), the order of its judgments (10.11), their number and
   each judge's index and signature (10.4), that its report is not already judged (10.10), and that

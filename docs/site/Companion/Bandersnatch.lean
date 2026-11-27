@@ -25,7 +25,7 @@ file := "bandersnatch"
 
 *In the paper:* {gpchapter}`sec:bandersnatch`.
 
-Appendix G of GP v0.8.1 defines the two Bandersnatch primitives that Safrole (§6) uses: VRF
+Appendix G of GP v0.8.1 defines the two Bandersnatch primitives that Safrole ({ref "safrole"}[§6]) uses: VRF
 signatures, which seal blocks and yield their entropy, and Ring VRF proofs, with which validators
 submit anonymous tickets. The appendix does not define the cryptography itself. It names the
 curve and refers to the specifications that define the schemes, and it fixes only the sets the rest
@@ -110,7 +110,8 @@ the Thin VRF and Draft 35 of the VRF specification, which GP v0.8.1 cites.
 {leanSource JamCrypto.withSignatures}
 
 and {api}`JamCrypto.Ring.crypto` the ring fields, from the KZG setup and, on the v0.8.0 path, the number of
-validators (on the v0.8.1 path the ring's domain is fixed at 2048 and the count is ignored):
+validators (on the v0.8.1 path the count is ignored and the ring's domain is 2048 by default; `dom081` is a
+parameter):
 
 {leanSource JamCrypto.Ring.crypto}
 
@@ -181,7 +182,7 @@ the fourth is in the same file's section on Draft 35 of the VRF specification:
   signature as the output point $`O`, then $`R`, then $`s`
   ({api}`JamCrypto.Bandersnatch.Thin.thinDecode`). This was raised with the paper as
   gavofyork/graypaper#593, and the VRF specification's author confirmed the order $`O \frown R \frown s`
-  (davxy/bandersnatch-vrf-spec#30).
+  and opened davxy/bandersnatch-vrf-spec#30.
 * *Note v0.8.1-A5, the ring's size.* $`\mathcal{O}(\mathbf{k})` does not fix the ring size, on which the ring proof's
   domain depends. On the v0.8.1 path `JamCrypto` uses the fixed domain of 2048 that §5 of Draft 35
   states, for every number of validators; on the v0.8.0 path it sizes the ring by the number of

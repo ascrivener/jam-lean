@@ -1,0 +1,205 @@
+{
+ "JAM.Account": [
+  "docs/site/Companion/Accounts.lean",
+  "docs/site/Companion/StateMerkle.lean"
+ ],
+ "JAM.Accumulate": [
+  "docs/site/Companion/Accounts.lean",
+  "docs/site/Companion/Invocations.lean"
+ ],
+ "JAM.Accumulation": [
+  "docs/site/Companion/Accumulation.lean",
+  "docs/site/Companion/History.lean"
+ ],
+ "JAM.Auditing": [
+  "docs/site/Companion/Auditing.lean"
+ ],
+ "JAM.Authorization": [
+  "docs/site/Companion/Authorization.lean"
+ ],
+ "JAM.BestChain": [
+  "docs/site/Companion/Auditing.lean",
+  "docs/site/Companion/BestChain.lean"
+ ],
+ "JAM.Blake2b": [
+  "docs/site/Companion/Primitives.lean"
+ ],
+ "JAM.Block": [
+  "docs/site/Companion/Codec.lean",
+  "docs/site/Companion/Overview.lean"
+ ],
+ "JAM.BlockImport": [
+  "docs/site/Companion/Authorization.lean",
+  "docs/site/Companion/Overview.lean"
+ ],
+ "JAM.Codec": [
+  "docs/site/Companion/Codec.lean"
+ ],
+ "JAM.Constants": [
+  "docs/site/Companion/Primitives.lean"
+ ],
+ "JAM.Crypto": [
+  "docs/site/Companion/Bandersnatch.lean"
+ ],
+ "JAM.Decode": [
+  "docs/site/Companion/Codec.lean"
+ ],
+ "JAM.Disputes": [
+  "docs/site/Companion/Disputes.lean"
+ ],
+ "JAM.Erasure": [
+  "docs/site/Companion/Erasure.lean"
+ ],
+ "JAM.Fast.Keccak": [
+  "docs/site/Companion/Primitives.lean"
+ ],
+ "JAM.Guarantee": [
+  "docs/site/Companion/Auditing.lean",
+  "docs/site/Companion/Work.lean"
+ ],
+ "JAM.History": [
+  "docs/site/Companion/History.lean",
+  "docs/site/Companion/Merkle.lean",
+  "docs/site/Companion/Primitives.lean"
+ ],
+ "JAM.Host.General": [
+  "docs/site/Companion/Invocations.lean"
+ ],
+ "JAM.Keccak": [
+  "docs/site/Companion/Primitives.lean"
+ ],
+ "JAM.Merkle": [
+  "docs/site/Companion/Merkle.lean"
+ ],
+ "JAM.Params": [
+  "docs/site/Companion/Primitives.lean"
+ ],
+ "JAM.Preimages": [
+  "docs/site/Companion/Accumulation.lean"
+ ],
+ "JAM.Refine": [
+  "docs/site/Companion/Invocations.lean",
+  "docs/site/Companion/Work.lean"
+ ],
+ "JAM.Reports": [
+  "docs/site/Companion/Reports.lean",
+  "docs/site/Companion/Statistics.lean"
+ ],
+ "JAM.Safrole": [
+  "docs/site/Companion/Primitives.lean",
+  "docs/site/Companion/Safrole.lean"
+ ],
+ "JAM.Segments": [
+  "docs/site/Companion/Merkle.lean",
+  "docs/site/Companion/Work.lean"
+ ],
+ "JAM.Sha512": [
+  "docs/site/Companion/Primitives.lean"
+ ],
+ "JAM.Shuffle": [
+  "docs/site/Companion/Shuffle.lean"
+ ],
+ "JAM.State": [
+  "docs/site/Companion/Accounts.lean",
+  "docs/site/Companion/Merkle.lean",
+  "docs/site/Companion/Overview.lean",
+  "docs/site/Companion/StateMerkle.lean"
+ ],
+ "JAM.StateDecode": [
+  "docs/site/Companion/StateMerkle.lean"
+ ],
+ "JAM.Statistics": [
+  "docs/site/Companion/Statistics.lean"
+ ],
+ "JAM.Theorems.Auditing": [
+  "docs/site/Companion/Auditing.lean",
+  "docs/site/Companion/Disputes.lean",
+  "docs/site/Companion/Shuffle.lean"
+ ],
+ "JAM.Theorems.BestChain": [
+  "docs/site/Companion/BestChain.lean"
+ ],
+ "JAM.Theorems.Confinement": [
+  "docs/site/Companion/Accounts.lean",
+  "docs/site/Companion/Accumulation.lean",
+  "docs/site/Companion/Invocations.lean"
+ ],
+ "JAM.Theorems.HostGas": [
+  "docs/site/Companion/Invocations.lean",
+  "docs/site/Companion/PVM.lean"
+ ],
+ "JAM.Theorems.Safrole": [
+  "docs/site/Companion/Safrole.lean"
+ ],
+ "JAM.Trie": [
+  "docs/site/Companion/StateMerkle.lean"
+ ],
+ "JAM.Work": [
+  "docs/site/Companion/Codec.lean",
+  "docs/site/Companion/Work.lean"
+ ],
+ "JamCrypto.Crypto": [
+  "docs/site/Companion/Bandersnatch.lean"
+ ],
+ "JamCrypto.Fast.Crypto": [
+  "docs/site/Companion/Bandersnatch.lean"
+ ],
+ "JamCrypto.Fast.Ring": [
+  "docs/site/Companion/Bandersnatch.lean"
+ ],
+ "JamCrypto.Reading": [
+  "docs/site/Companion/Bandersnatch.lean"
+ ],
+ "JamCrypto.Ring": [
+  "docs/site/Companion/Bandersnatch.lean"
+ ],
+ "JamCrypto.ThinVrf": [
+  "docs/site/Companion/Bandersnatch.lean"
+ ],
+ "PVM.Blob": [
+  "docs/site/Companion/Codec.lean"
+ ],
+ "PVM.Invocation": [
+  "docs/site/Companion/PVM.lean"
+ ],
+ "PVM.Logic.Steps": [
+  "docs/site/Companion/Codec.lean"
+ ],
+ "PVM.Logic.Words": [
+  "docs/site/Companion/Codec.lean"
+ ],
+ "PVM.Machine": [
+  "docs/site/Companion/PVM.lean"
+ ],
+ "PVM.Theorems.Blob": [
+  "docs/site/Companion/PVM.lean"
+ ],
+ "PVM.Theorems.BlobLimits": [
+  "docs/site/Companion/PVM.lean"
+ ],
+ "PVM.Theorems.Decode": [
+  "docs/site/Companion/PVM.lean"
+ ],
+ "PVM.Theorems.ExecForms": [
+  "docs/site/Companion/PVM.lean"
+ ],
+ "PVM.Theorems.GasFuel": [
+  "docs/site/Companion/PVM.lean"
+ ],
+ "PVM.Theorems.Host": [
+  "docs/site/Companion/PVM.lean"
+ ],
+ "PVM.Theorems.HostIds": [
+  "docs/site/Companion/PVM.lean"
+ ],
+ "PVM.Theorems.InitMem": [
+  "docs/site/Companion/PVM.lean"
+ ],
+ "PVM.Theorems.Invocation": [
+  "docs/site/Companion/Invocations.lean",
+  "docs/site/Companion/PVM.lean"
+ ],
+ "PVM.Theorems.Termination": [
+  "docs/site/Companion/PVM.lean"
+ ]
+}

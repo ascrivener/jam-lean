@@ -78,7 +78,7 @@ $$`Z \colon \mathbf{s} \mapsto \left[\mathbf{s}_0, \mathbf{s}_{|\mathbf{s}|-1}, 
 {leanSource JAM.outsideIn}
 
 The paper gives $`Z` only by its first four entries. The model takes entry $`i` from index $`i/2` when $`i` is
-even and from index $`|\mathbf{s}| - 1 - \lfloor i/2 \rfloor` when $`i` is odd. The paper's typing $`\llbracket T\rrbracket_{\mathsf{E}} \to \llbracket T\rrbracket_{\mathsf{E}}` needs only
+even and from index $`|\mathbf{s}| - 1 - \lfloor i/2 \rfloor` when $`i` is odd. The paper's typing $`\llbracket \mathbb{T}\rrbracket_{\mathsf{E}} \to \llbracket \mathbb{T}\rrbracket_{\mathsf{E}}` needs only
 that the length is preserved; the theorems below show that, and also that this reading is a permutation:
 
 {mathdoc JAM.outsideIn_perm}

@@ -269,7 +269,7 @@ package itself", and then checks it:
 The check of one imported segment is {api}`JAM.Segments.verifySegment`. Every segment verifies against the
 segment root of its sequence with the $`\mathcal{J}_0` justification $`J_\mathbf{l}` uses. Building on that,
 {api}`JAM.Guarantee.checkBundle` accepts a package together with the item data the data source
-gives for it ({api}`JAM.Guarantee.packageData`), provided every exported segment is $`\mathsf{W}_G` octets and the
+gives for it ({api}`JAM.Guarantee.packageData`), provided every segment the data source holds for the imports is $`\mathsf{W}_G` octets and the
 keys of $`\mathbf{l}` are exactly the imported package hashes. The theorem is about the decoded form
 that `checkBundle` takes. No round trip through the bundle's encoding is proved, so it does not
 show that {api}`JAM.Guarantee.verifyBundle` accepts the encoded bundle:

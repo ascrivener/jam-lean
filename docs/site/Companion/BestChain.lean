@@ -74,8 +74,9 @@ timeslot condition is what makes the recursion terminate (the measure is the tim
 
 {leanSource JAM.BestChain.slotTimely}
 
-{api}`JAM.BestChain.slotTimely` states (5.8)'s rule for the caller. The best-chain functions do not apply it,
-since the store is taken to hold only valid blocks.
+{api}`JAM.BestChain.slotTimely` states (5.8)'s rule for the caller. The best-chain functions use only its
+first conjunct, $`P(\mathbf{H})_T < \mathbf{H}_T`, and only to stop following parents ({api}`JAM.BestChain.ancestry`). They do not
+check the wall-clock bound $`\mathbf{H}_T \cdot \mathsf{P} \le \mathcal{T}`, since the store is taken to hold only valid blocks.
 
 # Acceptable blocks (§19)
 %%%

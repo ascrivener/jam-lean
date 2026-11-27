@@ -101,9 +101,9 @@ Supporting equalities, not registered with `@[csimp]`:
 `JamCrypto` (the crypto parameter in plain Lean, not imported by the model) keeps its fast code in
 its own `JamCrypto/Fast/` directory; the aggregator `JamCrypto.Fast` is imported by the root
 `JamCrypto`. The same script checks it. The fast functions perform the reference's own sequence of
-field operations on fixed-limb fields (`JamCrypto/Fast/Fr.lean`, `Fp25519.lean`, with generated
+field operations on fixed-limb fields (`JamCrypto/Fast/Fr.lean`, `Fp25519.lean`, `Fq.lean`, with generated
 proofs); see docs/jamcrypto.md. The replacements are in `JamCrypto/Fast/Crypto.lean`,
-`RingCurve.lean` and `Ring.lean`.
+`RingCurve.lean`, `G1.lean`, `Pairing.lean` and `Ring.lean`.
 
 | spec | fast | theorem | file |
 |---|---|---|---|
@@ -116,6 +116,10 @@ proofs); see docs/jamcrypto.md. The replacements are in `JamCrypto/Fast/Crypto.l
 | `Ring.Curve.decode` | `Fast.RingCurveFr.decode` | `Fast.RingCurveFr.decode_eq` | `JamCrypto/Fast/RingCurve.lean` |
 | `Ring.Curve.smulW` | `Fast.RingCurveFr.smulW` | `Fast.RingCurveFr.smulW_eq` | `JamCrypto/Fast/RingCurve.lean` |
 | `Ring.hashToCurve` | `Fast.RingCurveFr.hashToCurve` | `Fast.RingCurveFr.hashToCurve_eq` | `JamCrypto/Fast/RingCurve.lean` |
+| `G1.smul` | `Fast.G1Fq.smul` | `Fast.G1Fq.smul_eq` | `JamCrypto/Fast/G1.lean` |
+| `G1.msm` | `Fast.G1Fq.msm` | `Fast.G1Fq.msm_eq` | `JamCrypto/Fast/G1.lean` |
+| `G1.decompress` | `Fast.G1Fq.decompress` | `Fast.G1Fq.decompress_eq` | `JamCrypto/Fast/G1.lean` |
+| `Pairing.pairingCheck` | `Fast.PairingFq.pairingCheck` | `Fast.PairingFq.pairingCheck_eq` | `JamCrypto/Fast/Pairing.lean` |
 | `Ring.root` | `Ring.Fast.root` (restated) | `Ring.Fast.root_eq` | `JamCrypto/Fast/Ring.lean` |
 | `Ring.withSelectors` | `Ring.Fast.withSelectors` (restated) | `Ring.Fast.withSelectors_eq` | `JamCrypto/Fast/Ring.lean` |
 | `Ring.verify` | `Ring.Fast.verify` (restated) | `Ring.Fast.verify_eq` | `JamCrypto/Fast/Ring.lean` |

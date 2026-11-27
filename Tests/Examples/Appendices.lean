@@ -19,12 +19,12 @@ open Lean (Json)
 open PVM.Tests (field natField readJson)
 open JAM.Tests.Json (hex hexField)
 
-/-- Octets as `04 03 02 01`; longer runs as their first four and last `tail` octets and the count. -/
+/-- Octets as `04 03 02 01`; longer runs as their first four and last `tail` octets. -/
 def octets (b : List UInt8) (tail : Nat := 2) : String :=
   let h (x : UInt8) : String := JAM.Tests.Stf.hexS [x]
   let sp (xs : List UInt8) := " ".intercalate (xs.map h)
   if b.length ≤ 8 then s!"`{sp b}`"
-  else s!"`{sp (b.take 4)} … {sp (b.drop (b.length - tail))}` ({b.length} octets)"
+  else s!"`{sp (b.take 4)} … {sp (b.drop (b.length - tail))}`"
 
 /-- The octet offsets a piece of `n` octets occupies when it starts at `o`. -/
 def span (o n : Nat) : String := if n == 1 then toString o else s!"{o}–{o + n - 1}"
@@ -43,9 +43,9 @@ structure Piece where
   /-- How many final octets a long encoding shows. -/
   tail : Nat := 2
 
-def ruleNat : String := "$\\mathcal{E}$, eq. C.6"
-def ruleFixed (l : Nat) : String := s!"$\\mathcal\{E}_{l}$, little-endian, eq. C.13"
-def ruleBlob : String := "as itself, eq. C.1"
+def ruleNat : String := "$\\mathcal{E}$ (C.6)"
+def ruleFixed (l : Nat) : String := s!"$\\mathcal\{E}_{l}$ (C.13)"
+def ruleBlob : String := "itself (C.1)"
 
 /-- The rows for a list of pieces, with each piece's offsets in the whole encoding. -/
 def pieceRows (ps : List Piece) : List Row := Id.run do
@@ -106,7 +106,8 @@ def codecPreimages : IO Example := do
     notes := ["Every number below 128 is a single octet under $\\mathcal{E}$ (the case $x < 2^7$ of eq. C.6), so the \
       count 3 and the length 16 are the octets `03` and `10`. Larger numbers take two to nine octets, the \
       first of which says how many follow.",
-      "$\\mathcal{E}_4$ writes the least significant octet first: 16909060 is `0x01020304`, written `04 03 02 01`."],
+      "$\\mathcal{E}_4$ writes the least significant octet first: 16909060 is `0x01020304`, written `04 03 02 01`.",
+      "A long run shows its first four and last two octets; \"Octets at\" gives its place in the encoding."],
     model := ["JAM.encodePreimages", "JAM.Codec.varSeq", "JAM.Codec.var", "JAM.Codec.nat", "JAM.Codec.fixed", "JAM.Codec.blob"],
     equations := ["C.1", "C.6", "C.7", "C.8", "C.13", "C.19"],
     check := codecCheck name }
@@ -125,7 +126,7 @@ def codecWorkItem : IO Example := do
     { label := "Accumulate gas limit $a$", value := toString w.accumulateGasLimit, enc := Codec.fixed 8 w.accumulateGasLimit, rule := ruleFixed 8 },
     { label := "Exported segments $e$", value := toString w.exportCount, enc := Codec.fixed 2 w.exportCount, rule := ruleFixed 2 },
     { label := "Payload $\\mathbf{y}$, with its length", value := count w.payload.size "octet" "octets",
-      enc := Codec.var w.payload, rule := "$\\updownarrow$: $\\mathcal{E}$ of the length, then the octets, eq. C.8" },
+      enc := Codec.var w.payload, rule := "$\\updownarrow$ (C.8): $\\mathcal{E}$ of the length, then the octets" },
     { label := "Number of imports $|\\mathbf{i}|$", value := toString w.importSegments.length,
       enc := Codec.nat w.importSegments.length, rule := ruleNat }] ++
     (w.importSegments.zipIdx.map fun (x, k) =>
@@ -186,8 +187,8 @@ def trieExample (case : Nat) : IO Example := do
   let name (h : List UInt8) := if h == zero then "$\\mathbb{H}_0$ (empty)" else abbr h
   let leafRow (k v : List UInt8) : Row :=
     let n := Trie.leaf k v
-    let kind := if v.length ≤ 32 then s!"embedded-value leaf: value of {v.length} octets, padded to 32"
-      else s!"regular leaf: value of {v.length} octets, stored as $\\mathcal\{H}(v)$"
+    let kind := if v.length ≤ 32 then s!"embedded: the {v.length}-octet value, padded to 32"
+      else s!"regular: $\\mathcal\{H}(v)$ of the {v.length}-octet value"
     { label := s!"Leaf $L(k, v)$ for $k$ = {abbr k}",
       cells := [kind, octets (n.take 1), abbr (Trie.hashNode n)] }
   let mut levels : Array Row := #[]
@@ -202,7 +203,7 @@ def trieExample (case : Nat) : IO Example := do
     let node := Trie.branch ml mr
     let h := Trie.merkle (248 - depth) depth d
     unless h == Trie.hashNode node do throw <| IO.userError "examples: the branch does not hash to M"
-    let row : Row := ⟨s!"Branch $B(l, r)$ on bit {depth}", [s!"$l$ (bit 0): {name ml}; $r$ (bit 1): {name mr}", octets (node.take 1), abbr h]⟩
+    let row : Row := ⟨s!"Branch $B(l, r)$ on bit {depth}", [s!"$l$ = {name ml}, $r$ = {name mr}", octets (node.take 1), abbr h]⟩
     levels := levels.push row
     d := if l.length ≥ r.length then l else r
     depth := depth + 1
@@ -220,7 +221,8 @@ def trieExample (case : Nat) : IO Example := do
     rows := leaves ++ levels.toList.reverse ++ [{ label := "Root $M(d)$", cells := ["the top branch's hash", "", abbr got] }],
     notes := ["Every node is 64 octets. The first bit says what it is: a branch has 0, a leaf 1. An embedded-value leaf's first octet is \
       $2^7$ plus the value's length; a regular leaf's is $2^7 + 2^6$ = `c0`. A branch is its two children's hashes, with \
-      the left one's first bit cleared, so its first octet is the left child's first octet without its high bit.",
+      the left one's first bit cleared, so its first octet is the left child's first octet without its high bit. \
+      $l$ is the root of the entries whose bit is 0, $r$ of those whose bit is 1.",
       "The vectors' keys are 32 octets; as in `trietest`, the model is given their first 31, the paper's state-key length."],
     model := ["JAM.Trie.root", "JAM.Trie.merkle", "JAM.Trie.branch", "JAM.Trie.leaf", "JAM.Trie.hashNode", "JAM.Trie.bit"],
     equations := ["D.3", "D.4", "D.5", "D.6"],

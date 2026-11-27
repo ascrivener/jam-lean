@@ -42,7 +42,8 @@ lean_exe companion where
 target modelHighlights : Unit := do
   -- Every module a chapter quotes with `{leanSource}`: a missing one fails the book's build.
   let mods := #[`JAM.Safrole, `PVM.Machine, `PVM.Gas, `PVM.Memory,
-    `PVM.Basic, `PVM.Blob, `PVM.Instr, `PVM.Exec, `PVM.Invocation]
+    `PVM.Basic, `PVM.Blob, `PVM.Instr, `PVM.Exec, `PVM.Invocation,
+    `JAM.Host.General, `JAM.Refine, `JAM.Accumulate]
   let jobs ← mods.mapM fun m => do
     let some mod ← findModule? m | error s!"modelHighlights: no module {m}"
     fetch <| mod.facet `highlighted

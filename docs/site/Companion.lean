@@ -2,6 +2,7 @@ import VersoManual
 import Companion.Source
 import Companion.Safrole
 import Companion.PVM
+import Companion.Invocations
 
 open Verso.Genre Manual
 open Companion
@@ -78,7 +79,7 @@ with the model modules that implement them.
 * §18 Beefy distribution: not modelled
 * §19 Grandpa and the best chain: `JAM/BestChain.lean` (the best-chain rule; Grandpa itself is not modelled)
 * *Appendix A, the PVM* ({ref "pvm"}[written]): `PVM/Blob.lean`, `PVM/Machine.lean`, `PVM/Instr.lean`, `PVM/Exec.lean`, `PVM/Memory.lean`, `PVM/Invocation.lean`, `PVM/Gas.lean`
-* Appendix B, PVM invocations: `PVM/Invocation.lean`, `JAM/Host/`
+* *Appendix B, PVM invocations and host calls* ({ref "invocations"}[written]): `JAM/Host/General.lean`, `JAM/Refine.lean`, `JAM/Accumulate.lean` (the host-call loop, the standard initialization and the argument invocation, which v0.8.1 defines in §A.6–§A.8, are in the Appendix A chapter)
 * Appendix C, the serialization codec: `JAM/Codec.lean`, `JAM/Decode.lean`
 * Appendix D, state Merklization: `JAM/Trie.lean`, `JAM/State.lean`, `JAM/StateDecode.lean`
 * Appendix E, general Merklization: `JAM/Merkle.lean`, `JAM/Segments.lean`
@@ -89,3 +90,5 @@ with the model modules that implement them.
 {include 1 Companion.Safrole}
 
 {include 1 Companion.PVM}
+
+{include 1 Companion.Invocations}

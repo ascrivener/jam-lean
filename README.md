@@ -9,9 +9,9 @@ binaries. The model moved from v0.8.0 to v0.8.1 on 2026-11-25 (#261); the last v
 
 **Documentation:** [ascrivener.github.io/jam-lean](https://ascrivener.github.io/jam-lean/): the
 [API reference](https://ascrivener.github.io/jam-lean/api/) for `PVM`, `JAM` and `JamCrypto`, and
-[*A Companion to the Gray Paper*](https://ascrivener.github.io/jam-lean/book/), a pilot that sets
-the paper's equations next to the model's highlighted source and its theorems (built from
-[`docs/site/`](docs/site/README.md)).
+[*A Companion to the Gray Paper*](https://ascrivener.github.io/jam-lean/book/), which sets the
+paper's equations next to the model's highlighted source and its theorems, one chapter for each part
+of the paper the model implements (built from [`docs/site/`](docs/site/README.md)).
 
 * **The protocol.** All of Appendix A (the Polkadot Virtual Machine, its host-call machinery and its
   gas model; library `PVM`), and the protocol built on it (library `JAM`): the codec, hashes, the

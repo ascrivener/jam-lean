@@ -37,6 +37,12 @@ from `Companion.lean`. A chapter imports the model modules it discusses. It can 
 * `{docstring N}` for a definition or theorem's signature and docstring.
 * `{name}`N`` for an inline reference to `N`.
 
+One rule for code: wherever the book names the definition that implements an equation or a step,
+it *quotes* it with `{leanSource N}` (the header "N — file · GitHub · API" comes with it; blocks over
+30 lines start collapsed). A bare GitHub or API link never stands in for the code. A theorem in the
+`proofs/` package, which `{leanSource}` cannot reach, is quoted as its statement in a code block.
+`{api}` and `{name}` references in running prose to something quoted elsewhere are fine.
+
 The readings the model chose should link to `docs/upstream-candidates.md` by note number.
 
 ## Notation: the paper's macros
@@ -79,3 +85,12 @@ use goes in a doc comment preceded by `-- notation-ok: <id> <reason>`.
   module changes but none of its chapters does.
 * `scripts/check-citations.py` (CI) checks that every note the book and the model cite
   (`v0.8.1-A18`, "note 27") exists in `docs/upstream-candidates.md` and is not withdrawn.
+* Equations come from the paper's TeX. `scripts/gen_equations.py` writes `gp-equations.json`
+  (number, label, TeX body, fingerprint; its numbering is checked against LaTeX's `.aux`).
+  `{gpeq "6.24"}` displays the paper's equation; ``{eq}`6.24` `` cites a number. Where a display
+  must be the book's own (a part of an equation, a single case, a layout the renderers cannot
+  draw), a `{transcribed "6.24" "<fingerprint>"}` paragraph goes just before it, and the build fails
+  when that equation's TeX changes. `scripts/check-equations.py` (CI) rejects a numbered hand display
+  without its marker and a hand-typed "(6.24)" in prose. After regenerating the table for a new
+  paper version, `scripts/check-equations.py --changed OLD.json` lists the equations whose TeX
+  changed or which moved, and the chapters that use them: re-read those passages.

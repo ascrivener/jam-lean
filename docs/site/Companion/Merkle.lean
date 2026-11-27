@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import JAM.Merkle
 import JAM.Segments
@@ -18,6 +19,8 @@ tag := "merkle"
 shortTitle := "E. General Merklization"
 file := "general-merklization"
 %%%
+
+*In the paper:* {gpchapter}`sec:merklization`.
 
 Appendix E of GP v0.8.1 defines the Merkle structures the protocol uses outside the state trie:
 binary Merkle trees, well-balanced (§E.1.1) and of constant depth (§E.1.2), with the functions
@@ -39,7 +42,7 @@ tag := "merkle-node"
 $`N` hashes a sequence of items pairwise into a single root, splitting it at $`\lceil |\mathbf{v}|/2 \rceil` and
 prefixing each inner node with $`\$\text{node}`:
 
-$$`N\colon \left\{\begin{aligned} (\llbracket\mathbb{B}_n\rrbracket, \mathbb{B} \to \mathbb{H}) &\to \mathbb{B}_n \cup \mathbb{H} \\ (\mathbf{v}, H) &\mapsto \begin{cases} \mathbb{H}_0 & \text{if } |\mathbf{v}| = 0 \\ \mathbf{v}_0 & \text{if } |\mathbf{v}| = 1 \\ \begin{aligned} &H\big(\$\text{node} \frown N(\mathbf{v}_{\dots\lceil |\mathbf{v}|/2 \rceil}, H) \\ &\quad \frown N(\mathbf{v}_{\lceil |\mathbf{v}|/2 \rceil\dots}, H)\big) \end{aligned} & \text{otherwise} \end{cases} \end{aligned}\right. \quad \text{(E.1)}`
+{gpeq "E.1"}
 
 {leanSource JAM.Merkle.node}
 
@@ -56,6 +59,8 @@ $$`T\colon \left\{\begin{aligned} (\llbracket\mathbb{B}_n\rrbracket, \mathbb{N}_
 
 $$`\text{where } P^s(\mathbf{v}, i) \equiv \begin{cases} \mathbf{v}_{\dots\lceil |\mathbf{v}|/2 \rceil} & \text{if } (i < \lceil |\mathbf{v}|/2 \rceil) = s \\ \mathbf{v}_{\lceil |\mathbf{v}|/2 \rceil\dots} & \text{otherwise} \end{cases}`
 
+{transcribed "E.2" "afa0fbbc72"}
+
 $$`\text{and } P_I(\mathbf{v}, i) \equiv \begin{cases} 0 & \text{if } i < \lceil |\mathbf{v}|/2 \rceil \\ \lceil |\mathbf{v}|/2 \rceil & \text{otherwise} \end{cases} \qquad \text{(E.2)}`
 
 {leanSource JAM.Segments.trace}
@@ -68,7 +73,7 @@ with $`s`: in each, the sibling `o` is $`P^\bot`, and the recursive call goes in
 tag := "merkle-wb"
 %%%
 
-$$`\mathcal{M}_B\colon \left\{\begin{aligned} (\llbracket\mathbb{B}\rrbracket, \mathbb{B} \to \mathbb{H}) &\to \mathbb{H} \\ (\mathbf{v}, H) &\mapsto \begin{cases} H(\mathbf{v}_0) & \text{if } |\mathbf{v}| = 1 \\ N(\mathbf{v}, H) & \text{otherwise} \end{cases} \end{aligned}\right. \qquad \text{(E.3)}`
+{gpeq "E.3"}
 
 {leanSource JAM.Merkle.root}
 
@@ -81,7 +86,7 @@ The constant-depth tree first applies the constancy preprocessor $`C`, which has
 prefix $`\$\text{leaf}` and pads the sequence with zero hashes to a power of two, so that every leaf is at the
 same depth:
 
-$$`C\colon \left\{\begin{aligned} (\llbracket\mathbb{B}\rrbracket, \mathbb{B} \to \mathbb{H}) &\to \llbracket\mathbb{H}\rrbracket \\ (\mathbf{v}, H) &\mapsto \mathbf{v}' \ \text{where} \ \left\{\begin{aligned} |\mathbf{v}'| &= 2^{\lceil \log_2(\max(1, |\mathbf{v}|)) \rceil} \\ \mathbf{v}'_i &= \begin{cases} H(\$\text{leaf} \frown \mathbf{v}_i) & \text{if } i < |\mathbf{v}| \\ \mathbb{H}_0 & \text{otherwise} \end{cases} \end{aligned}\right. \end{aligned}\right. \qquad \text{(E.7)}`
+{gpeq "E.7"}
 
 {leanSource JAM.Segments.constancy}
 
@@ -93,11 +98,11 @@ $`\mathcal{M}` is the root of the padded tree. $`\mathcal{J}_x` gives the path f
 index $`i`: the first $`\lceil \log_2(\max(1, |\mathbf{v}|)) \rceil - x` siblings of the trace to its first leaf. $`\mathcal{L}_x` gives the page itself,
 as leaf hashes:
 
-$$`\mathcal{M}\colon \left\{\begin{aligned} (\llbracket\mathbb{B}\rrbracket, \mathbb{B} \to \mathbb{H}) &\to \mathbb{H} \\ (\mathbf{v}, H) &\mapsto N(C(\mathbf{v}, H), H) \end{aligned}\right. \qquad \text{(E.4)}`
+{gpeq "E.4"}
 
-$$`\mathcal{J}_x\colon \left\{\begin{aligned} (\llbracket\mathbb{B}\rrbracket, \mathbb{N}_{|\mathbf{v}|}, \mathbb{B} \to \mathbb{H}) &\to \llbracket\mathbb{H}\rrbracket \\ (\mathbf{v}, i, H) &\mapsto T(C(\mathbf{v}, H), 2^x i, H)_{\dots\max(0, \lceil \log_2(\max(1, |\mathbf{v}|)) - x \rceil)} \end{aligned}\right. \qquad \text{(E.5)}`
+{gpeq "E.5"}
 
-$$`\mathcal{L}_x\colon \left\{\begin{aligned} (\llbracket\mathbb{B}\rrbracket, \mathbb{N}_{|\mathbf{v}|}, \mathbb{B} \to \mathbb{H}) &\to \llbracket\mathbb{H}\rrbracket \\ (\mathbf{v}, i, H) &\mapsto \left[ H(\$\text{leaf} \frown l) \;\middle|\; l \mathrel{<\mkern-7mu-} \mathbf{v}_{2^x i \dots \min(2^x i + 2^x, |\mathbf{v}|)} \right] \end{aligned}\right. \qquad \text{(E.6)}`
+{gpeq "E.6"}
 
 {leanSource JAM.Segments.cdRoot}
 
@@ -147,9 +152,9 @@ A work package's exported segments $`\mathbf{s}` are committed to by $`\mathcal{
 be justified later, the paged proofs $`P(\mathbf{s})` are erasure-coded and distributed with them: for each page of 64
 segments, the page's leaf hashes and its path, encoded and zero-padded to one segment of $`\mathsf{W}_G` octets:
 
-$$`P\colon \left\{\begin{aligned} \llbracket\mathbb{J}\rrbracket &\to \llbracket\mathbb{J}\rrbracket \\ \mathbf{s} &\mapsto \left[ \mathcal{P}_l\left(\mathcal{E}(\updownarrow\mathcal{J}_6(\mathbf{s}, i), \updownarrow\mathcal{L}_6(\mathbf{s}, i))\right) \;\middle|\; i \mathrel{<\mkern-7mu-} \mathbb{N}_{\lceil |\mathbf{s}|/64 \rceil} \right] \quad \text{where } l = \mathsf{W}_G \end{aligned}\right. \qquad \text{(14.13)}`
+{gpeq "14.13"}
 
-$$`\mathcal{P}_{n \in \mathbb{N}_{1\dots}}\colon \left\{\begin{aligned} \mathbb{B} &\to \mathbb{B}_{k \cdot n} \\ \mathbf{x} &\mapsto \mathbf{x} \frown [0, 0, \dots]_{((|x| + n - 1) \bmod n) + 1 \dots n} \end{aligned}\right. \qquad \text{(14.20)}`
+{gpeq "14.20"}
 
 {leanSource JAM.Segments.pagedProofs}
 
@@ -187,6 +192,8 @@ $$`P\colon \left\{\begin{aligned} (\llbracket\mathbb{H}^?\rrbracket, \mathbb{H},
 
 and
 
+{transcribed "E.8" "b84c8c049c"}
+
 $$`R\colon \left\{\begin{aligned} (\llbracket T\rrbracket, \mathbb{N}, T) &\to \llbracket T\rrbracket \\ (\mathbf{s}, i, v) &\mapsto \mathbf{s}' \ \text{where } \mathbf{s}' = \mathbf{s} \text{ except } \mathbf{s}'_i = v \end{aligned}\right. \qquad \text{(E.8)}`
 
 {leanSource JAM.MMR.place}
@@ -199,15 +206,19 @@ $`R` is `List.set`. Each recursive call moves $`n` one peak up, and Lean is give
 The range is encoded as its optional peaks with a length, and committed to by its *super-peak*, which
 folds the present peaks together with Keccak and the prefix $`\$\text{peak}`:
 
-$$`\mathcal{E}_M\colon \left\{\begin{aligned} \llbracket\mathbb{H}^?\rrbracket &\to \mathbb{B} \\ \mathbf{b} &\mapsto \mathcal{E}\left(\updownarrow\left[\text{¿}x \;\middle|\; x \mathrel{<\mkern-7mu-} \mathbf{b}\right]\right) \end{aligned}\right. \qquad \text{(E.9)}`
+{gpeq "E.9"}
 
 $$`\mathcal{M}_R\colon \left\{\begin{aligned} \llbracket\mathbb{H}^?\rrbracket &\to \mathbb{H} \\ \mathbf{b} &\mapsto \begin{cases} \mathbb{H}_0 & \text{if } |\mathbf{h}| = 0 \\ \mathbf{h}_0 & \text{if } |\mathbf{h}| = 1 \\ \mathcal{H}_K\left(\$\text{peak} \frown \mathcal{M}_R(\mathbf{h}_{\dots|\mathbf{h}|-1}) \frown \mathbf{h}_{|\mathbf{h}|-1}\right) & \text{otherwise} \end{cases} \end{aligned}\right.`
+
+{transcribed "E.10" "192dcbf5f4"}
 
 $$`\text{where } \mathbf{h} = \left[h \;\middle|\; h \mathrel{<\mkern-7mu-} \mathbf{b}, h \ne \emptyset\right] \qquad \text{(E.10)}`
 
 $`\mathcal{E}_M` is the second half of the $`C(3)` row of the state serialization, `varSeq (opt id) r.belt` in
 {api}`JAM.Serialize.recent` ({ref "statemerkle"}[Appendix D]). $`\mathcal{M}_R` takes the last present peak off at each
 step, so the model works on the present peaks in reverse order:
+
+{leanSource JAM.Serialize.recent}
 
 {leanSource JAM.MMR.superPeakRev}
 
@@ -234,3 +245,6 @@ These are recorded in the model's
 * *Note v0.8.1-A15, the pages of $`P`.* {ref "work"}[§14.4] describes each paged proof as "a page of 64 hashes of
   segments". By the equation, the page is $`\mathcal{L}_6`, the hashes $`H(\$\text{leaf} \frown \mathbf{s}_i)` of the segments rather than
   $`\mathcal{H}(\mathbf{s}_i)`, and the last page holds only $`|\mathbf{s}| \bmod 64` of them when 64 does not divide $`|\mathbf{s}|`. The model follows the equation.
+
+
+{leanSource JAM.Segments.pageRoot}

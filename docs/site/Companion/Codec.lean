@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import Companion.Docstring
 import PVM.Blob
 import PVM.Logic.Steps
@@ -22,6 +23,8 @@ shortTitle := "C. Codec"
 file := "codec"
 %%%
 
+*In the paper:* {gpchapter}`sec:serialization`.
+
 Appendix C of GP v0.8.1 defines $`\mathcal{E}`, the function that turns a term into a sequence of
 octets, and its inverse $`\mathcal{E}^{-1}`. The paper uses $`\mathcal{E}` wherever a term is hashed,
 signed, stored in the state or passed to the PVM. The appendix has two parts: the encodings of the
@@ -38,11 +41,11 @@ the protocol use the same definitions. The decoders are in `JAM/Decode.lean`.
 tag := "codec-trivial"
 %%%
 
-$$`\mathcal{E}(\emptyset) \equiv [\,] \qquad \text{(C.1)} \qquad\qquad \mathcal{E}(x \in \mathbb{B}) \equiv x \qquad \text{(C.2)}`
+{gpeq "C.1, C.2"}
 
-$$`\mathcal{E}(\bot) \equiv [0], \qquad \mathcal{E}(\top) \equiv [1] \qquad \text{(C.3)}`
+{gpeq "C.3"}
 
-$$`\mathcal{E}((a, b, \dots)) \equiv \mathcal{E}(a) \frown \mathcal{E}(b) \frown \dots \qquad \text{(C.4)} \qquad\qquad \mathcal{E}(a, b, \dots) \equiv \mathcal{E}((a, b, \dots)) \qquad \text{(C.5)}`
+{gpeq "C.4, C.5"}
 
 An octet sequence encodes as itself, and a tuple as the concatenation of its parts. In the model a
 tuple's encoding is written out with `++` in each encoder; an octet sequence is
@@ -60,7 +63,7 @@ tag := "codec-naturals"
 The general encoding of a natural below $`2^{64}` takes one to nine octets. The number of leading one
 bits of the first octet says how many octets follow:
 
-$$`\mathcal{E}\colon \left\{\begin{aligned} \mathbb{N}_{2^{64}} &\to \mathbb{B}_{1:9} \\ x &\mapsto \begin{cases} [0] & \text{if } x = 0 \\ \left[2^8 - 2^{8-l} + \left\lfloor \frac{x}{2^{8l}} \right\rfloor\right] \frown \mathcal{E}_l(x \bmod 2^{8l}) & \text{if } \exists l \in \mathbb{N}_8 : 2^{7l} \le x < 2^{7(l+1)} \\ [2^8 - 1] \frown \mathcal{E}_8(x) & \text{otherwise if } x < 2^{64} \end{cases} \end{aligned}\right. \quad \text{(C.6)}`
+{gpeq "C.6"}
 
 {leanSource PVM.Blob.encodeNat}
 
@@ -73,16 +76,20 @@ middle case for $`l < 5`, the case that covers every nonzero $`x < 2^{35}`, and 
 
 {mathdoc PVM.encodeNat_len_le5}
 
-The fixed-length encoding $`\mathcal{E}_l` (eq. (C.13)) is little-endian, in exactly $`l` octets:
+The fixed-length encoding $`\mathcal{E}_l` (eq. {eq}`C.13`) is little-endian, in exactly $`l` octets:
 
-$$`\mathcal{E}_{l \in \mathbb{N}}\colon \left\{\begin{aligned} \mathbb{N}_{2^{8l}} &\to \mathbb{B}_l \\ x &\mapsto \begin{cases} [\,] & \text{if } l = 0 \\ [x \bmod 256] \frown \mathcal{E}_{l-1}\left(\left\lfloor \frac{x}{256} \right\rfloor\right) & \text{otherwise} \end{cases} \end{aligned}\right. \qquad \text{(C.13)}`
+{gpeq "C.13"}
 
 {leanSource PVM.Num.encodeLE}
 
-Applied to a tuple or a sequence, $`\mathcal{E}_l` encodes each element with $`\mathcal{E}_l` and concatenates the results (eqs. (C.14)–(C.16)).
+Applied to a tuple or a sequence, $`\mathcal{E}_l` encodes each element with $`\mathcal{E}_l` and concatenates the results (eqs. {eq}`C.14`–{eq}`C.16`).
 In the model these are written out where they are used, for example `[a.items, a.created, a.lastAcc, a.parent].flatMap (fixed 4)`
 for $`\mathcal{E}_4(a_i, a_r, a_a, a_p)` in the state serialization ({ref "statemerkle"}[Appendix D]).
 {api}`JAM.Codec.nat` and {api}`JAM.Codec.fixed` give the two encodings their codec names.
+
+{leanSource JAM.Codec.nat}
+
+{leanSource JAM.Codec.fixed}
 
 What the model proves about $`\mathcal{E}_l`: the result has $`l` octets, decoding it gives back $`x \bmod 2^{8l}`
 (so $`x` itself when $`x < 2^{8l}`, the paper's domain), and every $`l`-octet sequence is the encoding of its
@@ -99,11 +106,11 @@ decoded value:
 tag := "codec-sequences"
 %%%
 
-$$`\mathcal{E}([\mathbf{i}_0, \mathbf{i}_1, \dots]) \equiv \mathcal{E}(\mathbf{i}_0) \frown \mathcal{E}(\mathbf{i}_1) \frown \dots \qquad \text{(C.7)}`
+{gpeq "C.7"}
 
-$$`\updownarrow x \equiv (|x|, x) \quad \text{thus} \quad \mathcal{E}(\updownarrow x) \equiv \mathcal{E}(|x|) \frown \mathcal{E}(x) \qquad \text{(C.8)}`
+{gpeq "C.8"}
 
-$$`\text{¿}x \equiv \begin{cases} 0 & \text{if } x = \emptyset \\ (1, x) & \text{otherwise} \end{cases} \qquad \text{(C.9)}`
+{gpeq "C.9"}
 
 A sequence is the concatenation of its elements' encodings, with no length. A term of variable size
 is written $`\updownarrow x` and carries its length, encoded with the general $`\mathcal{E}`. An optional term $`\text{¿}x` is
@@ -117,7 +124,7 @@ prefixed by 0 or 1. Each encoder takes the encoder of the elements as an argumen
 
 {leanSource JAM.Codec.opt}
 
-`opt` writes the discriminator as the octet 0 or 1, which is $`\mathcal{E}(0)` and $`\mathcal{E}(1)` under eq. (C.6).
+`opt` writes the discriminator as the octet 0 or 1, which is $`\mathcal{E}(0)` and $`\mathcal{E}(1)` under eq. {eq}`C.6`.
 
 # Bit sequences (§C.1.4)
 %%%
@@ -126,13 +133,13 @@ tag := "codec-bits"
 
 Bits are packed eight to an octet, least significant first:
 
-$$`\mathcal{E}(b \in \mathbb{b}) \equiv \begin{cases} [\,] & \text{if } b = [\,] \\ \left[\sum_{i=0}^{i < \min(8, |b|)} b_i \cdot 2^i\right] \frown \mathcal{E}(b_{8\dots}) & \text{otherwise} \end{cases} \qquad \text{(C.10)}`
+{gpeq "C.10"}
 
 {leanSource JAM.encodeBits}
 
 The model builds the $`\lceil |b| / 8 \rceil` octets directly instead of recursing; a bit past the end of $`b`
-counts as 0, so the high bits of a short last octet are zero, as the sum in eq. (C.10) leaves them.
-The model uses it in the assurances extrinsic (eq. (C.21)) and to build the message an assurance signs
+counts as 0, so the high bits of a short last octet are zero, as the sum in eq. {eq}`C.10` leaves them.
+The model uses it in the assurances extrinsic (eq. {eq}`C.21`) and to build the message an assurance signs
 ({ref "reports"}[§11.2]).
 
 # Dictionaries and sets (§C.1.5, §C.1.6)
@@ -140,9 +147,9 @@ The model uses it in the assurances extrinsic (eq. (C.21)) and to build the mess
 tag := "codec-dicts"
 %%%
 
-$$`\forall K, V\colon \mathcal{E}(d \in \langle\!|\, K \to V \,|\!\rangle) \equiv \mathcal{E}\left(\updownarrow\left[\, (\mathcal{E}(k), \mathcal{E}(d[k])) \;\middle|\; k \in \mathcal{K}(d) \wr k \,\right]\right) \qquad \text{(C.11)}`
+{gpeq "C.11"}
 
-$$`\mathcal{E}(\{a, b, c, \dots\}) \equiv \mathcal{E}(a) \frown \mathcal{E}(b) \frown \mathcal{E}(c) \frown \dots \quad \text{where } a < b < c < \dots \qquad \text{(C.12)}`
+{gpeq "C.12"}
 
 A dictionary is encoded as its pairs in key order, with a length; a set as its elements in order.
 Where the paper uses a set of hashes $`\left\{\mkern-5mu\left[\,\mathbb{H}\,\right]\mkern-5mu\right\}` or a dictionary $`\langle\!|\, \mathbb{H} \to \mathbb{H} \,|\!\rangle`, the model holds it as
@@ -158,7 +165,7 @@ refinement context, are written with a length discriminator, so the model's set 
 $`\mathcal{E}(\updownarrow[\dots])` of the ordered elements. Not every set in the paper is: the set {ref "auditing"}[§17.3] encodes for an
 audit announcement has none (see the {ref "auditing"}[auditing chapter]).
 
-Dictionaries need care. Eq. (C.11) already gives a dictionary its length, and eq. (C.30) writes the
+Dictionaries need care. Eq. {eq}`C.11` already gives a dictionary its length, and eq. {eq}`C.30` writes the
 work report's segment-root lookup as $`\updownarrow\mathbf{r}_\mathbf{l}`, which read literally would put a second length before it.
 The model writes one length ({api}`JAM.Codec.varHashDict`); see {ref "codec-readings"}[Readings chosen].
 
@@ -190,6 +197,20 @@ discriminators 0 and 1), {api}`JAM.Decoder.bits` (which rejects nonzero padding 
 {api}`JAM.Decoder.bool`, and {api}`JAM.Decoder.varHashSet` and {api}`JAM.Decoder.varHashDict`
 (which reject elements or keys out of ascending order, or repeated). For example:
 
+{leanSource JAM.Decoder.fixed}
+
+{leanSource JAM.Decoder.bytes}
+
+{leanSource JAM.Decoder.varSeq}
+
+{leanSource JAM.Decoder.var}
+
+{leanSource JAM.Decoder.bits}
+
+{leanSource JAM.Decoder.bool}
+
+{leanSource JAM.Decoder.varHashDict}
+
 {leanSource JAM.Decoder.opt}
 
 {leanSource JAM.Decoder.varHashSet}
@@ -208,7 +229,7 @@ tag := "codec-block"
 A block is serialized as its header followed by its extrinsics, each of them a tuple of its
 elements in order, with the encodings of §C.1:
 
-$$`\mathcal{E}(\mathbf{B}) = \mathcal{E}\left(\mathbf{H}, \mathcal{E}_T(\mathbf{E}_T), \mathcal{E}_P(\mathbf{E}_P), \mathcal{E}_G(\mathbf{E}_G), \mathcal{E}_A(\mathbf{E}_A), \mathcal{E}_D(\mathbf{E}_D)\right) \qquad \text{(C.17)}`
+{gpeq "C.17"}
 
 {leanSource JAM.Block.encode}
 
@@ -216,11 +237,11 @@ $$`\mathcal{E}(\mathbf{B}) = \mathcal{E}\left(\mathbf{H}, \mathcal{E}_T(\mathbf{
 
 The header has a regular encoding and an unsigned one, $`\mathcal{E}_U`, without the seal $`\mathbf{H}_S`:
 
-$$`\mathcal{E}(\mathbf{H}) = \mathcal{E}(\mathcal{E}_U(\mathbf{H}), \mathbf{H}_S) \qquad \text{(C.23)}`
+{gpeq "C.23"}
 
-$$`\mathcal{E}_U(\mathbf{H}) = \mathcal{E}\left(\mathbf{H}_P, \mathbf{H}_R, \mathbf{H}_X, \mathcal{E}_4(\mathbf{H}_T), \mathcal{E}_E(\mathbf{H}_E), \text{¿}\mathbf{H}_W, \mathcal{E}_2(\mathbf{H}_I), \mathbf{H}_V, \updownarrow\mathbf{H}_O\right) \qquad \text{(C.24)}`
+{gpeq "C.24"}
 
-$$`\mathcal{E}_E(\emptyset) = \mathcal{E}(0) \qquad \text{(C.25)} \qquad\qquad \mathcal{E}_E((\eta_0, \eta_1, \mathbf{k})) = \mathcal{E}(1, \eta_0, \eta_1, \updownarrow\mathbf{k}) \qquad \text{(C.26)}`
+{gpeq "C.25, C.26"}
 
 {leanSource JAM.Header.encodeUnsigned}
 
@@ -229,42 +250,80 @@ $$`\mathcal{E}_E(\emptyset) = \mathcal{E}(0) \qquad \text{(C.25)} \qquad\qquad \
 A work result is encoded by $`O`, which puts a discriminator before an output blob and gives each of
 the six work errors its own number:
 
-$$`O(o \in \mathbb{E} \cup \mathbb{B}) \equiv \begin{cases} (0, \updownarrow o) & \text{if } o \in \mathbb{B} \\ 1 & \text{if } o = \infty \\ 2 & \text{if } o = \text{☇} \\ 3 & \text{if } o = \circledcirc \\ 4 & \text{if } o = \ominus \\ 5 & \text{if } o = \texttt{BAD} \\ 6 & \text{if } o = \texttt{BIG} \end{cases} \qquad \text{(C.38)}`
+{gpeq "C.38"}
 
 {leanSource JAM.WorkResult.encode}
 
 An imported segment is named by a segment root or by a work-package hash $`r^\boxplus`; the two are told apart by
 adding $`2^{15}` to the index:
 
-$$`I((h \in \mathbb{H} \cup \mathbb{H}^\boxplus, i \in \mathbb{N}_{2^{15}})) \equiv \begin{cases} (h, \mathcal{E}_2(i)) & \text{if } h \in \mathbb{H} \\ (r, \mathcal{E}_2(i + 2^{15})) & \text{if } \exists r \in \mathbb{H}, h = r^\boxplus \end{cases} \qquad \text{(C.39)}`
+{gpeq "C.39"}
 
 {leanSource JAM.encodeImport}
 
 The other equations of §C.2 are implemented field by field, in the paper's order:
 
-* (C.18) $`\mathcal{E}_T`, the tickets: {api}`JAM.encodeTickets`;
-* (C.19) $`\mathcal{E}_P`, the preimages: {api}`JAM.encodePreimages`;
-* (C.20) $`\mathcal{E}_G`, the guarantees: {api}`JAM.encodeGuarantees`;
-* (C.21) $`\mathcal{E}_A`, the assurances: {api}`JAM.encodeAssurances`;
-* (C.22) $`\mathcal{E}_D`, the disputes: {api}`JAM.Disputes.encode` and {api}`JAM.Judgment.encode`;
-* (C.27) a refinement context $`\mathbb{C}`: {api}`JAM.RefineContext.encode`;
-* (C.28) an availability specification $`\mathbb{Y}`: {api}`JAM.AvailabilitySpec.encode`;
-* (C.29) a work digest $`\mathbb{D}`: {api}`JAM.WorkDigest.encode`;
-* (C.30) a work report $`\mathbb{R}`: {api}`JAM.WorkReport.encode`;
-* (C.31), (C.32) a guarantee $`\mathbb{G}` and its credential: {api}`JAM.Guarantee.encode` and {api}`JAM.encodeCredential`;
-* (C.33) a work package $`\mathbb{P}`: {api}`JAM.WorkPackage.encode`;
-* (C.34) a work item $`\mathbb{W}`: {api}`JAM.WorkItem.encode`;
-* (C.35) a ticket $`\mathbb{T}`: {api}`JAM.Ticket.encode`;
-* (C.36) a deferred transfer: {api}`JAM.DeferredTransfer.encode`;
-* (C.37) an operand tuple $`\mathbb{U}`: {api}`JAM.OperandTuple.encode`.
+* {eq}`C.18` $`\mathcal{E}_T`, the tickets: {api}`JAM.encodeTickets`;
+* {eq}`C.19` $`\mathcal{E}_P`, the preimages: {api}`JAM.encodePreimages`;
+* {eq}`C.20` $`\mathcal{E}_G`, the guarantees: {api}`JAM.encodeGuarantees`;
+* {eq}`C.21` $`\mathcal{E}_A`, the assurances: {api}`JAM.encodeAssurances`;
+* {eq}`C.22` $`\mathcal{E}_D`, the disputes: {api}`JAM.Disputes.encode` and {api}`JAM.Judgment.encode`;
+* {eq}`C.27` a refinement context $`\mathbb{C}`: {api}`JAM.RefineContext.encode`;
+* {eq}`C.28` an availability specification $`\mathbb{Y}`: {api}`JAM.AvailabilitySpec.encode`;
+* {eq}`C.29` a work digest $`\mathbb{D}`: {api}`JAM.WorkDigest.encode`;
+* {eq}`C.30` a work report $`\mathbb{R}`: {api}`JAM.WorkReport.encode`;
+* {eq}`C.31`, {eq}`C.32` a guarantee $`\mathbb{G}` and its credential: {api}`JAM.Guarantee.encode` and {api}`JAM.encodeCredential`;
+* {eq}`C.33` a work package $`\mathbb{P}`: {api}`JAM.WorkPackage.encode`;
+* {eq}`C.34` a work item $`\mathbb{W}`: {api}`JAM.WorkItem.encode`;
+* {eq}`C.35` a ticket $`\mathbb{T}`: {api}`JAM.Ticket.encode`;
+* {eq}`C.36` a deferred transfer: {api}`JAM.DeferredTransfer.encode`;
+* {eq}`C.37` an operand tuple $`\mathbb{U}`: {api}`JAM.OperandTuple.encode`.
 
-For example, the work item of eq. (C.34):
+{leanSource JAM.encodeTickets}
+
+{leanSource JAM.encodePreimages}
+
+{leanSource JAM.encodeGuarantees}
+
+{leanSource JAM.encodeAssurances}
+
+{leanSource JAM.Disputes.encode}
+
+{leanSource JAM.Judgment.encode}
+
+{leanSource JAM.RefineContext.encode}
+
+{leanSource JAM.AvailabilitySpec.encode}
+
+{leanSource JAM.WorkDigest.encode}
+
+{leanSource JAM.WorkReport.encode}
+
+{leanSource JAM.Guarantee.encode}
+
+{leanSource JAM.encodeCredential}
+
+{leanSource JAM.WorkPackage.encode}
+
+{leanSource JAM.Ticket.encode}
+
+{leanSource JAM.DeferredTransfer.encode}
+
+{leanSource JAM.OperandTuple.encode}
+
+For example, the work item of eq. {eq}`C.34`:
 
 {leanSource JAM.WorkItem.encode}
 
 The block and the work-package family also have decoders ({api}`JAM.Block.decode`,
 {api}`JAM.WorkPackage.decode`, {api}`JAM.WorkReport.decode`, …), built from the primitive decoders
 above, field by field in the same order.
+
+{leanSource JAM.Block.decode}
+
+{leanSource JAM.WorkPackage.decode}
+
+{leanSource JAM.WorkReport.decode}
 
 # Readings chosen
 %%%
@@ -273,13 +332,13 @@ tag := "codec-readings"
 
 * *Values outside the domain.* $`\mathcal{E}` is defined on $`\mathbb{N}_{2^{64}}` and $`\mathcal{E}_l` on $`\mathbb{N}_{2^{8l}}`. The model's functions
   take any natural, so that they are total. Outside the paper's domain, $`\mathcal{E}_l` encodes $`x \bmod 2^{8l}`
-  (`Num.decodeLE_encodeLE` above), and $`\mathcal{E}` gives $`[2^8 - 1] \frown \mathcal{E}_8(x \bmod 2^{64})`: the last case of eq. (C.6),
+  (`Num.decodeLE_encodeLE` above), and $`\mathcal{E}` gives $`[2^8 - 1] \frown \mathcal{E}_8(x \bmod 2^{64})`: the last case of eq. {eq}`C.6`,
   applied whatever its condition. So $`\mathcal{E}(2^{64} + 5) = [255, 5, 0, \dots, 0]`, not $`\mathcal{E}(5) = [5]`. Likewise
-  {api}`JAM.encodeImport` accepts an index $`i \geq 2^{15}`, outside eq. (C.39)'s $`\mathbb{N}_{2^{15}}`: $`\mathcal{E}_2` keeps only the low 16
+  {api}`JAM.encodeImport` accepts an index $`i \geq 2^{15}`, outside eq. {eq}`C.39`'s $`\mathbb{N}_{2^{15}}`: $`\mathcal{E}_2` keeps only the low 16
   bits, of $`i` for a segment root and of $`i + 2^{15}` for a work-package hash, and a segment root whose kept
   index is $`2^{15}` or more decodes as a work-package hash.
   The paper never encodes such values.
-* *The order of a set.* Eq. (C.12) orders a set's elements by $`<` but does not define $`<` on octet
+* *The order of a set.* Eq. {eq}`C.12` orders a set's elements by $`<` but does not define $`<` on octet
   sequences. The model uses the lexicographic order of octet lists (Lean's `<` and `Ord` on
   `List UInt8`), which {api}`JAM.OctetSet` and {api}`JAM.OctetDict` keep and the set and dictionary decoders
   check. For the 32-octet hashes it is used on, this is the order of the hashes read as big-endian
@@ -289,8 +348,8 @@ tag := "codec-readings"
   their range (an optional value's other than 0 and 1, a work result's above 6, and the epoch
   marker's other than 0 and 1), nonzero padding bits, sets and dictionaries out of order, lengths beyond the end of the
   input, and octets left over at the end.
-* *A dictionary's length (note v0.8.1-A60).* Eq. (C.11) encodes a dictionary with its length, and
-  eq. (C.30) writes $`\updownarrow\mathbf{r}_\mathbf{l}` for the work report's segment-root lookup, which read literally gives two
+* *A dictionary's length (note v0.8.1-A60).* Eq. {eq}`C.11` encodes a dictionary with its length, and
+  eq. {eq}`C.30` writes $`\updownarrow\mathbf{r}_\mathbf{l}` for the work report's segment-root lookup, which read literally gives two
   length prefixes. The model writes one ({api}`JAM.Codec.varHashDict`, used by {api}`JAM.WorkReport.encode`).
   This is recorded in the model's
   [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).

@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Paper
 import JAM.Assurances
 import JAM.Guarantee
 import JAM.Erasure
@@ -36,18 +37,18 @@ tag := "assurance-map"
 %%%
 
 * *The assurance.* The assurances extrinsic $`\xtassurances`, its signing message
-  $`\Xavailable \concat \blake{\encode{\H_\¬parent, a_f}}` with $`\Xavailable = \token{\$jam\_available}` (eqs. (11.11)–(11.15)), and the rule
+  $`\Xavailable \concat \blake{\encode{\H_\¬parent, a_f}}` with $`\Xavailable = \token{\$jam\_available}` (eqs. {eq}`11.11`–{eq}`11.15`), and the rule
   that a report becomes available when more than two thirds of the validators assure it
-  (eq. (11.16)) are in the {ref "reports-assurances"}[§11 chapter]: {api}`JAM.assuranceMessage`,
+  (eq. {eq}`11.16`) are in the {ref "reports-assurances"}[§11 chapter]: {api}`JAM.assuranceMessage`,
   {api}`JAM.checkAssurance` and {api}`JAM.assurances`.
 * *The shards.* How the bundle and the exported segments (with their paged proofs) are cut into one
   chunk per validator, and how their hashes and Merkle roots are combined into the erasure root
-  $`u` of the availability specifier (eq. (14.19)), is in {ref "work-avspec"}[The availability specifier]
+  $`u` of the availability specifier (eq. {eq}`14.19`), is in {ref "work-avspec"}[The availability specifier]
   ({api}`JAM.Guarantee.bundleClub`, {api}`JAM.Guarantee.segmentsClub`, {api}`JAM.Guarantee.erasureRoot`). The erasure code
   $`\fnerasurecode{v}{k}` and its recovery are {ref "erasure"}[Appendix H] ({api}`JAM.Erasure.encode`), and the
   Merkle roots are {ref "merkle"}[Appendix E].
 * *The segments root.* A report's segments root $`e` is the constant-depth Merkle root $`\mathcal{M}` of its
-  exports (eq. (14.19)); the justifications that prove a segment is under it, and their check, are in
+  exports (eq. {eq}`14.19`); the justifications that prove a segment is under it, and their check, are in
   {ref "merkle-verify"}[Checking a justification].
 
 # Not modelled

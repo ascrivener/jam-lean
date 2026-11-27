@@ -1,0 +1,217 @@
+import VersoManual
+import Companion.Source
+
+/-!
+# The Gray Paper's version and section numbers
+
+Every reference the book makes to a part of the Gray Paper through these roles comes from one place:
+`docs/site/gp-labels.json`, generated from the pinned paper by `scripts/gen_gp_labels.py` (the
+paper's version, its commit, and its section labels with their numbers and titles). The book holds
+no hand-written paper URL (`scripts/check-citations.py` rejects one).
+
+* ``{gpchapter}`sec:blockproduction` ``: "§6 Block Production and Chain Growth (GP v0.8.1)".
+* ``{gpsec}`sec:epochmarker` `` or ``{gpsec}`6.5` ``: the section's name ("§6.6", "§6.5", "Appendix A").
+* `{gptag}[text]`: `text` linked to the pinned version's release.
+
+An unknown label or number fails the build. The references are text for now: they link nowhere,
+by decision (a reader of our own may come later). `GpTable.sectionUrl?` is the one place a link
+target would be added.
+-/
+
+open Lean Elab
+open Verso ArgParse Doc Elab
+open Verso.Genre Manual
+
+namespace Companion
+
+/-- The paper table (`gp-labels.json`): version, commit, section label ↦ number, number ↦ title. -/
+structure GpTable where
+  version : String
+  commit : String
+  sections : Std.HashMap String String
+  titles : Std.HashMap String String
+
+def loadGpTable : IO GpTable := do
+  let root ← findRepoRoot
+  let file := root / "docs" / "site" / "gp-labels.json"
+  let json ← IO.ofExcept <| Json.parse (← IO.FS.readFile file)
+  let str (k : String) : IO String := IO.ofExcept <| json.getObjValAs? String k
+  let obj (k : String) : IO (Std.HashMap String String) := do
+    let o ← IO.ofExcept <| json.getObjVal? k
+    let some kvs := (o.getObj?.toOption) | throw <| IO.userError s!"gp-labels.json: {k} is not an object"
+    kvs.foldlM (init := {}) fun m key v => do
+      let s ← IO.ofExcept v.getStr?
+      return m.insert key s
+  return { version := ← str "version", commit := ← str "commit",
+           sections := ← obj "sections", titles := ← obj "titles" }
+
+/-- Where a reference to section `n` links: nowhere for now, by decision. The one place to add a
+    link target (e.g. a reader of our own) later. -/
+def GpTable.sectionUrl? (_t : GpTable) (_n : String) : Option String := none
+/-- The release of the pinned version. -/
+def GpTable.tagUrl (t : GpTable) : String :=
+  s!"https://github.com/gavofyork/graypaper/releases/tag/v{t.version}"
+
+/-- How the paper names a section: "§6.5", "§A.7", and "Appendix A" for a whole appendix. -/
+def sectionName (n : String) : String :=
+  if n.length == 1 && n.all Char.isUpper then s!"Appendix {n}" else s!"§{n}"
+
+/-- The inline for a reference: `text`, linked when `GpTable.sectionUrl?` gives a target. -/
+def sectionRef (t : GpTable) (n text : String) : TermElabM Term :=
+  match t.sectionUrl? n with
+  | some url => ``(Verso.Doc.Inline.link #[Verso.Doc.Inline.text $(quote text)] $(quote url))
+  | none => ``(Verso.Doc.Inline.text $(quote text))
+
+/-- The number of section `key`: a label in the table, or a number that names a section. -/
+def GpTable.sectionNumber? (t : GpTable) (key : String) : Option String :=
+  match t.sections.get? key with
+  | some n => some n
+  | none => if t.titles.contains key then some key else none
+
+/-- `{gpsec}`label-or-number``: the paper's section ("§6.5", "Appendix A"), linked to the paper. -/
+@[role]
+def gpsec : RoleExpanderOf Unit
+  | (), #[arg] => do
+    let some { content := c, .. } := Lean.Doc.CodeView.of arg
+      | throwErrorAt arg "gpsec: expected a code literal with a section label or number"
+    let key := c.getVersoCode
+    let t ← loadGpTable
+    let some n := t.sectionNumber? key
+      | throwErrorAt arg m!"gpsec: no section {key} in GP v{t.version} (docs/site/gp-labels.json)"
+    sectionRef t n (sectionName n)
+  | _, _ => throwError "gpsec: expected exactly one code literal"
+
+/-- `{gpchapter}`label``: a chapter's pointer to its part of the paper, "§6 Block Production and
+    Chain Growth (GP v0.8.1)", linked to the paper. -/
+@[role]
+def gpchapter : RoleExpanderOf Unit
+  | (), #[arg] => do
+    let some { content := c, .. } := Lean.Doc.CodeView.of arg
+      | throwErrorAt arg "gpchapter: expected a code literal with a section label or number"
+    let key := c.getVersoCode
+    let t ← loadGpTable
+    let some n := t.sectionNumber? key
+      | throwErrorAt arg m!"gpchapter: no section {key} in GP v{t.version} (docs/site/gp-labels.json)"
+    let title := (t.titles.get? n).getD ""
+    sectionRef t n s!"{sectionName n}{if n.length == 1 && n.all Char.isUpper then ":" else ""} {title} (GP v{t.version})"
+  | _, _ => throwError "gpchapter: expected exactly one code literal"
+
+/-- `{gptag}[text]`: `text` linked to the pinned version's release. -/
+@[role]
+def gptag : RoleExpanderOf Unit
+  | (), content => do
+    let url := (← loadGpTable).tagUrl
+    let content ← content.mapM elabInline
+    ``(Verso.Doc.Inline.link #[$content,*] $(quote url))
+
+end Companion
+
+namespace Companion
+
+/-! ## Equations
+
+`docs/site/gp-equations.json` (generated by `scripts/gen_equations.py`, checked against LaTeX's own
+numbering) holds every numbered equation of the pinned paper: its number, its label if any, and its
+TeX as the paper writes it.
+
+* ``{eq}`6.24` `` (or ``{eq}`6.24, 6.25` ``, or a label ``{eq}`eq:slotkeysequence` ``): "(6.24)", text.
+* `{gpeq "6.24"}` (a paragraph of its own; also `"9.1, 9.2"` or a label): the paper's own equation,
+  displayed with its number, rendered with the paper's macros.
+
+An unknown number or label fails the build. -/
+
+/-- Equation number ↦ (labels, TeX body, environment); label ↦ number. -/
+structure GpEquations where
+  bodies : Std.HashMap String String
+  hashes : Std.HashMap String String
+  envs : Std.HashMap String String
+  labels : Std.HashMap String String
+
+def loadGpEquations : IO GpEquations := do
+  let root ← findRepoRoot
+  let json ← IO.ofExcept <| Json.parse (← IO.FS.readFile (root / "docs" / "site" / "gp-equations.json"))
+  let eqs ← IO.ofExcept <| json.getObjVal? "equations"
+  let some kvs := eqs.getObj?.toOption | throw <| IO.userError "gp-equations.json: equations"
+  let (bodies, envs, hashes) ← kvs.foldlM
+    (init := (({} : Std.HashMap String String), ({} : Std.HashMap String String), ({} : Std.HashMap String String)))
+    fun (b, e, h) n v => do
+      let body ← IO.ofExcept <| v.getObjValAs? String "body"
+      let env ← IO.ofExcept <| v.getObjValAs? String "env"
+      let hash ← IO.ofExcept <| v.getObjValAs? String "hash"
+      return (b.insert n body, e.insert n env, h.insert n hash)
+  let labs ← IO.ofExcept <| json.getObjVal? "labels"
+  let some lkvs := labs.getObj?.toOption | throw <| IO.userError "gp-equations.json: labels"
+  let labels ← lkvs.foldlM (init := {}) fun m k v => do return m.insert k (← IO.ofExcept v.getStr?)
+  return { bodies, envs, hashes, labels }
+
+/-- The equation numbers named by `spec` ("6.24", "9.1, 9.2", "eq:label"), or the first unknown one. -/
+def GpEquations.resolve (t : GpEquations) (spec : String) : Except String (List String) :=
+  (spec.splitOn ",").map (·.trimAscii.copy) |>.filter (· ≠ "") |>.mapM fun k =>
+    let n := (t.labels.get? k).getD k
+    if t.bodies.contains n then .ok n else .error k
+
+/-- ``{eq}`6.24` ``: the equation number(s) as the paper prints them, "(6.24)" or "(9.1, 9.2)". -/
+@[role]
+def eq : RoleExpanderOf Unit
+  | (), #[arg] => do
+    let some { content := c, .. } := Lean.Doc.CodeView.of arg
+      | throwErrorAt arg "eq: expected a code literal with equation numbers or a label"
+    let t ← loadGpEquations
+    match t.resolve c.getVersoCode with
+    | .error k => throwErrorAt arg m!"eq: no equation {k} in the paper (docs/site/gp-equations.json)"
+    | .ok ns => ``(Verso.Doc.Inline.text $(quote ("(" ++ ", ".intercalate ns ++ ")")))
+  | _, _ => throwError "eq: expected exactly one code literal"
+
+structure EqArgs where
+  spec : String
+
+instance : FromArgs EqArgs DocElabM :=
+  ⟨EqArgs.mk <$> .positional `spec (ValDesc.string.as "equation numbers or a label (string literal)")⟩
+
+/-- `{gpeq "6.24"}`: the paper's own equation(s), displayed with the number(s). -/
+@[block_command]
+def gpeq : BlockCommandOf EqArgs
+  | ⟨spec⟩ => do
+    let t ← loadGpEquations
+    let ns ← match t.resolve spec with
+      | .error k => throwError m!"gpeq: no equation {k} in the paper (docs/site/gp-equations.json)"
+      | .ok ns => pure ns
+    let bodies := ns.map fun n => (t.bodies.get? n).getD ""
+    let anyAlign := bodies.any (·.contains '&')
+    let inner := " \\\\ ".intercalate bodies
+    let shown :=
+      if anyAlign then s!"\\begin\{aligned}{inner}\\end\{aligned}"
+      else if ns.length > 1 then s!"\\begin\{gathered}{inner}\\end\{gathered}"
+      else inner
+    let tex := s!"{shown} \\qquad \\text\{(" ++ ", ".intercalate ns ++ ")}"
+    ``(Verso.Doc.Block.para #[Verso.Doc.Inline.math Lean.Doc.MathMode.display $(quote tex)])
+
+structure TranscribedArgs where
+  spec : String
+  hashes : String
+
+instance : FromArgs TranscribedArgs DocElabM :=
+  ⟨TranscribedArgs.mk <$> .positional `spec (ValDesc.string.as "equation numbers (string literal)")
+    <*> .positional `hashes (ValDesc.string.as "their fingerprints (string literal)")⟩
+
+/-- `{transcribed "13.9" "9f4fa6c4de"}`, a paragraph of its own just before a hand-written display:
+    the display is the book's own rendering of (part of) the paper's equation 13.9, made when the
+    equation had that fingerprint (`docs/site/gp-equations.json`). It renders nothing. The build fails
+    when the paper's equation changes (a new version: re-check the display, then update the
+    fingerprint) or the number does not exist. Used where `{gpeq}` does not fit: a part of an
+    equation, a single case, or a layout the renderers cannot draw. -/
+@[block_command]
+def transcribed : BlockCommandOf TranscribedArgs
+  | ⟨spec, hashes⟩ => do
+    let t ← loadGpEquations
+    let ns ← match t.resolve spec with
+      | .error k => throwError m!"transcribed: no equation {k} in the paper (docs/site/gp-equations.json)"
+      | .ok ns => pure ns
+    let now := ",".intercalate (ns.map fun n => (t.hashes.get? n).getD "")
+    unless now == hashes do
+      throwError m!"transcribed: the paper's equation {spec} changed (fingerprint {now}, the display \
+        was written against {hashes}); re-check the hand-written display against the paper, then \
+        update the fingerprint"
+    ``(Verso.Doc.Block.concat #[])
+
+end Companion

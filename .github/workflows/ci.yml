@@ -81,6 +81,9 @@ jobs:
       - name: Every note the book and the model cite exists in docs/upstream-candidates.md
         run: python3 -I scripts/check-citations.py
 
+      - name: The book's equations and equation numbers come from the paper's table (scripts/check-equations.py)
+        run: python3 -I scripts/check-equations.py
+
       - name: No forbidden constructs
         run: |
           if grep -rnE '\bsorry\b|partial def|implemented_by|native_decide|bv_decide' PVM JAM Services Tests PVM.lean JAM.lean Services.lean JamCrypto JamCrypto.lean JamCryptoTest.lean RingTest.lean; then

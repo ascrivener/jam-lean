@@ -80,6 +80,8 @@ PACKAGE_SYMBOLS = {
     "Gemini": r"\text{♊}",
     "llbracket": r"[\![",                # stmaryrd: MathJax's TeX input lacks these (KaTeX has them)
     "rrbracket": r"]\!]",
+    "nicefrac": (r"\tfrac{#1}{#2}", 2),   # nicefrac, used directly in the paper's equations
+    "multicolumn": (r"#3", 3),            # array cells spanning columns: the cell's content
 }
 
 # Substitutions that print a close but not identical glyph; listed under "approximate".
@@ -98,6 +100,12 @@ OVERRIDES = {
     r"\tricolon": r"\mathrel{\genfrac{}{}{0pt}{3}{\blacktriangleright}{\blacktriangleright}}",  # stacked small triangles
     r"\anglebar": r"\left\langle\!\left|#1\right|\!\right\rangle",  # mathabx's barred angle brackets
     r"\remainder": r"\mathbin{\mathsf{R}}",       # \text{\footnotesize\textsf{R}}: MathJax's \text takes no macros
+    # MnSymbol / mathabx glyphs with no counterpart: the forms the book's chapters use (approximate)
+    r"\seqminusl": r"\ominus",                     # \nwspoon
+    r"\seqminusr": r"\ominus",                     # \sespoon
+    r"\disjoint": r"\mathbin{\downharpoonleft}",   # \downspoon
+    r"\orderby": r"#2\;\wr\;#1",                  # #2 \middle\lwavy #1
+    r"\orderuniqby": r"#2\;\wr\wr\;#1",           # #2 \middle\lWavy #1
     r"\append": r"\doubleplus",                  # \ensuremath{\doubleplus}
 }
 
@@ -267,7 +275,7 @@ def main():
                 unmapped[a] = {"paper": "\\" + name, "where": where, "uses": bad or ["paragraph break"]}
             continue
         entry = {"paper": "\\" + name, "body": b, "args": nargs}
-        if name == "tricolon" or any(re.search(re.escape(k) + r"(?![A-Za-z])", body) for k in APPROXIMATE_SUBST):
+        if name in ("tricolon", "seqminusl", "seqminusr", "disjoint", "orderby", "orderuniqby") or any(re.search(re.escape(k) + r"(?![A-Za-z])", body) for k in APPROXIMATE_SUBST):
             approx[a] = "\\" + name
         if default is not None:
             entry["default"] = apply_subst(rename_refs(default))
@@ -276,8 +284,9 @@ def main():
 
     package = {}
     for a, b in sorted(PACKAGE_SYMBOLS.items()):
+        body, nargs = b if isinstance(b, tuple) else (b, 0)
         if a not in macros:
-            macros[a] = {"paper": "\\" + a, "body": b, "args": 0}
+            macros[a] = {"paper": "\\" + a, "body": body, "args": nargs}
             package[a] = "\\" + a
 
     # A macro that uses an unmapped one cannot render either.
@@ -353,6 +362,8 @@ def site_js(macros):
         "// Write the paper's macro names, ¬ included; gpMacros.name rewrites ¬ before parsing.",
         "window.gpMacros = (function () {",
         "  var name = function (s) {",
+        "    // KaTeX cannot take \\\\imath or \\\\jmath as a bare sub/superscript (the paper writes c_\\\\imath).",
+        "    s = s.replace(/([_^])\\\\(imath|jmath)(?![A-Za-z])/g, '$1{\\\\$2}');",
         "    return s.replace(/\\\\[A-Za-z]*¬[A-Za-z¬]*/g, function (m) { return m.replace(/¬/g, " + json.dumps(SENTINEL) + "); });",
         "  };",
         "  var preamble = [\n    " + ",\n    ".join(json.dumps(p, ensure_ascii=False) for p in pre) + "\n  ];",
@@ -391,7 +402,8 @@ def site_js(macros):
         "          }",
         "          var args = m[1] > 1 ? ctx.consumeArgs(m[1] - 1) : [];",
         "          return m[0].replace(/#(\\d)/g, function (_, d) {",
-        "            return d === '1' ? '{' + opt + '}' : '{' + text(args[+d - 2].slice().reverse()) + '}';",
+        "            // TeX substitutes an argument's tokens as they are, without braces around them.",
+        "            return d === '1' ? opt : text(args[+d - 2].slice().reverse());",
         "          });",
         "        };",
         "      });",

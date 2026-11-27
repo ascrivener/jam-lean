@@ -27,7 +27,7 @@ This avoids Verso's external-example mechanism, which would need the model's pac
 open Lean Elab
 open Verso ArgParse Doc Elab
 open Verso.Genre Manual
-open SubVerso.Highlighting (Highlighted)
+open SubVerso.Highlighting (Highlighted Token)
 
 namespace Companion
 
@@ -69,6 +69,39 @@ def loadHighlighted (root : System.FilePath) (mod name : Name) : IO (Option High
 def modulePath (mod : Name) : String :=
   "/".intercalate (mod.components.map (·.toString (escape := false)))
 
+-- A quoted declaration's docstring, rendered as text (with math) above its code.
+block_extension Block.sourceDoc where
+  traverse := fun _ _ _ => pure none
+  toTeX := none
+  toHtml :=
+    open Verso.Output.Html in
+    some <| fun _ go _ _ content => do
+      pure html%{<div class="docs source-doc">{← content.mapM go}</div>}
+
+/-- Removes the first doc comment (and the line break after it) from highlighted code. -/
+partial def stripDocComment : Highlighted → Highlighted × Bool
+  | .token ⟨.docComment, _⟩ => (.seq #[], true)
+  | .seq hs => Id.run do
+    let mut out := #[]
+    let mut done := false
+    let mut dropNl := false
+    for h in hs do
+      if done then
+        if dropNl then
+          dropNl := false
+          match h with
+          | .text t => out := out.push (.text (t.dropWhile (· == '\n')).copy)
+          | _ => out := out.push h
+        else out := out.push h
+      else
+        let (h', d) := stripDocComment h
+        out := out.push h'
+        if d then done := true; dropNl := true
+    (.seq out, done)
+  | .span info c => let (c', d) := stripDocComment c; (.span info c', d)
+  | .tactics info s e c => let (c', d) := stripDocComment c; (.tactics info s e c', d)
+  | h => (h, false)
+
 structure SourceConfig where
   name : Ident × Name
 
@@ -100,8 +133,16 @@ def leanSource : BlockCommandOf SourceConfig
     let apiUrl := s!"{apiRoot}/{modulePath mod}.html#{name}"
     let label := s!"{rel}, lines {first}–{last}"
     let cfg : Verso.Code.External.CodeConfig := { defSite := some false }
+    let docBlocks ← match ← Lean.findDocString? env name with
+      | none => pure #[]
+      | some docs =>
+        let some ast := MD4Lean.parse docs
+            (MD4Lean.MD_DIALECT_GITHUB ||| MD4Lean.MD_FLAG_LATEXMATHSPANS)
+          | throwErrorAt x "leanSource: failed to parse the docstring of {name} as Markdown"
+        ast.blocks.mapM (Verso.Genre.Manual.blockFromMarkdownWithLean [name])
     let some hl ← loadHighlighted root mod name
       | throwErrorAt x m!"leanSource: no command defining {name} in SubVerso's JSON for {mod}"
+    let (hl, _) := stripDocComment hl
     ``(Verso.Doc.Block.concat #[
         Verso.Doc.Block.para #[
           Verso.Doc.Inline.code $(quote name.toString),
@@ -109,6 +150,7 @@ def leanSource : BlockCommandOf SourceConfig
           Verso.Doc.Inline.link #[Verso.Doc.Inline.text "GitHub"] $(quote ghUrl),
           Verso.Doc.Inline.text " · ",
           Verso.Doc.Inline.link #[Verso.Doc.Inline.text "API"] $(quote apiUrl)],
+        Verso.Doc.Block.other Companion.Block.sourceDoc #[$docBlocks,*],
         Verso.Doc.Block.other (Verso.Genre.Manual.Block.lean $(quote hl) $(quote cfg))
           #[Verso.Doc.Block.code $(quote text)]])
 

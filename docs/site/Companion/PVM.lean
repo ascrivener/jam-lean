@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Docstring
 import PVM.Machine
 import PVM.Theorems.Termination
 import PVM.Theorems.GasFuel
@@ -36,14 +37,14 @@ $$`\Psi_1 \colon (\mathfrak{p}, \mathbf{k}, \mathbf{j}, \imath, \varrho, \tilde\
 
 The result is {api}`PVM.StepResult`, and the function is {api}`PVM.Program.step`. A
 {api}`PVM.Program` holds the code $`\mathbf{c}`, the bitmask $`\mathbf{k}` and the jump table $`\mathbf{j}`, so they need not be passed
-separately. The paper writes the registers as $`\varphi`; the model's code and docstrings call them `ω`.
+separately. The paper writes the registers as $`\varphi`; the model's code calls them `ω`.
 
 {leanSource PVM.Program.step}
 
 $`\Psi` calls $`\Psi_1` only at a valid instruction, so in practice the decode always succeeds. The `getD`
 default only keeps $`\Psi_1` total, and the following theorem shows it is never reached:
 
-{docstring PVM.Program.step_decode}
+{mathdoc PVM.Program.step_decode}
 
 # The gas stage
 %%%
@@ -70,9 +71,9 @@ The simulation $`\mathfrak{X}` is run with fuel, because Lean needs every functi
 below show that the fuel never runs out, and that the total {api}`PVM.Program.blockCost` agrees
 with the paper's $`\varrho^\Delta` at every block $`\Psi` charges:
 
-{docstring PVM.Sim.run_fuel_eq}
+{mathdoc PVM.Sim.run_fuel_eq}
 
-{docstring PVM.Program.blockCost_eq_of_deblob}
+{mathdoc PVM.Program.blockCost_eq_of_deblob}
 
 # Memory exceptions
 %%%
@@ -111,9 +112,9 @@ $`\Psi` iterates $`\Psi_1` until the step's result is not $`\blacktriangleright`
 model gives a measure: every block charge costs at least one unit of gas, and between charges $`\imath`
 increases or a terminator clears $`\tilde\varrho`. With this measure, $`\Psi` is a total function, {api}`PVM.psi`.
 
-{docstring PVM.step_measure_lt}
+{mathdoc PVM.step_measure_lt}
 
-{docstring PVM.psi_eq_runFuel}
+{mathdoc PVM.psi_eq_runFuel}
 
 # Readings chosen
 %%%
@@ -126,9 +127,10 @@ These points are recorded in the model's
 * *Note 3, §A.4.* The prose says that a RAM index below $`2^{16}` always panics, "regardless of the
   apparent (in)accessibility". The formula for $`\varepsilon^\mu` considers only inaccessible indices. The model
   follows the formula ({api}`PVM.memoryException`).
-* *Note 2, the branch target.* A branch target $`\imath + \mathcal{Z}(\dots)` can be negative, and $`\zeta` is undefined there.
-  In the model a negative target is never the start of a basic block, so the branch panics
-  ({api}`PVM.Program.branch`).
+* *Note 2, §A.10, the branch cost.* The gas model's $`\mathfrak{b}` reads $`\zeta` at the branch
+  target $`\imath + \mathcal{Z}(\dots)`, which can be negative, where $`\zeta` is undefined. The
+  model reads a negative index as 0 (`trap`), like an index past the end of $`\mathbf{c}`
+  ({api}`PVM.Program.zetaInt`, used by {api}`PVM.Program.branchCost`).
 * *Note 1, §A.10.* The gas model's $`\mathfrak{P}_S` compares $`\varphi_A = \varphi_D`, which, read literally, compares
   register values. The gas model has no values, so the model compares the indices $`r_A = r_D`.
 * *Note 5.* $`\Psi` returns $`\imath = 0` on $`\blacksquare` and ☇, while the test vectors report the instruction that exited.

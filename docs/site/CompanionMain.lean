@@ -32,9 +32,68 @@ def narrowCss : Verso.Genre.Manual.CSS := ⟨"
 html, body { overflow-x: clip; }
 "⟩
 
+/-- Math in docstrings: `$…$` and `$$…$$` in the text of docstrings (the `.docs` blocks of
+    `{docstring}` and `{leanSource}`, and hover tooltips) are rendered with the KaTeX that Verso
+    already loads. As in doc-gen4's MathJax
+    configuration, code (`code`, `pre`) is skipped, so a literal `$` belongs in backticks. -/
+def docMathJs : Verso.Genre.Manual.JS := ⟨"
+(() => {
+  const re = /\\$\\$([\\s\\S]+?)\\$\\$|\\$([^$\\n]+?)\\$/g;
+  const skip = (n) => n.parentElement && n.parentElement.closest('code, pre, .katex, .hl.lean');
+  const render = (root) => {
+    if (typeof katex === 'undefined') return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) {
+      const n = walker.currentNode;
+      if (!skip(n) && n.nodeValue.includes('$')) nodes.push(n);
+    }
+    for (const n of nodes) {
+      const text = n.nodeValue; let last = 0; let m; const frag = document.createDocumentFragment();
+      re.lastIndex = 0;
+      while ((m = re.exec(text)) !== null) {
+        frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        const span = document.createElement('span');
+        katex.render(m[1] !== undefined ? m[1] : m[2], span,
+          { throwOnError: false, displayMode: m[1] !== undefined });
+        frag.appendChild(span); last = re.lastIndex;
+      }
+      if (last === 0) continue;
+      frag.appendChild(document.createTextNode(text.slice(last)));
+      n.parentNode.replaceChild(frag, n);
+    }
+  };
+  // Hover docstrings are Markdown rendered without math spans, so a `_` inside `$…$` may have become
+  // <em>. Docstrings use \\ast rather than `*` in math, so inside a math span <em> can only be `_`.
+  const renderHover = (root) => {
+    if (typeof katex === 'undefined') return;
+    const span = /\\$\\$([\\s\\S]+?)\\$\\$|\\$([^$]+?)\\$/g;
+    const decode = (h) => { const t = document.createElement('textarea'); t.innerHTML = h; return t.value; };
+    for (const el of root.querySelectorAll('.docstring p, .docstring li')) {
+      el.innerHTML = el.innerHTML.replace(span, (whole, d, i) => {
+        const body = d !== undefined ? d : i;
+        if (body.includes('<code')) return whole;
+        const tex = decode(body.replace(/<\\/?em>/g, '_').replace(/<[^>]+>/g, ''));
+        return katex.renderToString(tex, { throwOnError: false, displayMode: d !== undefined });
+      });
+    }
+  };
+  document.addEventListener('DOMContentLoaded', () => {
+    for (const root of document.querySelectorAll('.docs')) render(root);
+    // Hover tooltips are created on demand: render their docstrings when they appear.
+    new MutationObserver((records) => {
+      for (const r of records) for (const n of r.addedNodes)
+        if (n.nodeType === 1 && (n.matches('[data-tippy-root], .tippy-box') || n.querySelector('.tippy-box')))
+          { renderHover(n); render(n); }
+    }).observe(document.body, { childList: true, subtree: true });
+  });
+})();
+"⟩
+
 /-- HTML only, one page per chapter. -/
 def config : Config where
   extraCss := ({} : Std.HashSet Verso.Genre.Manual.CSS).insert narrowCss
+  extraJs := ({} : Std.HashSet Verso.Genre.Manual.JS).insert docMathJs
   emitTeX := false
   emitHtmlSingle := .no
   emitHtmlMulti := .immediately

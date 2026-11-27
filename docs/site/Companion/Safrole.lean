@@ -1,5 +1,6 @@
 import VersoManual
 import Companion.Source
+import Companion.Docstring
 import JAM.Safrole
 import JAM.Theorems.Safrole
 
@@ -31,7 +32,7 @@ covers. Its full API is on the [doc-gen4 page](https://ascrivener.github.io/jam-
 The paper's Safrole state is $`\gamma = (\gamma_P, \gamma_Z, \gamma_S, \gamma_A)` (eq. (6.3), `consensusstatecomposition`), together
 with $`\tau`, $`\eta` and the key sets $`\kappa`, $`\lambda` and $`\iota`. The model keeps them in one structure:
 
-{docstring JAM.SafroleState}
+{mathdoc JAM.SafroleState}
 
 # The entropy accumulator (§6.4)
 %%%
@@ -79,9 +80,9 @@ The paper gives $`Z` only by its first four entries. The model takes entry $`i` 
 even and from index $`|\mathbf{s}| - 1 - \lfloor i/2 \rfloor` when $`i` is odd. The theorems below show that this reading is a
 permutation, as the paper's typing $`\llbracket T\rrbracket_{\mathsf{E}} \to \llbracket T\rrbracket_{\mathsf{E}}` requires:
 
-{docstring JAM.outsideIn_perm}
+{mathdoc JAM.outsideIn_perm}
 
-{docstring JAM.length_outsideIn}
+{mathdoc JAM.length_outsideIn}
 
 ## F, the fallback key sequence
 
@@ -92,7 +93,7 @@ $$`F \colon (r, \mathbf{k}) \mapsto \left[\, \left(\mathbf{k}^{\circlearrowleft}
 The cyclic index $`\mathbf{k}^{\circlearrowleft}` is `j % k.length`. `getD … ValidatorKey.null` keeps the function total when
 $`\mathbf{k}` is empty. The paper never calls $`F` with an empty $`\mathbf{k}`, because $`|\kappa'| = \mathsf{V}`.
 
-{docstring JAM.safrole_sealKeys_length}
+{mathdoc JAM.safrole_sealKeys_length}
 
 # The tickets extrinsic and the ticket accumulator (§6.7)
 %%%
@@ -107,7 +108,7 @@ $$`\mathbf{E}_T \in \left\lbrack\left(e \in \mathbb{N}_n,\; p \in \mathring{\mat
 
 {leanSource JAM.maxAttempts}
 
-{docstring JAM.maxAttempts_spec}
+{mathdoc JAM.maxAttempts_spec}
 
 {leanSource JAM.ticketContext}
 
@@ -123,11 +124,11 @@ the `uselessTicket` check for $`\mathbf{n} \subseteq \gamma'_A`. The order on id
 
 What the model proves about the accumulator:
 
-{docstring JAM.safrole_accumulator_length}
+{mathdoc JAM.safrole_accumulator_length}
 
-{docstring JAM.safrole_accumulator_sorted}
+{mathdoc JAM.safrole_accumulator_sorted}
 
-{docstring JAM.safrole_ticketsMark_length}
+{mathdoc JAM.safrole_ticketsMark_length}
 
 # Readings chosen
 %%%
@@ -145,9 +146,9 @@ note 31 of the model's
   octet sequence without saying how it is encoded. The model appends one octet ({api}`JAM.ticketContext`), and
   proves that one octet holds every allowed $`e` for the full and tiny chains:
 
-{docstring JAM.safrole_attempt_fits}
+{mathdoc JAM.safrole_attempt_fits}
 
-{docstring JAM.attempt_fits_of_six}
+{mathdoc JAM.attempt_fits_of_six}
 
 * *Errors and their order.* No errors are named for an invalid $`\mathbf{E}_T`, and no order is given between
   its conditions. The model uses the test vectors' error names (`SafroleError`), in the order given

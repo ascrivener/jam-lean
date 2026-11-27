@@ -765,7 +765,7 @@ theorem run_isSome (P : Program) (s : Nat) (hU : ∀ j, Reach P s j → (P.instr
       have ⟨hI', hm'⟩ := transition_spec hI hr
       exact run_isSome P s hU f y hI' (by omega)
 
-/-- **The fuel of 𝔛 suffices**: from **x**^init, any fuel at least `fuel P s` gives the same
+/-- **The fuel of $\mathfrak{X}$ suffices**: from $\mathbf{x}^{\text{init}}$, any fuel at least `fuel P s` gives the same
     result, so the out-of-fuel case of `run` is never what `blockCost?` returns. -/
 theorem run_fuel_eq (P : Program) (s f : Nat) (hf : fuel P s ≤ f) :
     run P f (init s) = run P (fuel P s) (init s) :=
@@ -967,7 +967,7 @@ theorem blockCost?_isSome_of_deblob {p : ByteArray} {i : Nat} {P : Program}
       exact blockCost?_isSome_of_vBlob hv.1 (vInst_blockStartOf hv.1 i)
     · cases h
 
-/-- `blockCost` is the simulated cost max(**x**^final_c − 3, 1) for every block Ψ charges. -/
+/-- `blockCost` is the simulated cost $\max(\mathbf{x}^{\text{final}}_c - 3, 1)$ for every block $\Psi$ charges. -/
 theorem blockCost_eq_of_deblob {p : ByteArray} {i : Nat} {P : Program}
     (h : deblob p i = some P) :
     ∃ z, Sim.run P (Sim.fuel P (P.blockStartOf i)) (Sim.init (P.blockStartOf i)) = some z ∧

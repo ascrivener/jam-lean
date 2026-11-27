@@ -157,14 +157,15 @@ theorem readN_writeN (μ : Memory) (a : Nat) (bs : List UInt8) (hlen : bs.length
 
 end Memory
 
-/-- The exceptional state ε^μ caused by memory access (GP §A.4):
+/-- The exceptional state $\varepsilon^\mu$ caused by memory access (GP §A.4, eq. (A.9)):
 
-    ε^μ = ▸ if **x** = ∅; ☇ if min(**x**) mod 2^32 < 2^16; F × 𝖹_P⌊min(**x**) mod 2^32 ÷ 𝖹_P⌋ otherwise,
-    where **x** = {x | x ∈ **r** ∧ x mod 2^32 ∉ 𝕍_μ ∨ x ∈ **w** ∧ x mod 2^32 ∉ 𝕍*_μ}.
+    $\varepsilon^\mu = \blacktriangleright$ if $\mathbf{x} = \emptyset$; ☇ if $\min(\mathbf{x}) \bmod 2^{32} < 2^{16}$;
+    $\Finv \times \mathsf{Z}_P \lfloor \min(\mathbf{x}) \bmod 2^{32} \div \mathsf{Z}_P \rfloor$ otherwise, where
+    $\mathbf{x} = \{ x \mid x \in \mathbf{r} \wedge x \bmod 2^{32} \notin \mathbb{V}_\mu \vee x \in \mathbf{w} \wedge x \bmod 2^{32} \notin \mathbb{V}^{\ast}_\mu \}$.
 
-    `none` is ▸, `some none` is ☇ (panic), and `some (some a)` is a fault at page address `a`.
+    `none` is $\blacktriangleright$, `some none` is ☇ (panic), and `some (some a)` is a fault at page address `a`.
 
-    The prose of §A.4 says an index below 2^16 always panics "regardless of the apparent
+    The prose of §A.4 says an index below $2^{16}$ always panics "regardless of the apparent
     (in)accessibility"; the formula, which we follow, only considers inaccessible indices
     (README, note 3). -/
 def memoryException (μ : Memory) (r w : List Nat) : Option (Option Nat) :=

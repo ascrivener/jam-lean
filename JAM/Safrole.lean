@@ -56,25 +56,25 @@ inductive SealKeys where
   | keys (k : List (List UInt8))
   deriving Inhabited
 
-/-- The state Safrole reads and writes: τ, η, λ, κ, γ_P, ι, γ_A, γ_S and γ_Z. -/
+/-- The state Safrole reads and writes: $\tau$, $\eta$, $\lambda$, $\kappa$, $\gamma_P$, $\iota$, $\gamma_A$, $\gamma_S$ and $\gamma_Z$. -/
 structure SafroleState where
-  /-- τ, the most recent block's timeslot. -/
+  /-- $\tau$, the most recent block's timeslot. -/
   tau : Nat
-  /-- η ∈ ⟦ℍ⟧_4. -/
+  /-- $\eta \in [\![\mathbb{H}]\!]_4$. -/
   eta : List (List UInt8)
-  /-- λ, the previous epoch's validators. -/
+  /-- $\lambda$, the previous epoch's validators. -/
   prev : List ValidatorKey
-  /-- κ, the active validators. -/
+  /-- $\kappa$, the active validators. -/
   active : List ValidatorKey
-  /-- γ_P, the pending validators. -/
+  /-- $\gamma_P$, the pending validators. -/
   pending : List ValidatorKey
-  /-- ι, the staging validators. -/
+  /-- $\iota$, the staging validators. -/
   staging : List ValidatorKey
-  /-- γ_A, the ticket accumulator. -/
+  /-- $\gamma_A$, the ticket accumulator. -/
   accumulator : List Ticket
-  /-- γ_S, the slot-sealer sequence. -/
+  /-- $\gamma_S$, the slot-sealer sequence. -/
   sealKeys : SealKeys
-  /-- γ_Z, the ring root of γ_P's Bandersnatch keys. -/
+  /-- $\gamma_Z$, the ring root of $\gamma_P$'s Bandersnatch keys. -/
   ringRoot : List UInt8
   deriving Inhabited
 
@@ -123,16 +123,16 @@ def Xentropy : List UInt8 := contextString "$jam_entropy"
 #guard Xentropy = "jam_entropy".toUTF8.toList
 
 /-- The context of a ticket's ring proof, and of a ticket-sealed block's seal:
-    $jam_ticket_seal ⌢ η ⧺ e (GP eq. `ticketsextrinsic` appends e as an element), the entry index
-    as one octet. The paper does not define the encoding ([`docs/upstream-candidates.md`](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues), 31).
-    e < n = ⌈2𝖤/|γ_P'|⌉, and one octet holds every such e exactly when n ≤ 256, i.e. when
-    2𝖤 ≤ 256⋅|γ_P'|; this holds for the paper's |γ_P'| ≥ 6 (eq. `valcount`) whenever 𝖤 ≤ 768, so
-    for the full (𝖤 = 600) and tiny (𝖤 = 12) chains (`safrole_attempt_fits`, `attempt_fits_of_six`
-    in `JAM/Theorems/Safrole.lean`). For smaller γ_P' `UInt8.ofNat` would reduce e mod 256. -/
+    $\mathsf{X}_T \frown \eta \mathbin{+\!\!+} e$ with $\mathsf{X}_T$ = `$jam_ticket_seal` (GP eq. (6.31),
+    `ticketsextrinsic`, appends $e$ as an element), the entry index as one octet. The paper does not define the encoding ([`docs/upstream-candidates.md`](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues), 31).
+    $e < n = \lceil 2\mathsf{E}/|\gamma'_P| \rceil$, and one octet holds every such $e$ exactly when $n \le 256$,
+    i.e. when $2\mathsf{E} \le 256 \cdot |\gamma'_P|$; this holds for the paper's $|\gamma'_P| \ge 6$ (eq. `valcount`)
+    whenever $\mathsf{E} \le 768$, so for the full ($\mathsf{E} = 600$) and tiny ($\mathsf{E} = 12$) chains (`safrole_attempt_fits`, `attempt_fits_of_six`
+    in `JAM/Theorems/Safrole.lean`). For smaller $\gamma'_P$ `UInt8.ofNat` would reduce $e$ mod 256. -/
 def ticketContext (eta : List UInt8) (attempt : Nat) : List UInt8 :=
   Xticket ++ eta ++ [UInt8.ofNat attempt]
 
-/-- ℋ, Blake2b-256 on octet lists. -/
+/-- $\mathcal{H}$, Blake2b-256 on octet lists. -/
 def blake (m : List UInt8) : List UInt8 := (Blake2b.hash256 ⟨m.toArray⟩).toList
 
 /-- The order on identifiers: hashes compared as octet sequences, lexicographically (for hashes of
@@ -158,18 +158,19 @@ def offendersFilter (offenders : List (List UInt8)) (k : List ValidatorKey) : Li
     [List.replicate 32 1 ++ List.replicate 32 7 ++ List.replicate 272 1, List.replicate 336 1] =
   [ValidatorKey.null, List.replicate 336 1]
 
-/-- Z, the outside-in sequencer (GP §6.5): [s_0, s_{|s|−1}, s_1, s_{|s|−2}, …]. -/
+/-- $Z$, the outside-in sequencer (GP §6.5, eq. (6.27)):
+    $[\mathbf{s}_0, \mathbf{s}_{|\mathbf{s}|-1}, \mathbf{s}_1, \mathbf{s}_{|\mathbf{s}|-2}, \dots]$. -/
 def outsideIn {α : Type} (s : List α) : List α :=
   (List.range s.length).filterMap fun i => if i % 2 = 0 then s[i / 2]? else s[s.length - 1 - i / 2]?
 
-/-- F(r, **k**), the fallback key sequence (GP eq. `fallbackkeysequence`):
-    k_{ℰ_4⁻¹(ℋ(r ⌢ ℰ_4(i))_{⋅⋅⋅4}) mod |k|, b} for i ∈ ℕ_𝖤. -/
+/-- $F(r, \mathbf{k})$, the fallback key sequence (GP eq. (6.28), `fallbackkeysequence`):
+    $\left(\mathbf{k}^{\circlearrowleft}_{\mathcal{E}_4^{-1}(\mathcal{H}(r \frown \mathcal{E}_4(i))_{\dots 4})}\right)_b$ for $i \in \mathbb{N}_{\mathsf{E}}$. -/
 def fallbackKeys (params : Params) (r : List UInt8) (k : List ValidatorKey) : List (List UInt8) :=
   (List.range params.epochLen).map fun i =>
     let j := PVM.Num.decodeLE ((blake (r ++ PVM.Num.encodeLE 4 i)).take 4)
     (k.getD (j % k.length) ValidatorKey.null).bs
 
-/-- The entry-index bound n = ⌈2𝖤 / |γ_P'|⌉ (GP eq. `ticketsextrinsic`). -/
+/-- The entry-index bound $n = \lceil 2\mathsf{E} / |\gamma'_P| \rceil$ (GP eq. (6.31), `ticketsextrinsic`). -/
 def maxAttempts (params : Params) (pending' : List ValidatorKey) : Nat :=
   (2 * params.epochLen + pending'.length - 1) / pending'.length
 
@@ -179,7 +180,7 @@ def strictlyOrdered : List Ticket → Bool
   | _ => true
 
 /-- The Safrole transition (GP §6). On success it returns the posterior state and the markers
-    H_E and H_W. -/
+    $\mathbf{H}_E$ and $\mathbf{H}_W$. -/
 def safrole (params : Params) (c : Crypto) (s : SafroleState) (i : SafroleInput) :
     Except SafroleError (SafroleState × SafroleOutput) := do
   let E := params.epochLen
@@ -234,8 +235,8 @@ def safrole (params : Params) (c : Crypto) (s : SafroleState) (i : SafroleInput)
           { epochMark, ticketsMark })
 
 /-- The header's seal and entropy-source conditions (GP eqs. `ticketconditiontrue`,
-    `ticketconditionfalse`, `vrfsigcheck`), for the posterior γ_S' and η_3' and the author's
-    Bandersnatch key H_A = (κ'_{H_I})_b. Y(H_V) is then the transition's `entropy` input. -/
+    `ticketconditionfalse`, `vrfsigcheck`), for the posterior $\gamma'_S$ and $\eta'_3$ and the author's
+    Bandersnatch key $\mathbf{H}_A = (\kappa'_{\mathbf{H}_I})_b$. $\mathcal{Y}(\mathbf{H}_V)$ is then the transition's `entropy` input. -/
 def sealValid (params : Params) (c : Crypto) (sealKeys' : SealKeys) (eta3' : List UInt8)
     (author : List UInt8) (h : Header) : Bool :=
   let sealSig := h.sealSig.toList

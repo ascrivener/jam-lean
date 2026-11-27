@@ -7,7 +7,7 @@ import PVM.Gas
 
 namespace PVM
 
-/-- The result of Ψ₁ (GP §A.4): (ε*, ı*, ϱ*, ϱ̃*, ω*, μ*). -/
+/-- The result of $\Psi_1$ (GP §A.4, eq. (A.7)): $(\varepsilon^{\ast}, \imath^{\ast}, \varrho^{\ast}, \tilde\varrho^{\ast}, \varphi^{\ast}, \mu^{\ast})$. -/
 structure StepResult where
   /-- ε* -/
   status : Status
@@ -24,8 +24,10 @@ structure StepResult where
 
 namespace Program
 
-/-- The gas stage of Ψ₁ (GP §A.4): (ε^ϱ, ϱ*, ϱ̃') =
-    (▸, ϱ, ⊤) if ϱ̃ = ⊤; (▸, ϱ − ϱ^Δ(**c**, **k**, 𝔏(ı)), ⊤) if ϱ ≥ ϱ^Δ(**c**, **k**, 𝔏(ı)); (∞, ϱ, ⊥) otherwise. -/
+/-- The gas stage of $\Psi_1$ (GP §A.4, eq. (A.8)): $(\varepsilon^\varrho, \varrho^{\ast}, \tilde\varrho') =$
+    $(\blacktriangleright, \varrho, \top)$ if $\tilde\varrho = \top$;
+    $(\blacktriangleright, \varrho - \varrho^\Delta(\mathbf{c}, \mathbf{k}, \mathfrak{L}(\imath)), \top)$ if $\varrho \ge \varrho^\Delta(\mathbf{c}, \mathbf{k}, \mathfrak{L}(\imath))$;
+    $(\infty, \varrho, \bot)$ otherwise. -/
 def chargeGas (P : Program) (i : Nat) (gas : UInt64) (charged : Bool) : Status × UInt64 × Bool :=
   if charged then (.cont, gas, true)
   else
@@ -37,8 +39,9 @@ def Status.continuesOrHost : Status → Bool
   | .cont | .host _ => true
   | _ => false
 
-/-- (ε*, ı*, ω*, μ*) (GP §A.4): (ε^ϱ, ı, ω, μ) if ε^ϱ ≠ ▸; else (ε^μ, ı, ω, μ) if ε^μ ≠ ▸;
-    else (ε, ı', ω', μ') from the regular execution `m`. -/
+/-- $(\varepsilon^{\ast}, \imath^{\ast}, \varphi^{\ast}, \mu^{\ast})$ (GP §A.4, eq. (A.10)): $(\varepsilon^\varrho, \imath, \varphi, \mu)$ if
+    $\varepsilon^\varrho \ne \blacktriangleright$; else $(\varepsilon^\mu, \imath, \varphi, \mu)$ if $\varepsilon^\mu \ne \blacktriangleright$; else
+    $(\varepsilon, \imath', \varphi', \mu')$ from the regular execution `m`. -/
 def finalState (εg : Status) (i : Nat) (ω : Regs) (μ : Memory) (m : Mutation)
     (εμ : Option (Option Nat)) : Status × Nat × Regs × Memory :=
   if εg ≠ .cont then (εg, i, ω, μ)
@@ -47,10 +50,10 @@ def finalState (εg : Status) (i : Nat) (ω : Regs) (μ : Memory) (m : Mutation)
     | some (some a) => (.fault (UInt64.ofNat a), i, ω, μ)
     | none => (m.status, m.pc, m.regs, m.mem)
 
-/-- Ψ₁(**c**, **k**, **j**, ı, ϱ, ϱ̃, ω, μ) (GP §A.4).
+/-- $\Psi_1(\mathbf{c}, \mathbf{k}, \mathbf{j}, \imath, \varrho, \tilde\varrho, \varphi, \mu)$ (GP §A.4, eq. (A.7)).
 
-    Ψ only calls Ψ₁ when 𝔳_inst(**c**, **k**, ı) holds, so ζ_ı ∈ U and the instruction decodes;
-    to keep Ψ₁ total we read an undecodable octet as `trap`. That default is unreachable at every
+    $\Psi$ only calls $\Psi_1$ when $\mathfrak{v}_{\text{inst}}(\mathbf{c}, \mathbf{k}, \imath)$ holds, so $\zeta_{\imath} \in U$ and the
+    instruction decodes; to keep $\Psi_1$ total we read an undecodable octet as `trap`. That default is unreachable at every
     step Ψ takes (`PVM.Program.step_decode` in `PVM.Theorems.ExecForms`). -/
 def step (P : Program) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (μ : Memory) :
     StepResult :=
@@ -118,7 +121,7 @@ def runMeasure (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) : Nat :
 def stepBound (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) : Nat :=
   runMeasure p i gas charged + 1
 
-/-- Ψ(p, ı, ϱ, ϱ̃, ω, μ) (GP §A.1). The fallback after `stepBound` steps is unreachable
+/-- $\Psi(\mathfrak{p}, \imath, \varrho, \tilde\varrho, \varphi, \mu)$ (GP §A.1). The fallback after `stepBound` steps is unreachable
     (`PVM.runFuel_stepBound_isSome` in `PVM.Theorems.Termination`). -/
 def psi (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (μ : Memory) : Result :=
   (runFuel p (stepBound p i gas charged) i gas charged ω μ).getD

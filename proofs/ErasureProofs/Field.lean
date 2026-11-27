@@ -1,5 +1,6 @@
 import Mathlib
 import JAM.Erasure
+import JAM.Theorems.CheckedIndex.Erasure
 
 /-!
 # GF(2¹⁶) as a Mathlib field (GP v0.8.1 §H.2)

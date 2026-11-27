@@ -44,6 +44,7 @@ import JAM.Theorems.Auditing
 import JAM.Theorems.CheckedIndex
 import JAM.Theorems.CheckedIndex.Blake2b
 import JAM.Theorems.CheckedIndex.Keccak
+import JAM.Theorems.CheckedIndex.Erasure
 import JAM.Theorems.BestChain
 
 /-!
@@ -82,7 +83,7 @@ Built on `PVM` (Appendix A).
 * `JAM.Theorems.HostGas` — the dispatchers of Ψ_A, Ψ_R and Ψ_I never add gas
 * `JAM.Theorems.Safrole` — Safrole invariants: γ_A' sorted, unique and bounded by 𝖤; Z a permutation; |γ_S'| = 𝖤; η' and key well-formedness
 * `JAM.Theorems.Auditing` — auditing invariants: ℱ a permutation, tranche 0 draws at most ten distinct cores, no no-shows no escalation, U monotone in J_⊤ and the §10 verdict link
-* `JAM.Theorems.CheckedIndex` — the spec definitions rewritten without unchecked indexing (`a[i]!`) equal their earlier forms (Sha512, state keys, `Decoder.byte`; Blake2b and Keccak in `JAM.Theorems.CheckedIndex.Blake2b` and `.Keccak`)
+* `JAM.Theorems.CheckedIndex` — the spec definitions rewritten without unchecked indexing (`a[i]!`) equal their earlier forms (Sha512, state keys, `Decoder.byte`; Blake2b, Keccak and the erasure code in `JAM.Theorems.CheckedIndex.Blake2b`, `.Keccak` and `.Erasure`)
 * `JAM.BestChain` — the best chain (§19): acceptable blocks (19.1)–(19.3) with the §17.3 disregard rule, the ticketed metric m (19.4), the best heads and the §5 timeslot rule
 * `JAM.Theorems.BestChain` — best-chain facts: best heads are acceptable, extend the finalized block and maximise m; independence from store order
 -/

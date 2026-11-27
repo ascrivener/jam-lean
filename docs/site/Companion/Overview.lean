@@ -202,10 +202,12 @@ a length prefix. The model's `flatMap hashL` is that concatenation.
 tag := "overview-readings"
 %%%
 
-* *No clock.* The paper's $`\Upsilon` assumes a universally known clock $`\mathcal{T}`. The model's {api}`JAM.importBlock` has none, so
+The notes named below are in the model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
+
+* *No clock (note v0.8.1-A30).* The paper's $`\Upsilon` assumes a universally known clock $`\mathcal{T}`. The model's {api}`JAM.importBlock` has none, so
   it does not check $`\mathbf{H}_T \cdot \mathsf{P} \leq \mathcal{T}`; a caller that has a clock checks it separately.
-* *The ancestors.* $`\mathcal{A}` is defined from $`\mathbf{H}` by following parents back to genesis; the paper only requires
+* *The ancestors (note v0.8.1-A31).* $`\mathcal{A}` is defined from $`\mathbf{H}` by following parents back to genesis; the paper only requires
   nodes to keep the headers of the last $`\mathsf{L}` = 24 hours. The model takes the kept headers as an argument
   ({api}`JAM.Chain`). When the list is empty (no parent header kept), the $`\mathbf{H}_P` check is skipped.
-* *Errors.* The paper names no errors for an invalid block. The model reports the first section
+* *Errors (note v0.8.1-A32).* The paper names no errors for an invalid block. The model reports the first section
   whose check fails, in the order of {api}`JAM.importBlock` ({api}`JAM.BlockError`).

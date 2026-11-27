@@ -91,13 +91,15 @@ $`\mathbf{E}_G`, and compared with their posterior $`\alpha'` and $`\varphi'`
 tag := "authorization-readings"
 %%%
 
+Notes 21, v0.8.1-A28 and v0.8.1-A29 are in the model's
+[notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
+
 * *Which guarantee's authorizer (note 21).* In (8.3), $`g` is bound only inside the condition
   $`\exists g \in \mathbf{E}_G : (g_r)_c = c`, but $`(g_r)_a` is used in the result. The model reads $`g` as the guarantee on core $`c`
-  ({api}`JAM.poolUsed`). This is note 21 of the model's
-  [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
-* *More than one guarantee on a core.* A valid $`\mathbf{E}_G` has at most one guarantee per core (§11). The
+  ({api}`JAM.poolUsed`).
+* *More than one guarantee on a core (note v0.8.1-A28).* A valid $`\mathbf{E}_G` has at most one guarantee per core (§11). The
   model does not rely on that here: if there were several, it would remove each one's authorizer
   in turn.
-* *An empty queue.* By (8.1) every queue has exactly $`\mathsf{Q}` entries, so $`\varphi'[c][\mathbf{H}_T]^{\circlearrowleft}` always exists. The model's
+* *An empty queue (note v0.8.1-A29).* By (8.1) every queue has exactly $`\mathsf{Q}` entries, so $`\varphi'[c][\mathbf{H}_T]^{\circlearrowleft}` always exists. The model's
   queues are lists of any length; for an empty queue, where $`i \bmod 0` names no element, it appends
   nothing ({api}`JAM.poolNext`).

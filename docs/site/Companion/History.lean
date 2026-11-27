@@ -134,9 +134,11 @@ posterior $`\beta_H` and $`\beta_B` ([`Tests/HistoryTest.lean`](https://github.c
 tag := "history-readings"
 %%%
 
-* *An empty history.* Eq. (7.5) indexes the last entry, $`\beta_H[|\beta_H| - 1]`, which does not exist when $`\beta_H` is empty
+The notes named below are in the model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
+
+* *An empty history (note v0.8.1-A26).* Eq. (7.5) indexes the last entry, $`\beta_H[|\beta_H| - 1]`, which does not exist when $`\beta_H` is empty
   (as at genesis). The model then leaves $`\beta^\dagger_H` empty ({api}`JAM.Recent.withParentRoot`).
-* *The package map.* $`\mathbf{p}` is written as a set of pairs $`k \mapsto v`, which makes it a dictionary. If two guarantees
+* *The package map (note v0.8.1-A27).* $`\mathbf{p}` is written as a set of pairs $`k \mapsto v`, which makes it a dictionary. If two guarantees
   had the same package hash, the model would keep the later one (`Std.ExtTreeMap.ofList`). The
   guarantee checks of §11 reject duplicate packages before this point, so the case does not arise in
   a valid block.

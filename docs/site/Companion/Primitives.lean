@@ -192,7 +192,9 @@ README, except $`\mathsf{L}`, which the README does not list; the tiny vectors u
 tag := "primitives-readings"
 %%%
 
-* *Keccak's padding.* The paper cites Keccak as "proposed by Bertoni et al." and "utilized by"
+Note v0.8.1-A33 is in the model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
+
+* *Keccak's padding (note v0.8.1-A33).* The paper cites Keccak as "proposed by Bertoni et al." and "utilized by"
   the Ethereum Yellow Paper. The model reads that as the original Keccak padding (`0x01`), not the
   FIPS 202 SHA3 padding (`0x06`).
 * *The tiny chain.* The paper says nothing about the smaller chain the test vectors use. The model

@@ -9,13 +9,13 @@ EXPERIMENTAL (see `docs/symexec-spike.md`). One function, `srun`, runs a stretch
 the gas-free machine does (GP v0.8.1 §A.4–A.5, `Program.freeStep`, chained as `FreeStepsH`). A
 stretch is then proved by evaluating `check … = true` in the kernel (`decide +kernel`).
 
-* Registers hold symbolic values (`SVal`): terms over named naturals ρ_k, the start registers and
+* Registers hold symbolic values (`SVal`): terms over named naturals $\rho_k$, the start registers and
   the start memory, with the paper's own mutation functions as nodes (so no per-operation proof).
-* Addresses are affine (`Aff`): a literal, or ρ_k + d for an integer offset d. Named naturals have
+* Addresses are affine (`Aff`): a literal, or $\rho_k + d$ for an integer offset $d$. Named naturals have
   lower and upper bounds, so an address has an interval; two regions are disjoint when they share a
   base and their offsets say so, when their intervals say so, or when a declared separation (a
   hypothesis of the stretch) says so.
-* Memory is a list of cells `μ_{a…+n} = ℰ_n(v)`, a list of dirty regions (everything else reads as
+* Memory is a list of cells $\mu_{a \dots +n} = \mathcal{E}_n(v)$, a list of dirty regions (everything else reads as
   at the start), and the start memory's readable and writable regions (stores keep pages).
 
 Supported: the ALU instructions of §A.5.9, §A.5.10 and §A.5.13, loads and stores at affine addresses
@@ -31,7 +31,7 @@ open Num Exec
 
 /-! ## Values and addresses -/
 
-/-- An affine address: ρ_k + off, or the literal `off` when `base = none`. -/
+/-- An affine address: $\rho_k + \mathit{off}$, or the literal `off` when `base = none`. -/
 structure Aff where
   base : Option Nat
   off : Int
@@ -45,19 +45,19 @@ inductive SVal where
   | var (k : Nat)
   /-- The start value of register `r`, as a natural. -/
   | reg0 (r : Nat)
-  /-- ℰ⁻¹ of the `n` start octets at an address. -/
+  /-- $\mathcal{E}^{-1}$ of the `n` start octets at an address. -/
   | mem0 (a : Aff) (n : Nat)
-  /-- v mod m. -/
+  /-- $v \bmod m$. -/
   | mod (v : SVal) (m : Nat)
   /-- An affine value (an address). -/
   | addr (a : Aff)
-  /-- §A.5.10's ALU function of ω_A, ω_B and ν_X. -/
+  /-- §A.5.10's ALU function of $\varphi_A$, $\varphi_B$ and $\nu_X$. -/
   | alu2i (op : TwoRegImmOp) (a b : SVal) (x : Nat)
-  /-- §A.5.13's function of ω_A, ω_B and ω_D. -/
+  /-- §A.5.13's function of $\varphi_A$, $\varphi_B$ and $\varphi_D$. -/
   | alu3 (op : ThreeRegOp) (a b d : SVal)
-  /-- §A.5.9's function of ω_A. -/
+  /-- §A.5.9's function of $\varphi_A$. -/
   | alu2 (op : TwoRegOp) (a : SVal)
-  /-- 𝒵⁻¹_8(𝒵_k(v)) (a signed load of `k` octets). -/
+  /-- $\mathcal{Z}^{-1}_8(\mathcal{Z}_k(v))$ (a signed load of `k` octets). -/
   | sx (k : Nat) (v : SVal)
   /-- Entry `i` of a table of literals (0 past its end): an octet table the code indexes. -/
   | tbl (vs : List Nat) (i : SVal)
@@ -99,19 +99,19 @@ def InReg (E : Env) (r : Aff × Nat) (t : Nat) : Prop := r.1.eval E ≤ t ∧ (t
 inductive Fact where
   /-- v < c. -/
   | lt (v : SVal) (c : Nat)
-  /-- c ≤ v. -/
+  /-- $c \le v$. -/
   | ge (v : SVal) (c : Nat)
-  /-- v ≠ c. -/
+  /-- $v \ne c$. -/
   | ne (v : SVal) (c : Nat)
-  /-- a ≤ b, as integers. -/
+  /-- $a \le b$, as integers. -/
   | le (a b : Aff)
   /-- Every address in [lo, hi) is readable in the start memory. -/
   | rd (lo hi : Aff)
   /-- Every address in [lo, hi) is writable in the start memory. -/
   | wr (lo hi : Aff)
-  /-- ρ_x + ρ_y = ρ_z (e.g. a cursor `p + i`). -/
+  /-- $\rho_x + \rho_y = \rho_z$ (e.g. a cursor `p + i`). -/
   | sum (x y z : Nat)
-  /-- a ≠ b, as integers. -/
+  /-- $a \ne b$, as integers. -/
   | neA (a b : Aff)
   deriving DecidableEq, Repr
 
@@ -126,7 +126,7 @@ def Fact.Holds (E : Env) : Fact → Prop
   | .sum x y z => E.ρ x + E.ρ y = E.ρ z
   | .neA a b => a.eval E ≠ b.eval E
 
-/-- Bounds of the named naturals (`lb[k] ≤ ρ_k < ub[k]`), readable and writable regions of the
+/-- Bounds of the named naturals ($\mathit{lb}[k] \le \rho_k < \mathit{ub}[k]$), readable and writable regions of the
     start memory, and declared pairs of disjoint regions. -/
 structure Static where
   ub : List Nat
@@ -150,7 +150,7 @@ def Aff.hi (st : Static) (a : Aff) : Option Int :=
   | some k => st.ub[k]?.map fun u => (u : Int) - 1 + a.off
   | none => some a.off
 
-/-- `n` octets at `a` lie within ℕ_{2^32}, by the bounds. -/
+/-- `n` octets at `a` lie within $\mathbb{N}_{2^{32}}$, by the bounds. -/
 def valid0 (st : Static) (a : Aff) (n : Nat) : Bool :=
   decide (0 ≤ a.lo st) && match a.hi st with
     | some h => decide (h + n ≤ two32) && decide (h < two32)
@@ -171,7 +171,7 @@ def disj (st : Static) (a : Aff) (n : Nat) (b : Aff) (m : Nat) : Bool :=
   (match b.hi st with | some h => decide (h + m ≤ a.lo st) | none => false) ||
   st.sep.any fun p => (within st a n p.1 && within st b m p.2) || (within st a n p.2 && within st b m p.1)
 
-/-- a ≤ b, as integers: on a common base, by the bounds, or by a fact `a' ≤ b'` on the same bases. -/
+/-- $a \le b$, as integers: on a common base, by the bounds, or by a fact $a' \le b'$ on the same bases. -/
 def leA0 (st : Static) (a b : Aff) : Bool :=
   (a.base == b.base && decide (a.off ≤ b.off)) ||
   (match a.hi st with | some h => decide (h ≤ b.lo st) | none => false) ||
@@ -179,14 +179,15 @@ def leA0 (st : Static) (a b : Aff) : Bool :=
     | .le a' b' => a'.base == a.base && b'.base == b.base && decide (a.off - a'.off ≤ b.off - b'.off)
     | _ => false
 
-/-- Some fact says ρ_z = ρ_x + ρ_y or ρ_z = ρ_y + ρ_x. -/
+/-- Some fact says $\rho_z = \rho_x + \rho_y$ or $\rho_z = \rho_y + \rho_x$. -/
 def hasSum (st : Static) (x z : Nat) : Bool :=
   st.facts.any fun f => match f with
     | .sum x' y' z' => z' == z && (x' == x || y' == x)
     | _ => false
 
-/-- a ≤ b, as integers: by `leA0`; or a summand below its sum (ρ_x ≤ ρ_x + ρ_y); or through two
-    sums with a shared first summand (ρ_s + ρ_x ≤ ρ_s + ρ_y when ρ_x ≤ ρ_y, by `leA0`). -/
+/-- $a \le b$, as integers: by `leA0`; or a summand below its sum ($\rho_x \le \rho_x + \rho_y$); or
+    through two sums with a shared first summand ($\rho_s + \rho_x \le \rho_s + \rho_y$ when
+    $\rho_x \le \rho_y$, by `leA0`). -/
 def leA (st : Static) (a b : Aff) : Bool :=
   leA0 st a b ||
   match a.base, b.base with
@@ -200,14 +201,14 @@ def leA (st : Static) (a b : Aff) : Bool :=
   | _, _ => false
 
 /-- `n > 0` octets at `a` end at or below the end of a region of an `rd` or `wr` fact, and the
-    bounds put that end at or below 2^32. -/
+    bounds put that end at or below $2^{32}$. -/
 def validF (st : Static) (a : Aff) (n : Nat) : Bool :=
   decide (0 < n) && decide (0 ≤ a.lo st) && st.facts.any fun f => match f with
     | .rd _ hi | .wr _ hi => leA st ⟨a.base, a.off + n⟩ hi &&
         match hi.hi st with | some h => decide (h ≤ two32) | none => false
     | _ => false
 
-/-- `n` octets at `a` lie within ℕ_{2^32}: by the bounds (`valid0`) or by a fact (`validF`). -/
+/-- `n` octets at `a` lie within $\mathbb{N}_{2^{32}}$: by the bounds (`valid0`) or by a fact (`validF`). -/
 def valid (st : Static) (a : Aff) (n : Nat) : Bool := valid0 st a n || validF st a n
 
 /-- The `n` octets at `a` lie in a region that a fact `rd` says is readable. -/
@@ -242,14 +243,14 @@ def minO : Option Nat → Option Nat → Option Nat
   | some a, none => some a
   | none, b => b
 
-/-- The bound that the facts `v < c` give a value. -/
+/-- The bound that the facts $v < c$ give a value. -/
 def fub : List Fact → SVal → Option Nat
   | [], _ => none
   | f :: fs, v => match f with
     | .lt w c => if w == v then minO (some c) (fub fs v) else fub fs v
     | _ => fub fs v
 
-/-- The lower bound that the facts `c ≤ v` give a value. -/
+/-- The lower bound that the facts $c \le v$ give a value. -/
 def flb : List Fact → SVal → Nat
   | [], _ => 0
   | f :: fs, v => match f with
@@ -259,8 +260,8 @@ def flb : List Fact → SVal → Nat
 /-- An exclusive upper bound of a value: from its form, and from the facts. -/
 def SVal.bnd (st : Static) (v : SVal) : Option Nat := minO (v.bnd0 st) (fub st.facts v)
 
-/-- `v mod m`, simplified: folded on a literal, dropped when a bound shows it does nothing, and
-    `𝒵⁻¹_8(𝒵_k(w)) mod 2^(8k) = w mod 2^(8k)` for k = 2, 4. -/
+/-- $v \bmod m$, simplified: folded on a literal, dropped when a bound shows it does nothing, and
+    $\mathcal{Z}^{-1}_8(\mathcal{Z}_k(w)) \bmod 2^{8k} = w \bmod 2^{8k}$ for $k = 2, 4$. -/
 def mkMod (st : Static) (v : SVal) (m : Nat) : SVal :=
   match v with
   | .const n => .const (n % m)
@@ -277,14 +278,14 @@ def asAff : SVal → Option Aff
   | .addr a => some a
   | _ => none
 
-/-- x mod M read as a signed offset: negative when x mod M ≥ M/2. -/
+/-- $x \bmod M$ read as a signed offset: negative when $x \bmod M \ge M/2$. -/
 def shift (x M : Nat) : Int := if x % M < M / 2 then ((x % M : Nat) : Int) else ((x % M : Nat) : Int) - M
 
 /-- The bounds show that `a` and `a'` are at least 0 and `a'` is below M. -/
 def affOk (st : Static) (a a' : Aff) (M : Nat) : Bool :=
   decide (0 ≤ a.lo st) && decide (0 ≤ a'.lo st) && (a'.hi st).any (fun h => decide (h < (M : Int)))
 
-/-- (a + x) mod M as an affine value, when the bounds show it neither wraps below 0 nor reaches M. -/
+/-- $(a + x) \bmod M$ as an affine value, when the bounds show it neither wraps below 0 nor reaches $M$. -/
 def addAff (st : Static) (a : Aff) (x M : Nat) : Option Aff :=
   if affOk st a ⟨a.base, a.off + shift x M⟩ M = true then some ⟨a.base, a.off + shift x M⟩ else none
 
@@ -292,7 +293,7 @@ def addAff (st : Static) (a : Aff) (x M : Nat) : Option Aff :=
 def affVal (a : Aff) : SVal :=
   if a.off = 0 then (match a.base with | some k => .var k | none => .const 0) else .addr a
 
-/-- The value (v + x) mod 2^64 (`fallback` when it is not affine). -/
+/-- The value $(v + x) \bmod 2^{64}$ (`fallback` when it is not affine). -/
 def addv (st : Static) (v : SVal) (x : Nat) (fallback : SVal) : SVal :=
   match v with
   | .const c => .const ((c + x) % two64)
@@ -300,12 +301,12 @@ def addv (st : Static) (v : SVal) (x : Nat) (fallback : SVal) : SVal :=
     | some a' => affVal a'
     | none => fallback
 
-/-- Whether §A.5.10's function reads ω_A (only `cmov_iz_imm`, `cmov_nz_imm`). -/
+/-- Whether §A.5.10's function reads $\varphi_A$ (only `cmov_iz_imm`, `cmov_nz_imm`). -/
 def usesA : TwoRegImmOp → Bool
   | .cmovIzImm | .cmovNzImm => true
   | _ => false
 
-/-- Whether §A.5.13's function reads ω_D (only `cmov_iz`, `cmov_nz`). -/
+/-- Whether §A.5.13's function reads $\varphi_D$ (only `cmov_iz`, `cmov_nz`). -/
 def usesD : ThreeRegOp → Bool
   | .cmovIz | .cmovNz => true
   | _ => false
@@ -315,8 +316,8 @@ def foldAlu2i (op : TwoRegImmOp) (a b : SVal) (x : Nat) : SVal :=
   | .const p, .const q => .const ((twoRegImmAlu op p q x).getD 0)
   | a, b => .alu2i op a b x
 
-/-- The zero-extension idiom: `add_imm_32 0` of a value below 2^31 is the value, and
-    `shlo_r_imm_64 s` of `shlo_l_imm_64 s` of w is w when w·2^s < 2^64. -/
+/-- The zero-extension idiom: `add_imm_32 0` of a value below $2^{31}$ is the value, and
+    `shlo_r_imm_64 s` of `shlo_l_imm_64 s` of $w$ is $w$ when $w \cdot 2^s < 2^{64}$. -/
 def zextRule (st : Static) (op : TwoRegImmOp) (b : SVal) (x : Nat) : Option SVal :=
   if op = .addImm32 then
     (if x = 0 ∧ (b.bnd st).any (· ≤ 2 ^ 31) then some b else none)
@@ -348,7 +349,7 @@ def SVal.lob0 (st : Static) : SVal → Nat
 /-- A lower bound of a value: from its form, and from the facts. -/
 def SVal.lob (st : Static) (v : SVal) : Nat := max (v.lob0 st) (flb st.facts v)
 
-/-- v ≤ w, by the bounds. -/
+/-- $v \le w$, by the bounds. -/
 def leB (st : Static) (v w : SVal) : Bool := (v.bnd st).any (· ≤ w.lob st + 1)
 
 def foldAlu3 (op : ThreeRegOp) (a b d : SVal) : SVal :=
@@ -362,8 +363,9 @@ def asAffV : SVal → Option Aff
   | .addr a => some a
   | _ => none
 
-/-- (v + w) mod 2^64 as an address on ρ_z, when v and w are affine on ρ_x and ρ_y, a fact says
-    ρ_x + ρ_y = ρ_z (or ρ_y + ρ_x = ρ_z), and the bounds show that nothing wraps. -/
+/-- $(v + w) \bmod 2^{64}$ as an address on $\rho_z$, when $v$ and $w$ are affine on $\rho_x$ and
+    $\rho_y$, a fact says $\rho_x + \rho_y = \rho_z$ (or $\rho_y + \rho_x = \rho_z$), and the bounds
+    show that nothing wraps. -/
 def addSum (st : Static) (v w : SVal) : Option SVal :=
   match asAffV v, asAffV w with
   | some ⟨some x, o1⟩, some ⟨some y, o2⟩ =>
@@ -403,7 +405,7 @@ def mkSx (st : Static) (k : Nat) (v : SVal) : SVal :=
 
 /-! ## Symbolic states -/
 
-/-- A symbolic state: the 13 registers, memory cells `(a, n, v)` (μ_{a…+n} = ℰ_n(v)), and the
+/-- A symbolic state: the 13 registers, memory cells `(a, n, v)` ($\mu_{a \dots +n} = \mathcal{E}_n(v)$), and the
     regions written since the start. -/
 structure SState where
   regs : List SVal
@@ -420,7 +422,7 @@ def Pre (E : Env) (st : Static) : Prop :=
   (∀ q ∈ st.rw, q.1.eval E = q.2.eval E) ∧
   (∀ f ∈ st.facts, f.Holds E)
 
-/-- A machine state (ω, μ) is described by σ. -/
+/-- A machine state $(\varphi, \mu)$ is described by $\sigma$. -/
 def Inv (E : Env) (σ : SState) (ω : Regs) (μ : Memory) : Prop :=
   σ.regs.length = 13 ∧
   (∀ r : Fin 13, ω.get r = UInt64.ofNat ((σ.regs.getD r.val (.const 0)).eval E)) ∧
@@ -445,8 +447,8 @@ def NTree.All {α : Type} (Q : Nat → α → Prop) : NTree α → Prop
   | .leaf => True
   | .node l k v r => Q k v ∧ l.All Q ∧ r.All Q
 
-/-- The effect of a host call when registers hold literals: when ω_r = v for each (r, v) in
-    `pre`, it writes ℰ_n(v) at the literal address a for `wr = some (a, n, v)`, sets the
+/-- The effect of a host call when registers hold literals: when $\varphi_r = v$ for each $(r, v)$ in
+    `pre`, it writes $\mathcal{E}_n(v)$ at the literal address $a$ for `wr = some (a, n, v)`, sets the
     registers in `out` to literals, and leaves the rest of memory and the context unchanged. -/
 structure HostEff where
   pre : List (Nat × Nat) := []
@@ -454,8 +456,9 @@ structure HostEff where
   out : List (Nat × Nat)
   deriving Repr
 
-/-- The code a stretch runs through: at each pc its instruction and ı + 1 + skip(ı) (the `d_i` of
-    the code facts), block starts (`bs_i`), jump-table entries (`jte_k`) and |**j**| (`jts`). -/
+/-- The code a stretch runs through: at each pc its instruction and $\imath + 1 + \text{skip}(\imath)$ (the `d_i`
+    of the code facts), block starts (`bs_i`), jump-table entries (`jte_k`) and $|\mathbf{j}|$
+    (`jts`). -/
 structure Prog where
   code : NTree (Instr × Nat)
   bs : NTree Bool
@@ -492,7 +495,7 @@ def tkind : TwoRegImmOp → TK
   | .loadIndU64 => .load 8 0
   | _ => .alu
 
-/-- How §A.5.6 treats a memory operation at the absolute address ν_X. -/
+/-- How §A.5.6 treats a memory operation at the absolute address $\nu_X$. -/
 def rkind : RegImmOp → TK
   | .loadU8 => .load 1 0 | .loadU16 => .load 2 0 | .loadU32 => .load 4 0 | .loadU64 => .load 8 0
   | .loadI8 => .load 1 1 | .loadI16 => .load 2 2 | .loadI32 => .load 4 4
@@ -512,7 +515,7 @@ def decideCond (op : RegImmOffsetOp) (lo hi x : Nat) : Option Bool :=
   | .branchGtUImm => if x < lo then some true else if hi ≤ x + 1 then some false else none
   | _ => none
 
-/-- The unsigned comparison that a signed one (§A.5.8) equals on operands below 2^63. -/
+/-- The unsigned comparison that a signed one (§A.5.8) equals on operands below $2^{63}$. -/
 def toU : RegImmOffsetOp → Option RegImmOffsetOp
   | .branchLtSImm => some .branchLtUImm
   | .branchLeSImm => some .branchLeUImm
@@ -520,13 +523,13 @@ def toU : RegImmOffsetOp → Option RegImmOffsetOp
   | .branchGtSImm => some .branchGtUImm
   | _ => none
 
-/-- A signed comparison of a value below 2^63 with a negative immediate (2^63 ≤ x < 2^64). -/
+/-- A signed comparison of a value below $2^{63}$ with a negative immediate ($2^{63} \le x < 2^{64}$). -/
 def negImm : RegImmOffsetOp → Bool
   | .branchGeUImm | .branchGtUImm => true
   | _ => false
 
 /-- A branch condition against an immediate: computed on a literal, or decided by the bounds;
-    a signed one on a value below 2^63. -/
+    a signed one on a value below $2^{63}$. -/
 def scond (op : RegImmOffsetOp) (v : SVal) (x : Nat) : Option Bool :=
   match v with
   | .const c => some (regImmBranchCond op c x)
@@ -584,7 +587,7 @@ def eqU (v w : SVal) : Option Bool :=
     | _, _ => none
 
 /-- A comparison of two registers (§A.5.11), when it is decided; signed ones on values below
-    2^63, where they equal the unsigned ones. -/
+    $2^{63}$, where they equal the unsigned ones. -/
 def scond2a (op : TwoRegOffsetOp) (v w : SVal) : Option Bool :=
   let nn := (v.bnd st).any (· ≤ 2 ^ 63) && (w.bnd st).any (· ≤ 2 ^ 63)
   match op with
@@ -633,7 +636,7 @@ def rdv (σ : SState) (r : Nat) : SVal := mkMod st (rwv st (σ.regs.getD r (.con
 
 def setv (σ : SState) (r : Nat) (v : SVal) : SState := { σ with regs := σ.regs.set r v }
 
-/-- The address (v + x) mod 2^32 of `n` octets, as an affine address in ℕ_{2^32}. -/
+/-- The address $(v + x) \bmod 2^{32}$ of `n` octets, as an affine address in $\mathbb{N}_{2^{32}}$. -/
 def mkAddr (v : SVal) (x n : Nat) : Option Aff :=
   let a? : Option Aff := match v with
     | .const c => some ⟨none, ((c + x) % two32 : Nat)⟩
@@ -681,7 +684,7 @@ def loadVal (σ : SState) (a : Aff) (n : Nat) : Option SVal :=
     | some w => some (.const (w % 256 ^ n))
     | none => if σ.dirty.all (fun d => disj st a n d.1 d.2) then some (.mem0 a n) else none
 
-/-- Store ℰ_n(v) at `a`. -/
+/-- Store $\mathcal{E}_n(v)$ at `a`. -/
 def sstore (σ : SState) (a : Aff) (n : Nat) (v : SVal) : Option SState :=
   if valid st a n && (st.wr.any (within st a n) || inWr st a n) then
     some { regs := σ.regs
@@ -697,19 +700,19 @@ def sload (σ : SState) (d : Nat) (a : Aff) (n k : Nat) : Option SState :=
     (loadVal st σ a n).map fun v => setv σ d (mkSx st k v)
   else none
 
-/-- A table address: v = c + i (mod 2^64) by `add_64` or `add_imm_64` (§A.5.10, §A.5.13). -/
+/-- A table address: $v = c + i \pmod{2^{64}}$ by `add_64` or `add_imm_64` (§A.5.10, §A.5.13). -/
 def idxOf1 : SVal → Option (Nat × SVal)
   | .alu3 .add64 i (.const c) _ => some (c, i)
   | .alu3 .add64 (.const c) i _ => some (c, i)
   | .alu2i .addImm64 _ i c => some (c, i)
   | _ => none
 
-/-- `idxOf1`, also under a reduction mod 2^64. -/
+/-- `idxOf1`, also under a reduction mod $2^{64}$. -/
 def idxOf : SVal → Option (Nat × SVal)
   | .mod v m => if m = two64 then idxOf1 v else none
   | v => idxOf1 v
 
-/-- The literals of `n` octets at a, a + 1, …, a + b − 1. -/
+/-- The literals of `n` octets at $a, a + 1, \dots, a + b - 1$. -/
 def tvals (σ : SState) (n : Nat) : Nat → Nat → Option (List Nat)
   | _, 0 => some []
   | a, b + 1 =>
@@ -717,7 +720,7 @@ def tvals (σ : SState) (n : Nat) : Nat → Nat → Option (List Nat)
     | some (.const w), some vs => some (w :: vs)
     | _, _ => none
 
-/-- Load `n` octets at v + x into `d` when v is a table base plus an index of at most 4096
+/-- Load `n` octets at $v + x$ into `d` when $v$ is a table base plus an index of at most 4096
     values, and the table's entries are literals: entry `i` of the table. -/
 def tload (σ : SState) (d : Nat) (v : SVal) (x n k : Nat) : Option SState :=
   match idxOf v with
@@ -732,7 +735,7 @@ def tload (σ : SState) (d : Nat) (v : SVal) (x n k : Nat) : Option SState :=
         (tvals st σ n (c + x) b).map fun vs => setv σ d (mkSx st k (.tbl vs i))
       else none
 
-/-- Load `n` octets at v + x into `d`: at an affine address, else from a table. -/
+/-- Load `n` octets at $v + x$ into `d`: at an affine address, else from a table. -/
 def ldv (σ : SState) (d : Nat) (v : SVal) (x n k : Nat) : Option SState :=
   match mkAddr st v x n with
   | some ad => sload st σ d ad n k
@@ -814,7 +817,7 @@ def hset (σ : SState) : List (Nat × Nat) → SState
   | [] => σ
   | (r, v) :: rs => hset (setv σ r (.const v)) rs
 
-/-- The preconditions of a host effect hold of σ. -/
+/-- The preconditions of a host effect hold of $\sigma$. -/
 def hpre (σ : SState) (e : HostEff) : Bool :=
   e.pre.all fun p => decide (p.1 < 13) && rdv st σ p.1 == .const p.2
 
@@ -823,7 +826,7 @@ def hwr (σ : SState) : Option (Nat × Nat × Nat) → Option SState
   | none => some σ
   | some (a, n, v) => if a < two32 ∧ a + n ≤ two32 then sstore st σ ⟨none, a⟩ n (.const v) else none
 
-/-- A host effect applied to σ. -/
+/-- A host effect applied to $\sigma$. -/
 def happly (σ : SState) (e : HostEff) : Option SState :=
   if e.out.all (·.1 < 13) then (hwr st σ e.wr).map (hset · e.out) else none
 

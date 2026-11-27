@@ -8,7 +8,7 @@ import PVM.Logic.Chase
 Service-independent facts for summarizing compiled code: little-endian words as octet lists
 (`encodeLE_decodeLE`, splits, `encodeLE_splice` for misaligned word copies), bitwise facts the
 compiler's idioms need, loads folded so `pvm_simp` keeps them whole (`rdN`, `sxw`, `sx8`), and
-octet reads through writes. ℰ (GP (C)) on each width range is `encodeNat_of_lt`.
+octet reads through writes. $\mathcal{E}$ (GP (C)) on each width range is `encodeNat_of_lt`.
 -/
 
 namespace PVM
@@ -35,7 +35,7 @@ namespace PVM
 
 open Num Exec
 
-/-- Or of a value below 2^k and a multiple of 2^k (below 2^64) is their sum. -/
+/-- Or of a value below $2^k$ and a multiple of $2^k$ (below $2^{64}$) is their sum. -/
 theorem bitwise_or_add (x y k : Nat) (hk : k ≤ 64) (hx : x < 2 ^ k) (hy : y < 2 ^ (64 - k)) :
     bitwise (· || ·) x (y * 2 ^ k) = x + y * 2 ^ k := by
   apply Nat.eq_of_testBit_eq
@@ -90,7 +90,7 @@ theorem encodeLE_mod (l v : Nat) : Num.encodeLE l (v % 256 ^ l) = Num.encodeLE l
     rw [Nat.pow_succ, Nat.mul_comm, Nat.mod_mul_right_div_self, ih,
       Nat.mod_mod_of_dvd _ (Nat.dvd_mul_right 256 _)]
 
-/-- The misaligned word of `memcpy`: the high 8 − m octets of `a`, then the low m of `b`. -/
+/-- The misaligned word of `memcpy`: the high $8 - m$ octets of `a`, then the low $m$ of `b`. -/
 theorem encodeLE_splice (a b : List UInt8) (ha : a.length = 8) (hb : b.length = 8) (m : Nat)
     (hm : 0 < m ∧ m < 8) :
     Num.encodeLE 8 (bitwise (· || ·) (Num.decodeLE a / 2 ^ (8 * m))
@@ -246,7 +246,7 @@ theorem ofNat_eq_iff (e : Nat) (b : UInt8) : UInt8.ofNat e = b ↔ e % 256 = b.t
   · intro h; subst h; simp [UInt8.toNat_ofNat]
   · intro h; apply UInt8.toNat_inj.mp; rw [UInt8.toNat_ofNat']; exact h
 
-/-- `encodeLE_splice` for words given as values below 2^64. -/
+/-- `encodeLE_splice` for words given as values below $2^{64}$. -/
 theorem encodeLE_splice' (pw T m : Nat) (hm : 0 < m ∧ m < 8) (hpw : pw < 18446744073709551616)
     (hT : T < 18446744073709551616) :
     Num.encodeLE 8 (Exec.bitwise (· || ·) (pw / 2 ^ (8 * m)) (T * 2 ^ (64 - 8 * m) % 18446744073709551616)) =
@@ -356,8 +356,8 @@ theorem splice_readN (μ : Memory) (pw A m : Nat) (hm : 0 < m ∧ m < 8)
   rw [show 8 - m + m = 8 by omega, show A + m + (8 - m) = A + 8 by omega] at this
   exact this.symm
 
-/-- ℰ(x) for 2^(7l) ≤ x < 2^(7(l+1)), l < 5 (GP (C)): the prefix octet 2^8 − 2^(8−l) + ⌊x / 2^(8l)⌋, then
-    ℰ_l(x mod 2^(8l)). -/
+/-- $\mathcal{E}(x)$ for $2^{7l} \le x < 2^{7(l+1)}$, $l < 5$ (GP (C)): the prefix octet
+    $2^8 - 2^{8-l} + \lfloor x / 2^{8l} \rfloor$, then $\mathcal{E}_l(x \bmod 2^{8l})$. -/
 theorem encodeNat_of_lt (x l : Nat) (hl : l < 5) (hx : 0 < x) (h1 : 2 ^ (7 * l) ≤ x)
     (h2 : x < 2 ^ (7 * (l + 1))) :
     Blob.encodeNat x = UInt8.ofNat (2 ^ 8 - 2 ^ (8 - l) + x / 2 ^ (8 * l)) :: Num.encodeLE l (x % 2 ^ (8 * l)) := by
@@ -372,7 +372,7 @@ theorem encodeNat_of_lt (x l : Nat) (hl : l < 5) (hx : 0 < x) (h1 : 2 ^ (7 * l) 
 
 
 
-/-! Literal low masks: `a & (2^k − 1) = a mod 2^k`. -/
+/-! Literal low masks: $a \mathbin{\&} (2^k - 1) = a \bmod 2^k$. -/
 
 theorem bitwise_and_m1 (a : Nat) : Exec.bitwise (· && ·) a 1 = a % 2 := by
   rw [bitwise_and_low _ 1 1 (by decide) (by decide)]
@@ -402,7 +402,7 @@ theorem bitwise_and_m4294967295 (a : Nat) : Exec.bitwise (· && ·) a 4294967295
   rw [bitwise_and_low _ 4294967295 32 (by decide) (by decide)]
 
 
-/-- A slice of what memory holds: if memory holds `l₁ ⌢ l₂ ⌢ l₃` at `b`, it holds `l₂` at `b + |l₁|`. -/
+/-- A slice of what memory holds: if memory holds $l_1 \frown l_2 \frown l_3$ at $b$, it holds $l_2$ at $b + |l_1|$. -/
 theorem Memory.readN_mid (μ : Memory) (b : Nat) (l₁ l₂ l₃ : List UInt8)
     (h : μ.readN b (l₁ ++ l₂ ++ l₃).length = l₁ ++ l₂ ++ l₃) :
     μ.readN (b + l₁.length) l₂.length = l₂ := by
@@ -411,7 +411,7 @@ theorem Memory.readN_mid (μ : Memory) (b : Nat) (l₁ l₂ l₃ : List UInt8)
   have h2 := List.append_inj h1.2 (by simp [Memory.length_readN])
   exact h2.1
 
-/-- |ℰ(n)| for n < 2^32: one to five octets. -/
+/-- $|\mathcal{E}(n)|$ for $n < 2^{32}$: one to five octets. -/
 theorem encodeNat_len_le5 (n : Nat) (h : n < 4294967296) :
     1 ≤ (Blob.encodeNat n).length ∧ (Blob.encodeNat n).length ≤ 5 := by
   rcases Nat.eq_zero_or_pos n with h0 | h0
@@ -425,7 +425,7 @@ theorem encodeNat_len_le5 (n : Nat) (h : n < 4294967296) :
   · rw [encodeNat_of_lt n 3 (by decide) h0 (by simp; omega) (by simp; omega)]; simp
   · rw [encodeNat_of_lt n 4 (by decide) h0 (by simp; omega) (by simp; omega)]; simp
 
-/-- |ℰ(n)| for n < 2^16: one to three octets. -/
+/-- $|\mathcal{E}(n)|$ for $n < 2^{16}$: one to three octets. -/
 theorem encodeNat_len_le3 (n : Nat) (h : n < 65536) :
     1 ≤ (Blob.encodeNat n).length ∧ (Blob.encodeNat n).length ≤ 3 := by
   rcases Nat.eq_zero_or_pos n with h0 | h0

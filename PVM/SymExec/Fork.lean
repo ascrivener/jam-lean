@@ -54,7 +54,7 @@ def splitU (op : RegImmOffsetOp) (v : SVal) (x : Nat) : Option (List Fact × Lis
   | _ => none
 
 /-- A split for a comparison with an immediate: a signed one first on the sign of `v`
-    (v < 2^63 or not), then as the unsigned comparison it equals on that side. -/
+    ($v < 2^{63}$ or not), then as the unsigned comparison it equals on that side. -/
 def splitImm (st : Static) (op : RegImmOffsetOp) (v : SVal) (x : Nat) : Option (List Fact × List Fact) :=
   match toU op with
   | some u =>

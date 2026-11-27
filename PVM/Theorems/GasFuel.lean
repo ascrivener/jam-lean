@@ -2,30 +2,30 @@ import PVM.Gas
 import PVM.Theorems.Blob
 
 /-!
-# The gas simulation 𝔛 always finishes within its fuel (GP v0.8.1 §A.9)
+# The gas simulation $\mathfrak{X}$ always finishes within its fuel (GP v0.8.1 §A.9)
 
-`PVM.Sim.run` runs 𝔛 with at most `Sim.fuel P ı = 256 · (|**c**| − ı + 2)` transitions. Here we
-prove that this fuel always suffices: from **x**^init the `0` (out-of-fuel) case of `run` is never
-reached, so any larger fuel gives the same result (`PVM.Sim.run_fuel_eq`). For the blocks Ψ
-charges (ı a block start of a program passing 𝔳_blob) the simulation also never meets an opcode
+`PVM.Sim.run` runs $\mathfrak{X}$ with at most `Sim.fuel P ı` $= 256 \cdot (|\mathbf{c}| - \imath + 2)$ transitions. Here we
+prove that this fuel always suffices: from $\mathbf{x}^{\text{init}}$ the `0` (out-of-fuel) case of `run` is never
+reached, so any larger fuel gives the same result (`PVM.Sim.run_fuel_eq`). For the blocks $\Psi$
+charges ($\imath$ a block start of a program passing $\mathfrak{v}_{\text{blob}}$) the simulation also never meets an opcode
 outside U, so `blockCost?` is `some` and `blockCost`'s default is unreachable
 (`PVM.Program.blockCost?_isSome_of_vBlob`, `PVM.Program.blockCost_eq_of_vBlob`).
 
-The measure: 255 · (instructions left to decode) + 2 · (Σ of a per-entry potential over the
+The measure: 255 · (instructions left to decode) + 2 · ($\Sigma$ of a per-entry potential over the
 reorder buffer) + (decode and start slots used this cycle). Decoding lowers the first term by at
-least 255 and adds at most 2 · 104 + 4; starting an entry (WAIT → EXE) lowers the potential by 1
+least 255 and adds at most $2 \cdot 104 + 4$; starting an entry (WAIT → EXE) lowers the potential by 1
 and uses one start slot; a cycle step never raises the potential and resets the slots, and the
 invariant `Sim.Inv` shows that a cycle step that lowers neither must have been preceded by a
-decode or start since the last cycle (otherwise 𝔛 would have decoded, started or stopped
+decode or start since the last cycle (otherwise $\mathfrak{X}$ would have decoded, started or stopped
 instead). The bounds used from the cost table (GP §A.10), checked by `decide` over all 256
-octets: č ≤ 100, ď ≤ 4, x̌ ≤ (4, 4, 4, 1, 1), and č ≥ 1 unless x̌ = 0 (only `move_reg` has č = 0).
+octets: $\check{c} \le 100$, $\check{d} \le 4$, $\check{x} \le (4, 4, 4, 1, 1)$, and $\check{c} \ge 1$ unless $\check{x} = 0$ (only `move_reg` has $\check{c} = 0$).
 -/
 
 namespace PVM
 
 /-! ## Units, field by field -/
 
-/-- The five fields of 𝔼. -/
+/-- The five fields of $\mathbb{E}$. -/
 inductive UnitField where
   | alu | load | store | mul | div
 
@@ -89,8 +89,8 @@ theorem lo_le_evalCost (P : Program) (i : Nat) (ins : Instr) (e : CostExpr) :
 
 end Program
 
-/-- The bounds of one row of the table: č ≤ 100, ď ≤ 4, x̌ ≤ (4, 4, 4, 1, 1), and 1 ≤ č unless
-    x̌ = 0 (only `move_reg` has č = 0). -/
+/-- The bounds of one row of the table: $\check{c} \le 100$, $\check{d} \le 4$, $\check{x} \le (4, 4, 4, 1, 1)$, and $1 \le \check{c}$ unless
+    $\check{x} = 0$ (only `move_reg` has $\check{c} = 0$). -/
 def CostRow.bounded (r : CostRow) : Bool :=
   (1 ≤ r.cycles.lo || (r.alu.hi == 0 && r.load.hi == 0 && r.store.hi == 0 && r.mul.hi == 0 &&
     r.div.hi == 0)) && r.cycles.hi ≤ 100 && r.decodeSlots.hi ≤ 4 && r.alu.hi ≤ 4 &&
@@ -109,7 +109,7 @@ theorem zeta_lt (P : Program) (i : Nat) : P.zeta i < 256 := by
 theorem zeta_of_ge (P : Program) {i : Nat} (h : P.code.size ≤ i) : P.zeta i = 0 := by
   simp [Program.zeta, h]
 
-/-- The bounds of an evaluated cost (č, ď, x̌). -/
+/-- The bounds of an evaluated cost $(\check{c}, \check{d}, \check{x})$. -/
 structure InstrCost.Bounded (c : InstrCost) : Prop where
   cycles_pos : 1 ≤ c.cycles ∨ ∀ f : UnitField, f.get c.units = 0
   cycles_le : c.cycles ≤ 100
@@ -147,7 +147,7 @@ namespace Sim
 
 /-! ## The measure -/
 
-/-- The potential of a reorder-buffer entry: ∅ 0, FIN 1, EXE c + 2, WAIT c + 3, DEC c + 4. -/
+/-- The potential of a reorder-buffer entry: $\emptyset$ 0, FIN 1, EXE c + 2, WAIT c + 3, DEC c + 4. -/
 def pot (e : RobEntry) : Nat :=
   match e.state with
   | .none => 0
@@ -156,10 +156,10 @@ def pot (e : RobEntry) : Nat :=
   | .wait => e.cycles + 3
   | .dec => e.cycles + 4
 
-/-- Σ pot over the reorder buffer. -/
+/-- $\Sigma$ pot over the reorder buffer. -/
 def potSum (l : List RobEntry) : Nat := (l.map pot).sum
 
-/-- Instructions left to decode: 0 if **x**_ı = ∅, else (|**c**| + 1 − ı) + 1. -/
+/-- Instructions left to decode: 0 if $\mathbf{x}_{\imath} = \emptyset$, else $(|\mathbf{c}| + 1 - \imath) + 1$. -/
 def pcMeasure (P : Program) : Option Nat → Nat
   | none => 0
   | some i => P.code.size + 1 - i + 1
@@ -167,24 +167,24 @@ def pcMeasure (P : Program) : Option Nat → Nat
 /-- Decode and start slots used in this cycle. -/
 def slack (x : SimState) : Nat := (maxDecode - x.decodeSlots) + (maxStart - x.startSlots)
 
-/-- The termination measure of 𝔛. -/
+/-- The termination measure of $\mathfrak{X}$. -/
 def measure (P : Program) (x : SimState) : Nat :=
   255 * pcMeasure P x.pc + 2 * potSum x.rob + slack x
 
-/-- The units held by entries executing with cycles left: Σ r_t over r_s = EXE ∧ r_c > 0, in
+/-- The units held by entries executing with cycles left: $\Sigma\, r_t$ over $r_s = \text{EXE} \wedge r_c > 0$, in
     field `f`. -/
 def held (f : UnitField) (l : List RobEntry) : Nat :=
   (l.map fun e => if e.state = .exe ∧ 0 < e.cycles then f.get e.units else 0).sum
 
 /-! ## The invariant -/
 
-/-- The blocks positions 𝔛 decodes from `s`: s, then the next instruction after each
+/-- The blocks positions $\mathfrak{X}$ decodes from `s`: s, then the next instruction after each
     non-terminator. -/
 inductive Reach (P : Program) (s : Nat) : Nat → Prop
   | refl : Reach P s s
   | step {j : Nat} : Reach P s j → isTerminator (P.zeta j) = false → Reach P s (P.next j)
 
-/-- The invariant of the states reachable from **x**^init(s). -/
+/-- The invariant of the states reachable from $\mathbf{x}^{\text{init}}(s)$. -/
 structure Inv (P : Program) (s : Nat) (x : SimState) : Prop where
   pc : ∀ j, x.pc = some j → Reach P s j
   done0 : ∀ e ∈ x.rob, (e.state = .fin ∨ e.state = .none) → e.cycles = 0
@@ -241,9 +241,9 @@ theorem foldl_live_none : ∀ (l : List RobEntry) (n : Nat), (∀ e ∈ l, e.sta
     rw [List.foldl_cons, if_neg (by simp [h e (by simp)])]
     exact foldl_live_none l n fun e he => h e (by simp [he])
 
-/-! ## The cycle step 𝔛''' entry by entry -/
+/-! ## The cycle step $\mathfrak{X}'''$ entry by entry -/
 
-/-- 𝔛''' on one entry, given whether it is retired. -/
+/-- $\mathfrak{X}'''$ on one entry, given whether it is retired. -/
 def cyc (e : RobEntry) (r : Bool) : RobEntry :=
   { e with
     state :=
@@ -257,7 +257,7 @@ theorem cycleStep_rob (x : SimState) :
     (cycleStep x).rob = x.rob.zipWith cyc (retiredPrefix x.rob true) :=
   rfl
 
-/-- The units freed in field `f`: Σ r_t over r_s = EXE ∧ r_c = 1. -/
+/-- The units freed in field `f`: $\Sigma\, r_t$ over $r_s = \text{EXE} \wedge r_c = 1$. -/
 def freed (f : UnitField) (l : List RobEntry) : Nat :=
   (l.map fun e => if e.state = .exe ∧ e.cycles = 1 then f.get e.units else 0).sum
 
@@ -272,7 +272,7 @@ theorem freed_foldl (f : UnitField) : ∀ (l : List RobEntry) (z : Units),
     · rw [if_pos (by simp [h.1, h.2]), if_pos h, UnitField.get_add]; omega
     · rw [if_neg (by simpa using h), if_neg h]; omega
 
-/-- Facts about one entry under 𝔛''', when a retired entry is FIN or ∅. -/
+/-- Facts about one entry under $\mathfrak{X}'''$, when a retired entry is FIN or $\emptyset$. -/
 theorem cyc_pot_le (e : RobEntry) (r : Bool) (hr : r = true → e.state = .fin ∨ e.state = .none) :
     pot (cyc e r) ≤ pot e ∧
       ((e.state = .dec ∨ e.state = .exe ∨ (r = true ∧ e.state = .fin)) →
@@ -514,7 +514,7 @@ theorem startStep_spec {P : Program} {s : Nat} {x : SimState} (hI : Inv P s x)
     simp only [measure, startStep, slack, potSum, Fin.getElem_fin]
     omega
 
-/-! ## The cycle step keeps the invariant, and lowers the measure when 𝔛 takes it -/
+/-! ## The cycle step keeps the invariant, and lowers the measure when $\mathfrak{X}$ takes it -/
 
 theorem cycleStep_spec {P : Program} {s : Nat} {x : SimState} (hI : Inv P s x)
     (hprog : potSum (cycleStep x).rob < potSum x.rob ∨ 0 < slack x) :
@@ -711,7 +711,7 @@ theorem transition_spec {P : Program} {s : Nat} {x x' : SimState} (hI : Inv P s 
   · exact startStep_spec hI hn
   · exact cycleStep_spec hI (cycle_progress hI hdec hst hstop)
 
-/-- The transitions reachable from an invariant state are all defined when every instruction 𝔛
+/-- The transitions reachable from an invariant state are all defined when every instruction $\mathfrak{X}$
     may decode is in U. -/
 theorem transition_isSome {P : Program} {s : Nat} {x : SimState} (hI : Inv P s x)
     (hU : ∀ j, Reach P s j → (P.instrCost? j).isSome) : (transition P x).isSome := by
@@ -771,14 +771,14 @@ theorem run_fuel_eq (P : Program) (s f : Nat) (hf : fuel P s ≤ f) :
     run P f (init s) = run P (fuel P s) (init s) :=
   run_stable P s (fuel P s) (init s) (inv_init P s) (measure_init P s) f hf
 
-/-- With every instruction 𝔛 may decode from `s` in U, the simulation finishes within its fuel. -/
+/-- With every instruction $\mathfrak{X}$ may decode from `s` in U, the simulation finishes within its fuel. -/
 theorem run_fuel_isSome (P : Program) (s : Nat) (hU : ∀ j, Reach P s j → (P.instrCost? j).isSome) :
     (run P (fuel P s) (init s)).isSome :=
   run_isSome P s hU _ _ (inv_init P s) (measure_init P s)
 
 end Sim
 
-/-! ## Every block Ψ charges decodes only opcodes in U -/
+/-! ## Every block $\Psi$ charges decodes only opcodes in U -/
 
 /-- Every opcode in U decodes, and has a row in the cost table (GP §A.5, §A.10). -/
 def opcodeTotal (n : Nat) : Bool :=
@@ -805,7 +805,7 @@ theorem opcodeTotal_lt : ∀ n, n < 256 → opcodeTotal n = true := by
 
 namespace Program
 
-/-- 𝔳_inst's opcode condition **c**_ı ∈ U makes the instruction at ı decode (so Ψ₁'s fallback
+/-- $\mathfrak{v}_{\text{inst}}$'s opcode condition $\mathbf{c}_{\imath} \in U$ makes the instruction at $\imath$ decode (so $\Psi_1$'s fallback
     `trap` for an undecodable octet is unreachable). -/
 theorem decode_isSome {P : Program} {i : Nat} (h : isValidOpcode (P.zeta i) = true) :
     (P.decode i).isSome := by
@@ -835,7 +835,7 @@ theorem instrCost?_isSome {P : Program} {i : Nat} (h : isValidOpcode (P.zeta i) 
 theorem maskAt_eq_maskExt (P : Program) {i : Nat} (h : i < P.mask.size) : P.maskAt i = P.maskExt i := by
   simp [maskAt, maskExt, Array.getD, h]
 
-/-- skip(c) is the least j with (**k** ⌢ [1, 1, …])_{c+1+j} = 1, capped at 24 (GP eq. `skip`). -/
+/-- $\text{skip}(c)$ is the least $j$ with $(\mathbf{k} \frown [1, 1, \dots])_{c+1+j} = 1$, capped at 24 (GP eq. `skip`). -/
 theorem maskExt_of_lt_skip (P : Program) (c : Nat) {k : Nat} (hk : k < P.skip c) :
     P.maskExt (c + 1 + k) = false := by
   unfold skip at hk
@@ -865,7 +865,7 @@ theorem vBlobAux_cases (P : Program) :
         · exact .inr ‹_›
         · cases h
 
-/-- Along a program passing 𝔳_blob, every opcode index ≥ c of the chain is 𝔳_inst, and so is the
+/-- Along a program passing $\mathfrak{v}_{\text{blob}}$, every opcode index $\ge c$ of the chain is $\mathfrak{v}_{\text{inst}}$, and so is the
     one after a non-terminator. -/
 theorem vBlobAux_chain (P : Program) (hsz : P.mask.size = P.code.size) :
     ∀ (f c : Nat), P.vBlobAux f c = true → ∀ j, c ≤ j → j < P.code.size → P.maskAt j = true →
@@ -908,7 +908,7 @@ theorem vBlob_size {P : Program} (hv : P.vBlob = true) : P.mask.size = P.code.si
   simp only [vInst, Bool.and_eq_true, beq_iff_eq] at this
   exact this.1.1.1
 
-/-- In a program passing 𝔳_blob, every instruction 𝔛 decodes from a valid opcode index is valid. -/
+/-- In a program passing $\mathfrak{v}_{\text{blob}}$, every instruction $\mathfrak{X}$ decodes from a valid opcode index is valid. -/
 theorem vBlob_reach {P : Program} (hv : P.vBlob = true) {s : Nat} (hs : P.vInst s = true) :
     ∀ j, Sim.Reach P s j → P.vInst j = true := by
   intro j hr
@@ -923,8 +923,8 @@ theorem vInst_isValidOpcode {P : Program} {i : Nat} (h : P.vInst i = true) :
     isValidOpcode (P.zeta i) = true := by
   simp only [vInst, Bool.and_eq_true] at h; exact h.2
 
-/-- ϱ^Δ(**c**, **k**, s) is defined (the simulation finishes within its fuel and meets no opcode
-    outside U) for every valid opcode index s of a program passing 𝔳_blob. -/
+/-- $\varrho^\Delta(\mathbf{c}, \mathbf{k}, s)$ is defined (the simulation finishes within its fuel and meets no opcode
+    outside U) for every valid opcode index s of a program passing $\mathfrak{v}_{\text{blob}}$. -/
 theorem blockCost?_isSome_of_vBlob {P : Program} (hv : P.vBlob = true) {s : Nat}
     (hs : P.vInst s = true) : (P.blockCost? s).isSome := by
   unfold blockCost?
@@ -941,7 +941,7 @@ theorem blockStartFrom_spec (P : Program) :
     · exact .inl ‹_›
     · exact blockStartFrom_spec P n
 
-/-- 𝔏(ı), for a program passing 𝔳_blob, is a valid opcode index. -/
+/-- $\mathfrak{L}(\imath)$, for a program passing $\mathfrak{v}_{\text{blob}}$, is a valid opcode index. -/
 theorem vInst_blockStartOf {P : Program} (hv : P.vBlob = true) (i : Nat) :
     P.vInst (P.blockStartOf i) = true := by
   rcases blockStartFrom_spec P i with h | h
@@ -951,7 +951,7 @@ theorem vInst_blockStartOf {P : Program} (hv : P.vBlob = true) (i : Nat) :
     exact ⟨⟨⟨vBlob_size hv, by rw [vBlob_size hv]; exact decide_eq_true hlt⟩, hm⟩, hu⟩
   · rw [blockStartOf, h]; exact vBlob_vInst_zero hv
 
-/-- **The default of `blockCost` is unreachable in Ψ**: at every step Ψ takes (deblob succeeds),
+/-- **The default of `blockCost` is unreachable in $\Psi$**: at every step $\Psi$ takes (deblob succeeds),
     the block it charges has a simulated cost. -/
 theorem blockCost?_isSome_of_deblob {p : ByteArray} {i : Nat} {P : Program}
     (h : deblob p i = some P) : (P.blockCost? (P.blockStartOf i)).isSome := by

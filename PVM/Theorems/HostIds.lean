@@ -7,7 +7,7 @@ import PVM.Theorems.Termination
 
 `hostCallIdsOf p` scans a blob for `ecalli` instructions without running it. We prove:
 
-* `psi_hostId_mem`: every ħ × h that Ψ returns has h among them;
+* `psi_hostId_mem`: every $\hbar \times h$ that $\Psi$ returns has $h$ among them;
 * `psiHStar_congr`, `psiM_congr`: running a program under two host handlers that agree on those
   ids gives the same result. A program's behaviour cannot depend on what a handler does for any
   other id, so in particular it can never make any other host call.
@@ -26,7 +26,7 @@ theorem deblob_vInst {p : ByteArray} {i : Nat} {P : Program} (h : deblob p i = s
     · cases h; rename_i hv; simp only [Bool.and_eq_true] at hv; exact hv.2
     · cases h
 
-/-- **Every host call Ψ makes is one the program names.** -/
+/-- **Every host call $\Psi$ makes is one the program names.** -/
 theorem psi_hostId_mem {p : ByteArray} {i : Nat} {gas : UInt64} {ch : Bool} {ω : Regs}
     {μ : Memory} {h : UInt64} (hs : (psi p i gas ch ω μ).status = .host h) :
     h.toNat ∈ hostCallIdsOf p := by
@@ -58,7 +58,7 @@ theorem psiHFuel_congr (p : ByteArray) {f f' : HostFn X}
       simp only [hff _ hmem r.gas r.regs r.mem x, ih]
     all_goals rfl
 
-/-- **Ψ_H depends only on the handler's behaviour for the program's own `ecalli` ids.** -/
+/-- **$\Psi_H$ depends only on the handler's behaviour for the program's own `ecalli` ids.** -/
 theorem psiHStar_congr (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω : Regs)
     (μ : Memory) (x : X) {f f' : HostFn X} (hff : HostFn.AgreeOn (hostCallIdsOf p) f f') :
     psiHStar p i gas ch ω μ f x = psiHStar p i gas ch ω μ f' x := by
@@ -84,7 +84,7 @@ theorem standardInit_code {b a : ByteArray} {r : ByteArray × Regs × Memory}
     · cases hv'
     · cases hv'; exact hj
 
-/-- **Ψ_M depends only on the handler's behaviour for the program's own `ecalli` ids**: a service
+/-- **$\Psi_M$ depends only on the handler's behaviour for the program's own `ecalli` ids**: a service
     cannot observe, or be affected by, any host function it does not name. -/
 theorem psiM_congr (b : ByteArray) (i : Nat) (gas : UInt64) (a : ByteArray) (x : X)
     {f f' : HostFn X} (hff : HostFn.AgreeOn (jamHostCallIdsOf b) f f') :
@@ -100,8 +100,8 @@ theorem psiM_congr (b : ByteArray) (i : Nat) (gas : UInt64) (a : ByteArray) (x :
 
 /-! ## Context invariants
 
-If every host call a program can make preserves a property of the context, the context Ψ_H and
-Ψ_M end with has it too. Only the program's own `ecalli` ids matter, so a handler can do anything
+If every host call a program can make preserves a property of the context, the context $\Psi_H$ and
+$\Psi_M$ end with has it too. Only the program's own `ecalli` ids matter, so a handler can do anything
 at all for the ids the program never names. -/
 
 theorem psiHFuel_ctx_inv (p : ByteArray) (P : X → Prop) (f : HostFn X)
@@ -133,7 +133,7 @@ theorem psiHStar_ctx_inv (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (�
   | none => exact hx
   | some r => exact psiHFuel_ctx_inv p P f hf _ _ _ _ _ _ _ _ hx hr
 
-/-- **Context invariants for Ψ_M.** If every host call the blob names preserves `P`, then Ψ_M's
+/-- **Context invariants for $\Psi_M$.** If every host call the blob names preserves `P`, then $\Psi_M$'s
     final context satisfies `P` whenever the initial one does. -/
 theorem psiM_ctx_inv (b : ByteArray) (i : Nat) (gas : UInt64) (a : ByteArray) (x : X)
     (P : X → Prop) (f : HostFn X)

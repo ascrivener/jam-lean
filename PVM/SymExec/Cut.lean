@@ -5,8 +5,8 @@ import PVM.SymExec.Check
 
 EXPERIMENTAL (see `docs/symexec-spike.md`). A chain of stretches is cut at points where a `Cut`
 says what holds of the machine state: registers, memory cells, readable and writable regions, and
-the regions written since the chain's start (everything else reads as in the start memory μ₀, and
-the page map is μ₀'s). `seg_sound` turns one Boolean check per segment, evaluated by the kernel,
+the regions written since the chain's start (everything else reads as in the start memory $\mu_0$, and
+the page map is $\mu_0$'s). `seg_sound` turns one Boolean check per segment, evaluated by the kernel,
 into `Cut.Holds A → ∃ …, FreeStepsH … ∧ Cut.Holds B`, with no per-segment proof: a generator only
 emits the data of each cut.
 -/
@@ -26,7 +26,7 @@ structure Cut where
 /-- The environment of the named naturals `vals` and a machine state. -/
 def env (vals : List Nat) (ω : Regs) (μ : Memory) : Env := ⟨fun k => vals.getD k 0, ω, μ⟩
 
-/-- What a cut asserts of (ω, μ), given the named naturals and the chain's start memory μ₀. -/
+/-- What a cut asserts of $(\varphi, \mu)$, given the named naturals and the chain's start memory $\mu_0$. -/
 def Cut.Holds (vals : List Nat) (μ₀ : Memory) (c : Cut) (ω : Regs) (μ : Memory) : Prop :=
   RegsHold (env vals ω μ) ω c.regs ∧ CellsHold (env vals ω μ) μ c.cells ∧
   RdHold (env vals ω μ) μ c.rd ∧ WrHold (env vals ω μ) μ c.wr ∧

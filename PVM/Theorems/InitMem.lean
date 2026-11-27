@@ -1,11 +1,11 @@
 import PVM.Invocation
 
 /-!
-# The RAM Y builds, region by region
+# The RAM $Y$ builds, region by region
 
 `initialMemory jb a` (GP §A.7, eq. `memlayout`) sets page access per section and writes the three
 data sections. These lemmas read it back without evaluating it: the access of any page
-(`initialMemory_pages`) and the octet at any address below 2^32 (`initialMemory_read`), as a case
+(`initialMemory_pages`) and the octet at any address below $2^{32}$ (`initialMemory_read`), as a case
 split on which section the address lies in. They hold for every blob, so a proof about a large
 program can reason about its starting memory from a few facts about its sections (their sizes,
 the octets it reads) instead of the whole blob.
@@ -53,7 +53,7 @@ theorem setPages_get? (μ : Memory) (first count : Nat) (acc : Option Access) (p
 @[simp] theorem empty_read (i : Nat) : Memory.empty.read i = 0 := by
   simp [Memory.empty, Memory.read, Std.ExtTreeMap.getD_eq_getD_getElem?]
 
-/-- The octet at `j` after writing `bs` at `a`, for writes and reads below 2^32. -/
+/-- The octet at `j` after writing `bs` at `a`, for writes and reads below $2^{32}$. -/
 theorem read_writeN (μ : Memory) (a : Nat) (bs : List UInt8) (j : Nat)
     (ha : a + bs.length ≤ two32) (hj : j < two32) :
     (μ.writeN a bs).read j = if a ≤ j ∧ j < a + bs.length then bs[j - a]! else μ.read j := by
@@ -88,7 +88,7 @@ theorem readable_setPages (μ : Memory) (f c : Nat) (acc : Option Access) (i : N
 
 end Memory
 
-/-- **Page access of Y's RAM**, section by section (later sections take precedence where the
+/-- **Page access of $Y$'s RAM**, section by section (later sections take precedence where the
     paper's sections would overlap, which they do not for a valid blob). -/
 theorem initialMemory_pages (jb : JamBlob) (a : ByteArray) (p : Nat) :
     (initialMemory jb a).pages.get? p =
@@ -105,8 +105,8 @@ theorem initialMemory_pages (jb : JamBlob) (a : ByteArray) (p : Nat) :
       else none := by
   simp only [initialMemory, Memory.writeN_pages, Memory.setPages_get?, Memory.empty_get?]
 
-/-- **The octets of Y's RAM**: the arguments, the read-write data, the read-only data, and 0
-    elsewhere (for a blob whose sections fit below 2^32). -/
+/-- **The octets of $Y$'s RAM**: the arguments, the read-write data, the read-only data, and 0
+    elsewhere (for a blob whose sections fit below $2^{32}$). -/
 theorem initialMemory_read (jb : JamBlob) (a : ByteArray) (j : Nat) (hj : j < two32)
     (hro : roStart + jb.ro.size ≤ two32) (hrw : rwStart jb + jb.rw.size ≤ two32)
     (harg : argStart + a.size ≤ two32) :

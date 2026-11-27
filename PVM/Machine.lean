@@ -2,24 +2,24 @@ import PVM.Exec
 import PVM.Gas
 
 /-!
-# Single-step Ψ₁ and the full PVM Ψ (GP v0.8.1 §A.1, §A.4)
+# Single-step $\Psi_1$ and the full PVM $\Psi$ (GP v0.8.1 §A.1, §A.4)
 -/
 
 namespace PVM
 
 /-- The result of $\Psi_1$ (GP §A.4, eq. (A.7)): $(\varepsilon^{\ast}, \imath^{\ast}, \varrho^{\ast}, \tilde\varrho^{\ast}, \varphi^{\ast}, \mu^{\ast})$. -/
 structure StepResult where
-  /-- ε* -/
+  /-- $\varepsilon^{\ast}$ -/
   status : Status
-  /-- ı* -/
+  /-- $\imath^{\ast}$ -/
   pc : Nat
-  /-- ϱ* -/
+  /-- $\varrho^{\ast}$ -/
   gas : UInt64
-  /-- ϱ̃*, the gas-charged flag. -/
+  /-- $\tilde\varrho^{\ast}$, the gas-charged flag. -/
   charged : Bool
-  /-- ω* -/
+  /-- $\varphi^{\ast}$ -/
   regs : Regs
-  /-- μ* -/
+  /-- $\mu^{\ast}$ -/
   mem : Memory
 
 namespace Program
@@ -34,7 +34,7 @@ def chargeGas (P : Program) (i : Nat) (gas : UInt64) (charged : Bool) : Status �
     let cost := P.blockCost (P.blockStartOf i)
     if gas.toNat ≥ cost then (.cont, UInt64.ofNat (gas.toNat - cost), true) else (.oog, gas, false)
 
-/-- ε* ∈ {▸} ∪ {ħ} × ℕ_R, the condition under which a terminator clears the charged flag. -/
+/-- $\varepsilon^{\ast} \in \{\blacktriangleright\} \cup \{\hbar\} \times \mathbb{N}_R$, the condition under which a terminator clears the charged flag. -/
 def Status.continuesOrHost : Status → Bool
   | .cont | .host _ => true
   | _ => false
@@ -54,7 +54,7 @@ def finalState (εg : Status) (i : Nat) (ω : Regs) (μ : Memory) (m : Mutation)
 
     $\Psi$ only calls $\Psi_1$ when $\mathfrak{v}_{\text{inst}}(\mathbf{c}, \mathbf{k}, \imath)$ holds, so $\zeta_{\imath} \in U$ and the
     instruction decodes; to keep $\Psi_1$ total we read an undecodable octet as `trap`. That default is unreachable at every
-    step Ψ takes (`PVM.Program.step_decode` in `PVM.Theorems.ExecForms`). -/
+    step $\Psi$ takes (`PVM.Program.step_decode` in `PVM.Theorems.ExecForms`). -/
 def step (P : Program) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (μ : Memory) :
     StepResult :=
   -- (ε^ϱ, ϱ*, ϱ̃')
@@ -68,22 +68,22 @@ def step (P : Program) (i : Nat) (gas : UInt64) (charged : Bool) (ω : Regs) (μ
 
 end Program
 
-/-- The result of Ψ (GP §A.1): (ε, ı, ϱ, ϱ̃, ω, μ). -/
+/-- The result of $\Psi$ (GP §A.1): $(\varepsilon, \imath, \varrho, \tilde\varrho, \varphi, \mu)$. -/
 structure Result where
-  /-- ε ∈ {∎, ☇, ∞} ∪ {F, ħ} × ℕ_R -/
+  /-- $\varepsilon \in \{\blacksquare, \text{☇}, \infty\} \cup \{\Finv, \hbar\} \times \mathbb{N}_R$ -/
   status : Status
-  /-- ı: 0 on ∎ and ☇, otherwise the instruction that caused the exit. -/
+  /-- $\imath$: 0 on $\blacksquare$ and ☇, otherwise the instruction that caused the exit. -/
   pc : Nat
-  /-- ϱ -/
+  /-- $\varrho$ -/
   gas : UInt64
-  /-- ϱ̃ -/
+  /-- $\tilde\varrho$ -/
   charged : Bool
-  /-- ω -/
+  /-- $\varphi$ -/
   regs : Regs
-  /-- μ -/
+  /-- $\mu$ -/
   mem : Memory
 
-/-- Ψ with at most `fuel` steps (GP §A.1); `none` if the fuel runs out first.
+/-- $\Psi$ with at most `fuel` steps (GP §A.1); `none` if the fuel runs out first.
 
     Each step deblobs the program afresh, exactly as the paper writes it. -/
 def runFuel (p : ByteArray) : Nat → Nat → UInt64 → Bool → Regs → Memory → Option Result
@@ -106,9 +106,9 @@ def runFuel (p : ByteArray) : Nat → Nat → UInt64 → Bool → Regs → Memor
         some { status := r.status, pc := i, gas := r.gas, charged := r.charged,
                regs := ω, mem := μ }
 
-/-- A termination measure for Ψ from (ı, ϱ, ϱ̃): every block charge costs at least 1 gas, and
-    between charges ı strictly increases within **c** (non-terminators) or a terminator clears
-    ϱ̃. With n = |**c**| + 1, the measure 2n·ϱ + (if ϱ̃ then n + |**c**| − ı else 0) strictly
+/-- A termination measure for $\Psi$ from $(\imath, \varrho, \tilde\varrho)$: every block charge costs at least 1 gas, and
+    between charges $\imath$ strictly increases within $\mathbf{c}$ (non-terminators) or a terminator clears
+    $\tilde\varrho$. With $n = |\mathbf{c}| + 1$, the measure $2n \cdot \varrho + (\text{if } \tilde\varrho \text{ then } n + |\mathbf{c}| - \imath \text{ else } 0)$ strictly
     decreases on every continuing step (`PVM.step_measure_lt` in `PVM.Theorems.Termination`). -/
 def runMeasure (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) : Nat :=
   match Blob.parse? p with
@@ -117,7 +117,7 @@ def runMeasure (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) : Nat :
     let n := P.code.size + 1
     2 * n * gas.toNat + (if charged then n + P.code.size - i else 0)
 
-/-- The number of steps after which Ψ has certainly exited. -/
+/-- The number of steps after which $\Psi$ has certainly exited. -/
 def stepBound (p : ByteArray) (i : Nat) (gas : UInt64) (charged : Bool) : Nat :=
   runMeasure p i gas charged + 1
 

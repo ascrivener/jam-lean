@@ -6,10 +6,10 @@ import PVM.Memory
 
 The spec RAM `Memory` (GP v0.8.1 §4.7, eq. `pvmmemory`) keeps one tree entry per written octet.
 `FastMem` keeps a spec `Memory` as its *base* and an overlay of the octets written since: a hash
-map from page index ⌊i / 𝖹_P⌋ to a `Page`, which holds the page's 𝖹_P octets and a mask of the
+map from page index $\lfloor i / \mathsf{Z}_P \rfloor$ to a `Page`, which holds the page's $\mathsf{Z}_P$ octets and a mask of the
 ones written. A write updates the overlay's page in place (when the overlay is not shared), so it
 costs a hash lookup and two octet writes instead of a tree insertion. Reads look in the overlay
-first and fall back to the base. Access modes are never changed by Ψ, so they stay in the base.
+first and fall back to the base. Access modes are never changed by $\Psi$, so they stay in the base.
 
 `FastMem.toMemory` writes the overlay back into the base. It is the abstraction function: every
 operation here is proved to commute with it (`toMemory_write`, `read_eq`, …), and
@@ -18,7 +18,7 @@ operation here is proved to commute with it (`toMemory_write`, `read_eq`, …), 
 
 namespace PVM
 
-/-- A page of the overlay: its 𝖹_P octets, a mask (non-zero = written), and the offsets written
+/-- A page of the overlay: its $\mathsf{Z}_P$ octets, a mask (non-zero = written), and the offsets written
     (each once), so that writing the page back costs one insertion per written octet. -/
 structure Page where
   data : ByteArray
@@ -58,7 +58,7 @@ theorem set_hoffs (pg : Page) (o : Nat) :
     have := pg.hoffs o' h
     split <;> simp [this]
 
-/-- Write octet `v` at offset `o` (< 𝖹_P). -/
+/-- Write octet `v` at offset `o` ($< \mathsf{Z}_P$). -/
 @[inline] def set (pg : Page) (o : Nat) (v : UInt8) : Page :=
   -- read the mask before updating it, so that the update happens in place
   let offs := if pg.mark[o]! != 0 then pg.offs else o :: pg.offs
@@ -93,18 +93,18 @@ namespace FastMem
 /-- A spec memory, with an empty overlay. -/
 @[inline] def ofMemory (μ : Memory) : FastMem := { base := μ, dirty := ∅ }
 
-/-- The overlay's octet at the address `k` (< 2^32), if written. -/
+/-- The overlay's octet at the address `k` ($< 2^{32}$), if written. -/
 def view (F : FastMem) (k : Nat) : Option UInt8 :=
   match F.dirty[k / pageSize]? with
   | some pg => pg.get? (k % pageSize)
   | none => none
 
-/-- i mod 2^32, through a 32-bit word (the literal 2^32 is not a small constant). -/
+/-- $i \bmod 2^{32}$, through a 32-bit word (the literal $2^{32}$ is not a small constant). -/
 @[inline] def mod32 (i : Nat) : Nat := (UInt32.ofNat i).toNat
 
 theorem mod32_eq (i : Nat) : mod32 i = i % two32 := UInt32.toNat_ofNat'
 
-/-- μ^↺_i. -/
+/-- $\mu^{\circlearrowleft}_i$. -/
 @[inline] def read (F : FastMem) (i : Nat) : UInt8 :=
   let k := mod32 i
   match F.dirty[k / pageSize]? with
@@ -113,25 +113,25 @@ theorem mod32_eq (i : Nat) : mod32 i = i % two32 := UInt32.toNat_ofNat'
     | none => F.base.bytes.getD k 0
   | none => F.base.bytes.getD k 0
 
-/-- μ'^↺_i = v. -/
+/-- $\mu'^{\circlearrowleft}_i = v$. -/
 @[inline] def write (F : FastMem) (i : Nat) (v : UInt8) : FastMem :=
   let k := mod32 i
   { F with dirty := F.dirty.alter (k / pageSize) fun o => some ((o.getD .blank).set (k % pageSize) v) }
 
-/-- μ^↺_{a…+n}. -/
+/-- $\mu^{\circlearrowleft}_{a \dots +n}$. -/
 def readN (F : FastMem) (a n : Nat) : List UInt8 := (List.range n).map fun k => F.read (a + k)
 
-/-- μ'^↺_{a…+|bs|} = bs. -/
+/-- $\mu'^{\circlearrowleft}_{a \dots +|bs|} = bs$. -/
 def writeN (F : FastMem) (a : Nat) : List UInt8 → FastMem
   | [] => F
   | b :: bs => (F.write a b).writeN (a + 1) bs
 
-/-- ℰ_n⁻¹(μ^↺_{a…+n}), without building the list. -/
+/-- $\mathcal{E}_n^{-1}(\mu^{\circlearrowleft}_{a \dots +n})$, without building the list. -/
 def readLE (F : FastMem) (a : Nat) : Nat → Nat
   | 0 => 0
   | n + 1 => (F.read a).toNat + 256 * F.readLE (a + 1) n
 
-/-- μ'^↺_{a…+n} = ℰ_n(v), without building the list. -/
+/-- $\mu'^{\circlearrowleft}_{a \dots +n} = \mathcal{E}_n(v)$, without building the list. -/
 def writeLE (F : FastMem) (a : Nat) : Nat → Nat → FastMem
   | 0, _ => F
   | n + 1, v => (F.write a (UInt8.ofNat (v % 256))).writeLE (a + 1) n (v / 256)
@@ -374,7 +374,7 @@ theorem toMemory_writeN (F : FastMem) (a : Nat) (bs : List UInt8) :
 
 end FastMem
 
-/-- ε^μ only depends on the access modes. -/
+/-- $\varepsilon^\mu$ only depends on the access modes. -/
 theorem memoryException_pages {μ ν : Memory} (h : μ.pages = ν.pages) (r w : List Nat) :
     memoryException μ r w = memoryException ν r w := by
   simp [memoryException, Memory.readable, Memory.writable, h]

@@ -3,9 +3,9 @@ import PVM.Logic.Steps
 /-!
 # Chains of gas-free steps through host calls
 
-`FreeStepsH p R i ω μ x i' ω' μ' x' n`: from (ı, ω, μ, x) the machine continues, through ordinary
-steps and through host calls whose outcome the contract `R` allows (resuming at ı + 1 + skip(ı)),
-to (ı', ω', μ', x'), in at most `n` steps (each ordinary step and each host call counts one), each
+`FreeStepsH p R i ω μ x i' ω' μ' x' n`: from $(\imath, \varphi, \mu, x)$ the machine continues, through ordinary
+steps and through host calls whose outcome the contract `R` allows (resuming at $\imath + 1 + \text{skip}(\imath)$),
+to $(\imath', \varphi', \mu', x')$, in at most `n` steps (each ordinary step and each host call counts one), each
 at an index whose basic block costs at most `stepCostCap` (`CostOk`). It
 is to `FreeRunH` what `FreeSteps` is to `FreeRun`: chains compose and end in a run
 (`FreeStepsH.run`), so a proof can follow a program across its host calls piece by piece. The
@@ -17,7 +17,7 @@ namespace PVM
 
 variable {X : Type}
 
-/-- The basic block containing ı costs at most `stepCostCap`, if the program deblobs at ı. -/
+/-- The basic block containing $\imath$ costs at most `stepCostCap`, if the program deblobs at $\imath$. -/
 def CostOk (p : ByteArray) (i : Nat) : Prop :=
   ∀ P, deblob p i = some P → P.blockCost (P.blockStartOf i) ≤ stepCostCap
 
@@ -149,7 +149,7 @@ theorem step_decode {P : Program} {i : Nat} {ins : Instr} {n : Nat} {ω : Regs} 
   .next ⟨P, hd.1, by rw [Program.freeStep_of_decode ω μ hd.2.1]; exact hs⟩ (.of hd.1 hd.2.2.2) rest
 
 /-- A host call `ecalli h` at an index the code facts give, with an outcome `R` allows; the run
-    resumes at ı + 1 + skip(ı) = n. -/
+    resumes at $\imath + 1 + \text{skip}(\imath) = n$. -/
 theorem host_decode {P : Program} {i : Nat} {h : UInt64} {n : Nat} {ω : Regs} {μ : Memory} {x : X}
     {ω' : Regs} {μ' : Memory} {x' : X} {i'' : Nat} {ω'' : Regs} {μ'' : Memory} {x'' : X} {k : Nat}
     (hd : deblob p i = some P ∧ P.decode i = some (.oneImm .ecalli h) ∧ P.next i = n ∧

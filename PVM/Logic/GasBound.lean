@@ -3,17 +3,17 @@ import PVM.Logic.StepsH
 import PVM.Theorems.Invocation
 
 /-!
-# Enough gas: a gas-free run is Ψ's run
+# Enough gas: a gas-free run is $\Psi$'s run
 
-`psiM_of_freeRunH` says Ψ_M returns a gas-free run's output *or ∞*. This file gives the converse
+`psiM_of_freeRunH` says $\Psi_M$ returns a gas-free run's output *or $\infty$*. This file gives the converse
 bound: if the run takes at most n steps (`FreeStepsH … n`, each ordinary step and each host call
 one, each in a block costing at most M = `stepCostCap`), and every host call the contract allows
 costs at most H and does what the contract says whenever that much gas is left (`HostCostLe`),
-then with at least (n + 1)(M + H) gas Ψ_M returns exactly the run's output.
+then with at least $(n + 1)(M + H)$ gas $\Psi_M$ returns exactly the run's output.
 
-Each continuing step of Ψ₁ charges at most one block cost (GP §A.9: ϱ^Δ at a block's start,
-nothing inside it), so with ϱ ≥ M it continues as the gas-free step does
-(`step_eq_of_gas`); Ψ_H* then follows the chain step by step (`psiHStar_of_steps`), and the
+Each continuing step of $\Psi_1$ charges at most one block cost (GP §A.9: $\varrho^\Delta$ at a block's start,
+nothing inside it), so with $\varrho \ge M$ it continues as the gas-free step does
+(`step_eq_of_gas`); $\Psi_H^{\ast}$ then follows the chain step by step (`psiHStar_of_steps`), and the
 halting step needs M more.
 -/
 
@@ -28,7 +28,7 @@ def HostCostLe (f : HostFn X) (R : HostRel X) (H : Nat) : Prop :=
     (f h g ω μ x).status = .cont ∧ (f h g ω μ x).regs = ω' ∧ (f h g ω μ x).mem = μ' ∧
       (f h g ω μ x).ctx = x' ∧ g.toNat ≤ (f h g ω μ x).gas.toNat + H
 
-/-- With at least the block's cost left, Ψ₁ does what the gas-free step does, and charges at most
+/-- With at least the block's cost left, $\Psi_1$ does what the gas-free step does, and charges at most
     that cost. -/
 theorem step_eq_of_gas {P : Program} {i : Nat} {gas : UInt64} {ch : Bool} {ω : Regs} {μ : Memory}
     {M : Nat} (hM : P.blockCost (P.blockStartOf i) ≤ M) (hg : M ≤ gas.toNat) :
@@ -50,7 +50,7 @@ theorem step_eq_of_gas {P : Program} {i : Nat} {gas : UInt64} {ch : Bool} {ω : 
   · simp only [Program.step, Program.freeStep, hcont.1]
   · simpa [Program.step] using hcont.2
 
-/-- **A continuing gas-free step, with at least M gas**: Ψ from here is Ψ from the next state,
+/-- **A continuing gas-free step, with at least M gas**: $\Psi$ from here is $\Psi$ from the next state,
     with at most M gas less. -/
 theorem psi_next_of_gas {p : ByteArray} {i : Nat} {ω : Regs} {μ : Memory} {i' : Nat} {ω' : Regs}
     {μ' : Memory} (hn : FreeNext p i ω μ i' ω' μ') (hc : CostOk p i)
@@ -68,7 +68,7 @@ theorem psi_next_of_gas {p : ByteArray} {i : Nat} {ω : Regs} {μ : Memory} {i' 
   dsimp only
   rw [hpc, hr, hm]
 
-/-- **A host call, with at least M gas**: Ψ stops there with ħ × h, the state before the call,
+/-- **A host call, with at least M gas**: $\Psi$ stops there with $\hbar \times h$, the state before the call,
     and at most M gas less. -/
 theorem psi_host_of_gas {p : ByteArray} {i : Nat} {ω : Regs} {μ : Memory} {P : Program} {h : UInt64}
     {j : Nat} {ω₁ : Regs} {μ₁ : Memory} {M : Nat} (hP : deblob p i = some P)
@@ -86,7 +86,7 @@ theorem psi_host_of_gas {p : ByteArray} {i : Nat} {ω : Regs} {μ : Memory} {P :
   rw [hs]
   exact ⟨rfl, rfl, rfl, rfl, hle⟩
 
-/-- **The halting step, with at least M gas**: Ψ halts with the gas-free step's registers and
+/-- **The halting step, with at least M gas**: $\Psi$ halts with the gas-free step's registers and
     memory. -/
 theorem psi_halt_of_gas {p : ByteArray} {i : Nat} {ω : Regs} {μ : Memory} {ω' : Regs} {μ' : Memory}
     (hx : FreeExit p i ω μ .halt ω' μ') (hc : CostOk p i) (gas : UInt64) (ch : Bool)
@@ -105,15 +105,15 @@ theorem psi_halt_of_gas {p : ByteArray} {i : Nat} {ω : Regs} {μ : Memory} {ω'
     rw [hs]
     simp [hr, hm]
 
-/-- Ψ_H* depends on its start only through Ψ's result there. -/
+/-- $\Psi_H^{\ast}$ depends on its start only through $\Psi$'s result there. -/
 theorem psiHStar_congr_psi {p : ByteArray} {f : HostFn X} (hf : f.GasNonIncreasing) {i i' : Nat}
     {gas gas' : UInt64} {ch ch' : Bool} {ω ω' : Regs} {μ μ' : Memory} (x : X)
     (h : psi p i gas ch ω μ = psi p i' gas' ch' ω' μ') :
     psiHStar p i gas ch ω μ f x = psiHStar p i' gas' ch' ω' μ' f x := by
   rw [psiHStar_eq p i gas ch ω μ f hf x, psiHStar_eq p i' gas' ch' ω' μ' f hf x, h]
 
-/-- **Ψ_H* follows a chain of at most n steps** from any gas of at least n(M + H): it equals Ψ_H*
-    from the chain's end, with at most n(M + H) gas less. -/
+/-- **$\Psi_H^{\ast}$ follows a chain of at most n steps** from any gas of at least $n(M + H)$: it equals $\Psi_H^{\ast}$
+    from the chain's end, with at most $n(M + H)$ gas less. -/
 theorem psiHStar_of_steps {p : ByteArray} {f : HostFn X} (hf : f.GasNonIncreasing) {R : HostRel X}
     {H : Nat} (hH : HostCostLe f R H) {i : Nat} {ω : Regs} {μ : Memory}
     {x : X} {e : Nat} {ω₁ : Regs} {μ₁ : Memory} {x₁ : X} {n : Nat}
@@ -152,10 +152,10 @@ theorem psiHStar_of_steps {p : ByteArray} {f : HostFn X} (hf : f.GasNonIncreasin
     rw [hpc, yr, ym, yc, blobNext_of_deblob hP]
     exact heq
 
-/-- **Ψ_M with enough gas returns the run's output.** From Y's initial state, a chain of at most
-    n steps to an index where the program halts leaving ω', μ', in a block costing at most
+/-- **$\Psi_M$ with enough gas returns the run's output.** From $Y$'s initial state, a chain of at most
+    n steps to an index where the program halts leaving $\varphi', \mu'$, in a block costing at most
     `stepCostCap`: with at least (n + 1)(`stepCostCap` + H) gas,
-    Ψ_M's output is the octets ω'_7 … ω'_7 + ω'_8 of μ' (or [] if they are not readable), and its
+    $\Psi_M$'s output is the octets $\varphi'_7 \dots \varphi'_7 + \varphi'_8$ of $\mu'$ (or [] if they are not readable), and its
     context the chain's. -/
 theorem psiM_of_stepsH (b : ByteArray) (i : Nat) (gas : UInt64) (a : ByteArray) (x : X)
     (f : HostFn X) (hf : f.GasNonIncreasing) (R : HostRel X) {H : Nat}

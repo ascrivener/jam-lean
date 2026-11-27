@@ -7,8 +7,9 @@ Decoding is kept separate from execution: `Program.decode` turns the octets at a
 into an `Instr`, following the operand definitions at the head of each subsubsection of GP
 v0.8.1 §A.5 (`sec:instructiontables`); `PVM.Exec` gives each `Instr` its meaning.
 
-Immediates ν are stored already sign-extended (𝒳) as values in ℕ_{2^64}. Offsets (ı + 𝒵(…)) are
-stored as integers, since the paper does not reduce them modulo anything.
+Immediates $\nu$ are stored already sign-extended ($\mathcal{X}$) as values in $\mathbb{N}_{2^{64}}$.
+Offsets ($\imath + \mathcal{Z}(\dots)$) are stored as integers, since the paper does not reduce
+them modulo anything.
 -/
 
 namespace PVM
@@ -18,33 +19,33 @@ namespace PVM
 inductive Instr where
   /-- §A.5.1, no arguments. -/
   | noArgs (op : NoArgsOp)
-  /-- §A.5.2, one immediate ν_X. -/
+  /-- §A.5.2, one immediate $\nu_X$. -/
   | oneImm (op : OneImmOp) (x : UInt64)
-  /-- §A.5.3, one register r_A and one extended-width immediate ν_X. -/
+  /-- §A.5.3, one register $r_A$ and one extended-width immediate $\nu_X$. -/
   | regExtImm (op : RegExtImmOp) (a : RegIdx) (x : UInt64)
-  /-- §A.5.4, two immediates ν_X, ν_Y. -/
+  /-- §A.5.4, two immediates $\nu_X$, $\nu_Y$. -/
   | twoImm (op : TwoImmOp) (x y : UInt64)
-  /-- §A.5.5, one offset ν_X = ı + 𝒵(…). -/
+  /-- §A.5.5, one offset $\nu_X = \imath + \mathcal{Z}(\dots)$. -/
   | oneOffset (op : OneOffsetOp) (x : Int)
-  /-- §A.5.6, one register r_A and one immediate ν_X. -/
+  /-- §A.5.6, one register $r_A$ and one immediate $\nu_X$. -/
   | regImm (op : RegImmOp) (a : RegIdx) (x : UInt64)
-  /-- §A.5.7, one register r_A and two immediates ν_X, ν_Y. -/
+  /-- §A.5.7, one register $r_A$ and two immediates $\nu_X$, $\nu_Y$. -/
   | regTwoImm (op : RegTwoImmOp) (a : RegIdx) (x y : UInt64)
-  /-- §A.5.8, one register r_A, one immediate ν_X and one offset ν_Y. -/
+  /-- §A.5.8, one register $r_A$, one immediate $\nu_X$ and one offset $\nu_Y$. -/
   | regImmOffset (op : RegImmOffsetOp) (a : RegIdx) (x : UInt64) (y : Int)
-  /-- §A.5.9, two registers r_D, r_A. -/
+  /-- §A.5.9, two registers $r_D$, $r_A$. -/
   | twoReg (op : TwoRegOp) (d a : RegIdx)
-  /-- §A.5.10, two registers r_A, r_B and one immediate ν_X. -/
+  /-- §A.5.10, two registers $r_A$, $r_B$ and one immediate $\nu_X$. -/
   | twoRegImm (op : TwoRegImmOp) (a b : RegIdx) (x : UInt64)
-  /-- §A.5.11, two registers r_A, r_B and one offset ν_X. -/
+  /-- §A.5.11, two registers $r_A$, $r_B$ and one offset $\nu_X$. -/
   | twoRegOffset (op : TwoRegOffsetOp) (a b : RegIdx) (x : Int)
-  /-- §A.5.12, two registers r_A, r_B and two immediates ν_X, ν_Y. -/
+  /-- §A.5.12, two registers $r_A$, $r_B$ and two immediates $\nu_X$, $\nu_Y$. -/
   | twoRegTwoImm (op : TwoRegTwoImmOp) (a b : RegIdx) (x y : UInt64)
-  /-- §A.5.13, three registers r_A, r_B, r_D. -/
+  /-- §A.5.13, three registers $r_A$, $r_B$, $r_D$. -/
   | threeReg (op : ThreeRegOp) (a b d : RegIdx)
   deriving DecidableEq, Repr
 
-/-- The opcode ζ_ı of an instruction. -/
+/-- The opcode $\zeta_{\imath}$ of an instruction. -/
 def Instr.opcode : Instr → Nat
   | .noArgs op => op.opcode
   | .oneImm op _ => op.opcode
@@ -78,21 +79,21 @@ def Instr.name : Instr → String
 
 namespace Program
 
-/-- ζ_{start…+n}, the octets `start, …, start + n - 1` of ζ. -/
+/-- $\zeta_{\text{start} \dots+n}$, the octets `start, …, start + n - 1` of $\zeta$. -/
 def zetaBytes (P : Program) (start n : Nat) : List UInt8 :=
   (List.range n).map fun i => UInt8.ofNat (P.zeta (start + i))
 
-/-- ℰ_n⁻¹(ζ_{start…+n}). -/
+/-- $\mathcal{E}_n^{-1}(\zeta_{\text{start} \dots+n})$. -/
 def zetaLE (P : Program) (start n : Nat) : Nat := Num.decodeLE (P.zetaBytes start n)
 
-/-- 𝒳_n(ℰ_n⁻¹(ζ_{start…+n})), a sign-extended immediate. -/
+/-- $\mathcal{X}_n(\mathcal{E}_n^{-1}(\zeta_{\text{start} \dots+n}))$, a sign-extended immediate. -/
 def immAt (P : Program) (start n : Nat) : UInt64 := UInt64.ofNat (Num.sext n (P.zetaLE start n))
 
-/-- ı + 𝒵_n(ℰ_n⁻¹(ζ_{start…+n})), an offset relative to the instruction at `i`. -/
+/-- $\imath + \mathcal{Z}_n(\mathcal{E}_n^{-1}(\zeta_{\text{start} \dots+n}))$, an offset relative to the instruction at `i`. -/
 def offsetAt (P : Program) (i start n : Nat) : Int := (i : Int) + Num.signed n (P.zetaLE start n)
 
-/-- Decode the instruction at opcode index `ı` (GP §A.5), with ℓ = skip(ı). Returns `none`
-    when ζ_ı ∉ U. -/
+/-- Decode the instruction at opcode index `ı` (GP §A.5), with $\ell = \text{skip}(\imath)$. Returns `none`
+    when $\zeta_{\imath} \notin U$. -/
 def decode (P : Program) (i : Nat) : Option Instr :=
   let op := P.zeta i
   let l := P.skip i
@@ -161,8 +162,8 @@ end PVM
 
 namespace PVM
 
-/-- The host-call ids a program can ever request: the immediate ν_X of every `ecalli` at an
-    opcode index where 𝔳_inst holds (GP §A.1, §A.5.2). Ψ only steps at such indices, so this
+/-- The host-call ids a program can ever request: the immediate $\nu_X$ of every `ecalli` at an
+    opcode index where $\mathfrak{v}_{\text{inst}}$ holds (GP §A.1, §A.5.2). $\Psi$ only steps at such indices, so this
     syntactic scan bounds every host call (`PVM.psi_hostId_mem` in `PVM.Theorems.HostIds`). -/
 def Program.hostCallIds (P : Program) : List Nat :=
   (List.range P.code.size).filterMap fun i =>
@@ -172,7 +173,7 @@ def Program.hostCallIds (P : Program) : List Nat :=
       | _ => none
     else none
 
-/-- `Program.hostCallIds` of a blob's program; empty if the blob does not parse (then Ψ panics
+/-- `Program.hostCallIds` of a blob's program; empty if the blob does not parse (then $\Psi$ panics
     on its first step and makes no host call). -/
 def hostCallIdsOf (p : ByteArray) : List Nat :=
   match Blob.parse? p with

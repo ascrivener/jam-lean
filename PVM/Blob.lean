@@ -2,10 +2,10 @@ import PVM.Basic
 import PVM.Tables
 
 /-!
-# Program blobs, skip, ζ and basic blocks
+# Program blobs, skip, $\zeta$ and basic blocks
 
-GP v0.8.1 §A.1 (deblob, eq. `deblob`; 𝔳_blob, 𝔳_inst), §A.2 (`sec:programdecoding`: skip, ζ) and
-§A.3 (`sec:basicblocks`: U, T, ϖ, 𝔏).
+GP v0.8.1 §A.1 (deblob, eq. `deblob`; $\mathfrak{v}_{\text{blob}}$, $\mathfrak{v}_{\text{inst}}$), §A.2 (`sec:programdecoding`: skip, $\zeta$) and
+§A.3 (`sec:basicblocks`: $U$, $T$, $\varpi$, $\mathfrak{L}$).
 -/
 
 namespace PVM
@@ -13,11 +13,11 @@ namespace PVM
 /-- The components of a program blob (GP §A.1–A.2): the instruction data $\mathbf{c}$, the opcode
     bitmask $\mathbf{k}$ and the dynamic jump table $\mathbf{j}$. -/
 structure Program where
-  /-- **c**, the instruction data. -/
+  /-- $\mathbf{c}$, the instruction data. -/
   code : ByteArray
-  /-- **k**, the opcode bitmask. -/
+  /-- $\mathbf{k}$, the opcode bitmask. -/
   mask : Array Bool
-  /-- **j**, the dynamic jump table. -/
+  /-- $\mathbf{j}$, the dynamic jump table. -/
   jumpTable : Array Nat
 
 /-- `n ∈ U`, the set of valid opcodes (GP §A.3), read from the instruction tables. -/
@@ -28,34 +28,34 @@ def isTerminator (n : Nat) : Bool := terminatorOpcodes.contains n
 
 namespace Program
 
-/-- ζ_i ≡ (**c** ⌢ [0, 0, …])_i (GP eq. `instructions`). -/
+/-- $\zeta_i \equiv (\mathbf{c} \frown [0, 0, \dots])_i$ (GP eq. `instructions`). -/
 def zeta (P : Program) (i : Nat) : Nat := P.code[i]?.map UInt8.toNat |>.getD 0
 
-/-- ζ at an integer index. Negative indices are outside ζ; we read them as `0` like the
-    indices past the end of **c** (only used by the branch cost 𝔟, see `PVM.Gas`). -/
+/-- $\zeta$ at an integer index. Negative indices are outside $\zeta$; we read them as `0` like the
+    indices past the end of $\mathbf{c}$ (only used by the branch cost $\mathfrak{b}$, see `PVM.Gas`). -/
 def zetaInt (P : Program) (i : Int) : Nat := if i < 0 then 0 else P.zeta i.toNat
 
-/-- (**k** ⌢ [1, 1, …])_i (GP eq. `skip`). -/
+/-- $(\mathbf{k} \frown [1, 1, \dots])_i$ (GP eq. `skip`). -/
 def maskExt (P : Program) (i : Nat) : Bool := P.mask.getD i true
 
-/-- **k**_i, with indices outside **k** reading as 0. -/
+/-- $\mathbf{k}_i$, with indices outside $\mathbf{k}$ reading as 0. -/
 def maskAt (P : Program) (i : Nat) : Bool := P.mask.getD i false
 
-/-- skip(i) = min(24, j ∈ ℕ : (**k** ⌢ [1, 1, …])_{i+1+j} = 1) (GP eq. `skip`). -/
+/-- $\text{skip}(i) = \min(24, j \in \mathbb{N} : (\mathbf{k} \frown [1, 1, \dots])_{i+1+j} = 1)$ (GP eq. `skip`). -/
 def skip (P : Program) (i : Nat) : Nat :=
   ((List.range 24).find? fun j => P.maskExt (i + 1 + j)).getD 24
 
-/-- The index of the instruction following the one at `i`: i + 1 + skip(i). -/
+/-- The index of the instruction following the one at `i`: $i + 1 + \text{skip}(i)$. -/
 def next (P : Program) (i : Nat) : Nat := i + 1 + P.skip i
 
-/-- 𝔳_inst(**c**, **k**, ı) = |**k**| = |**c**| ∧ ı < |**k**| ∧ **k**_ı = 1 ∧ **c**_ı ∈ U (GP §A.1). -/
+/-- $\mathfrak{v}_{\text{inst}}(\mathbf{c}, \mathbf{k}, \imath) = |\mathbf{k}| = |\mathbf{c}| \wedge \imath < |\mathbf{k}| \wedge \mathbf{k}_{\imath} = 1 \wedge \mathbf{c}_{\imath} \in U$ (GP §A.1). -/
 def vInst (P : Program) (i : Nat) : Bool :=
   P.mask.size == P.code.size && decide (i < P.mask.size) && P.maskAt i && isValidOpcode (P.zeta i)
 
-/-- 𝔳_blob(**c**, **k**, ı) (GP §A.1), with explicit fuel.
+/-- $\mathfrak{v}_{\text{blob}}(\mathbf{c}, \mathbf{k}, \imath)$ (GP §A.1), with explicit fuel.
 
-    Every recursive call has ı < |**k**| (from 𝔳_inst) and moves to ı + 1 + skip(ı) ≤ |**k**|, so
-    the recursion makes at most |**k**| + 1 calls; `vBlob` supplies that much fuel
+    Every recursive call has $\imath < |\mathbf{k}|$ (from $\mathfrak{v}_{\text{inst}}$) and moves to $\imath + 1 + \text{skip}(\imath) \le |\mathbf{k}|$, so
+    the recursion makes at most $|\mathbf{k}| + 1$ calls; `vBlob` supplies that much fuel
     (see `PVM.Program.vBlobAux_fuel` in `PVM.Theorems.Blob`). -/
 def vBlobAux (P : Program) : Nat → Nat → Bool
   | 0, _ => false
@@ -65,15 +65,15 @@ def vBlobAux (P : Program) : Nat → Nat → Bool
     else if P.vInst i then P.vBlobAux fuel (P.next i)
     else false
 
-/-- 𝔳_blob(**c**, **k**, 0) (GP §A.1). -/
+/-- $\mathfrak{v}_{\text{blob}}(\mathbf{c}, \mathbf{k}, 0)$ (GP §A.1). -/
 def vBlob (P : Program) : Bool := P.vBlobAux (P.mask.size + 1) 0
 
-/-- `n` is the opcode index of a valid instruction: **k**_n = 1 ∧ **c**_n ∈ U (GP §A.3). -/
+/-- `n` is the opcode index of a valid instruction: $\mathbf{k}_n = 1 \wedge \mathbf{c}_n \in U$ (GP §A.3). -/
 def isInstrStart (P : Program) (n : Nat) : Bool :=
   decide (n < P.code.size) && P.maskAt n && isValidOpcode (P.zeta n)
 
-/-- `n` immediately follows a block terminator: ∃ m ∈ ℕ_{|c|}, **k**_m = 1 ∧ **c**_m ∈ T ∧
-    m + 1 + skip(m) = n. Since skip(m) ≤ 24, the witness `m` lies in [n − 25, n − 1], so the
+/-- `n` immediately follows a block terminator: $\exists m \in \mathbb{N}_{|c|}, \mathbf{k}_m = 1 \wedge \mathbf{c}_m \in T \wedge$
+    $m + 1 + \text{skip}(m) = n$. Since $\text{skip}(m) \le 24$, the witness `m` lies in $[n - 25, n - 1]$, so the
     search is over that window (see `PVM.Program.followsTerminator_iff`). -/
 def followsTerminator (P : Program) (n : Nat) : Bool :=
   (List.range 25).any fun d =>
@@ -82,7 +82,7 @@ def followsTerminator (P : Program) (n : Nat) : Bool :=
        decide (m < P.code.size) && P.maskAt m && isTerminator (P.zeta m) && P.next m == n)
 
 /-- `n ∈ ϖ`, the basic-block starts (GP §A.3):
-    ϖ ≡ ({0} ∪ {n + 1 + skip(n) | n ∈ ℕ_{|c|} ∧ **k**_n = 1 ∧ **c**_n ∈ T}) ∩ {n | **k**_n = 1 ∧ **c**_n ∈ U}. -/
+    $\varpi \equiv (\{0\} \cup \{n + 1 + \text{skip}(n) \mid n \in \mathbb{N}_{|c|} \wedge \mathbf{k}_n = 1 \wedge \mathbf{c}_n \in T\}) \cap \{n \mid \mathbf{k}_n = 1 \wedge \mathbf{c}_n \in U\}$. -/
 def isBlockStart (P : Program) (n : Nat) : Bool :=
   (n == 0 || P.followsTerminator n) && P.isInstrStart n
 
@@ -94,9 +94,9 @@ def blockStartFrom (P : Program) : Nat → Nat
   | 0 => 0
   | n + 1 => if P.isBlockStart (n + 1) then n + 1 else P.blockStartFrom n
 
-/-- 𝔏(ı) = max(j ∈ ϖ : j ≤ ı), the start of the basic block containing ı (GP §A.3).
-    When ϖ has no element `≤ ı` (only possible for invalid programs, since 0 ∈ ϖ whenever
-    𝔳_blob holds) we return 0. -/
+/-- $\mathfrak{L}(\imath) = \max(j \in \varpi : j \le \imath)$, the start of the basic block containing $\imath$ (GP §A.3).
+    When $\varpi$ has no element `≤ ı` (only possible for invalid programs, since $0 \in \varpi$ whenever
+    $\mathfrak{v}_{\text{blob}}$ holds) we return 0. -/
 def blockStartOf (P : Program) (i : Nat) : Nat := P.blockStartFrom i
 
 end Program
@@ -105,15 +105,15 @@ end Program
 
 namespace Blob
 
-/-- 𝖹_C = 2^25, the maximum size of the instruction data **c** of a program blob (GP v0.8.1
+/-- $\mathsf{Z}_C = 2^{25}$, the maximum size of the instruction data $\mathbf{c}$ of a program blob (GP v0.8.1
     definitions, eq. `deblob`; #559). -/
 def maxCodeSize : Nat := 2 ^ 25
 
-/-- 𝖹_J = 2^24, the maximum number of entries of the dynamic jump table **j** (GP v0.8.1
+/-- $\mathsf{Z}_J = 2^{24}$, the maximum number of entries of the dynamic jump table $\mathbf{j}$ (GP v0.8.1
     definitions, eq. `deblob`; #559). -/
 def maxJumpTableEntries : Nat := 2 ^ 24
 
-/-- ℰ, the general natural-number serialization (GP (C), "general natural number
+/-- $\mathcal{E}$, the general natural-number serialization (GP (C), "general natural number
     serialization"). -/
 def encodeNat (x : Nat) : List UInt8 :=
   if x = 0 then [0]
@@ -129,8 +129,8 @@ def slice? (bs : ByteArray) (pos n : Nat) : Option (List UInt8) :=
 def leadingOnes (b : UInt8) : Nat :=
   ((List.range 8).find? fun i => !Num.bit b.toNat (7 - i)).getD 8
 
-/-- ℰ⁻¹ at offset `pos`: the unique `x` with ℰ(x) a prefix of `bs[pos, …)`, and the offset after
-    it. Only canonical encodings are accepted, since the paper requires `bs` to *be* ℰ(x). -/
+/-- $\mathcal{E}^{-1}$ at offset `pos`: the unique `x` with $\mathcal{E}(x)$ a prefix of `bs[pos, …)`, and the offset after
+    it. Only canonical encodings are accepted, since the paper requires `bs` to *be* $\mathcal{E}(x)$. -/
 def decodeNat? (bs : ByteArray) (pos : Nat) : Option (Nat × Nat) := do
   let b ← bs[pos]?
   let l := leadingOnes b
@@ -141,8 +141,8 @@ def decodeNat? (bs : ByteArray) (pos : Nat) : Option (Nat × Nat) := do
   let enc ← slice? bs pos (1 + (if l = 8 then 8 else l))
   if encodeNat x == enc then some (x, pos + 1 + (if l = 8 then 8 else l)) else none
 
-/-- ℰ⁻¹ of a bit sequence of length `n` packed least-significant bit first (GP (C), "Bit
-    Sequence Encoding"); the octets must be exactly ⌈n/8⌉ long with zero padding bits. -/
+/-- $\mathcal{E}^{-1}$ of a bit sequence of length `n` packed least-significant bit first (GP (C), "Bit
+    Sequence Encoding"); the octets must be exactly $\lceil n/8 \rceil$ long with zero padding bits. -/
 def decodeBits? (bs : List UInt8) (n : Nat) : Option (Array Bool) :=
   if bs.length ≠ (n + 7) / 8 then none
   else
@@ -150,10 +150,10 @@ def decodeBits? (bs : List UInt8) (n : Nat) : Option (Array Bool) :=
     let bits := (List.range (8 * bs.length)).map fun i => Num.bit (ba.getD (i / 8) 0).toNat (i % 8)
     if (bits.drop n).all (· == false) then some (bits.take n).toArray else none
 
-/-- The unique (**c**, **k**, **j**) ∈ (𝔹_{:𝖹_C}, 𝕓, ⟦ℕ_R⟧_{:𝖹_J}) with
-    p = ℰ(|**j**|) ⌢ ℰ_1(z) ⌢ ℰ(|**c**|) ⌢ ℰ_z(**j**) ⌢ ℰ(**c**) ⌢ ℰ(**k**), z ≤ 4 and
-    |**k**| = |**c**| (GP v0.8.1 eq. `deblob`, the encoding condition; the bounds on |**c**|, |**j**|
-    and z are new in v0.8.1, #559). -/
+/-- The unique $(\mathbf{c}, \mathbf{k}, \mathbf{j}) \in (\mathbb{B}_{:\mathsf{Z}_C}, \mathbb{b}, [\![ \mathbb{N}_R ]\!]_{:\mathsf{Z}_J})$ with
+    $p = \mathcal{E}(|\mathbf{j}|) \frown \mathcal{E}_1(z) \frown \mathcal{E}(|\mathbf{c}|) \frown \mathcal{E}_z(\mathbf{j}) \frown \mathcal{E}(\mathbf{c}) \frown \mathcal{E}(\mathbf{k})$, $z \le 4$ and
+    $|\mathbf{k}| = |\mathbf{c}|$ (GP v0.8.1 eq. `deblob`, the encoding condition; the bounds on $|\mathbf{c}|$, $|\mathbf{j}|$
+    and $z$ are new in v0.8.1, #559). -/
 def parse? (p : ByteArray) : Option Program := do
   let (jLen, pos) ← decodeNat? p 0
   if jLen > maxJumpTableEntries then none
@@ -172,8 +172,8 @@ def parse? (p : ByteArray) : Option Program := do
 
 end Blob
 
-/-- deblob(p, ı) (GP v0.8.1 eq. `deblob`): the program (**c**, **k**, **j**) if p is a valid encoding,
-    𝔳_blob(**c**, **k**, 0) and 𝔳_inst(**c**, **k**, ı); otherwise ∇ (`none`). -/
+/-- $\text{deblob}(p, \imath)$ (GP v0.8.1 eq. `deblob`): the program $(\mathbf{c}, \mathbf{k}, \mathbf{j})$ if $p$ is a valid encoding,
+    $\mathfrak{v}_{\text{blob}}(\mathbf{c}, \mathbf{k}, 0)$ and $\mathfrak{v}_{\text{inst}}(\mathbf{c}, \mathbf{k}, \imath)$; otherwise $\nabla$ (`none`). -/
 def deblob (p : ByteArray) (i : Nat) : Option Program := do
   let P ← Blob.parse? p
   if P.vBlob && P.vInst i then some P else none

@@ -13,7 +13,7 @@ namespace PVM.SymExec
 
 open Num Exec
 
-/-- Facts about registers `(r, v)`: ω_r = v, and memory cells `(a, n, v)`: μ_{a…+n} = ℰ_n(v). -/
+/-- Facts about registers `(r, v)`: $\varphi_r = v$, and memory cells `(a, n, v)`: $\mu_{a \dots+n} = \mathcal{E}_n(v)$. -/
 structure Spec where
   regs : List (Nat × SVal)
   cells : List (Aff × Nat × SVal)
@@ -150,7 +150,7 @@ def init (A : Spec) : SState :=
 def initOk (st : Static) (A : Spec) : Bool :=
   A.regs.all (fun r => r.1 < 13) && A.cells.all (fun c => valid st c.1 c.2.1)
 
-/-- The end state σ has the target's registers and cells, and writes only inside `frame`. -/
+/-- The end state $\sigma$ has the target's registers and cells, and writes only inside `frame`. -/
 def entails (st : Static) (σ : SState) (T : Spec) (frame : List (Aff × Nat)) : Bool :=
   T.regs.all (fun r => r.1 < 13 &&
     mkMod st (σ.regs.getD r.1 (.const 0)) two64 == mkMod st r.2 two64) &&
@@ -295,7 +295,7 @@ theorem out_of_bool {E : Env} {frame : List (Aff × Nat)} {t : Nat}
   simp only [InReg, Aff.eval, hb] at hin
   omega
 
-/-- A return `jump_ind r, 0` to a symbolic address `ret` (an entry of **j**, GP eq.
+/-- A return `jump_ind r, 0` to a symbolic address `ret` (an entry of $\mathbf{j}$, GP eq.
     `jumptablealignment`) as the last step of a stretch. -/
 theorem ret_step {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {pc n : Nat} {r : RegIdx}
     {ω : Regs} {μ : Memory} {x : X} {ret t : Nat}
@@ -328,7 +328,7 @@ theorem trap_exit {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {pc n
   simp only [or_true, ite_true] at this
   exact .exit (.exit this) (by simp)
 
-/-- A stretch ending in `jump_ind r, 0` with ω_r = 2^32 − 2^16 (GP eq. `jumptablealignment`): the
+/-- A stretch ending in `jump_ind r, 0` with $\varphi_r = 2^{32} - 2^{16}$ (GP eq. `jumptablealignment`): the
     run halts with the state unchanged. -/
 theorem halt_exit {X : Type} {p : ByteArray} {R : HostRel X} {P : Program} {pc n : Nat} {r : RegIdx}
     {ω : Regs} {μ : Memory} {x : X}

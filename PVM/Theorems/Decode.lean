@@ -3,8 +3,8 @@ import PVM.Instr
 /-!
 # Decoding agrees with the opcode
 
-`Program.decode` produces an instruction whose opcode is ζ_ı (`decode_opcode`), and it
-succeeds exactly when ζ_ı ∈ U (`decode_isSome_iff`).
+`Program.decode` produces an instruction whose opcode is $\zeta_{\imath}$ (`decode_opcode`), and it
+succeeds exactly when $\zeta_{\imath} \in U$ (`decode_isSome_iff`).
 -/
 
 namespace PVM
@@ -33,7 +33,7 @@ opcode_lemmas TwoRegOffsetOp
 opcode_lemmas TwoRegTwoImmOp
 opcode_lemmas ThreeRegOp
 
-/-- A decoded instruction's opcode is ζ_ı. -/
+/-- A decoded instruction's opcode is $\zeta_{\imath}$. -/
 theorem Program.decode_opcode {P : Program} {i : Nat} {ins : Instr} (h : P.decode i = some ins) :
     ins.opcode = P.zeta i := by
   unfold Program.decode at h

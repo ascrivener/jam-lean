@@ -50,7 +50,7 @@ macro_rules
       try simp only [Memory.readN_succ', Memory.readN_zero', Num.encodeLE, List.cons.injEq, and_true,
         Nat.reduceAdd, Nat.add_zero] $[$loc]?)
 
-/-- Close an octet equation `UInt8.ofNat e = c` by arithmetic on `e mod 2^8`. -/
+/-- Close an octet equation `UInt8.ofNat e = c` by arithmetic on $e \bmod 2^8$. -/
 macro "chase_octet" : tactic => `(tactic| first
   | rfl
   | decide
@@ -75,7 +75,7 @@ macro "chase" : tactic => `(tactic| first
      first | exact Memory.readable_of_writable (by simp (disch := chase_disch) only [*]) | done))
 
 
-/-- A frame carries a word: if every octet of `a … a + n − 1` satisfies the frame's condition
+/-- A frame carries a word: if every octet of $a, \dots, a + n - 1$ satisfies the frame's condition
     (decided for concrete addresses), the word reads the same after as before. -/
 theorem Memory.readN_of_frame {μ μ' : Memory} {P : Nat → Bool}
     (h : ∀ b, P b = true → μ'.read b = μ.read b) (a n : Nat)

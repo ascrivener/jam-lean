@@ -136,7 +136,7 @@ against $`\mathcal{M}` with its $`\mathcal{J}_0` justification, and every page v
 These theorems are about acceptance only. They do not say that the check rejects a wrong segment;
 that would rest on the hash function, which here is an arbitrary parameter.
 
-# Paged proofs (§14.4)
+# Paged proofs (§14.3, §14.4)
 %%%
 tag := "merkle-paged"
 %%%

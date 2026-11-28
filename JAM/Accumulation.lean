@@ -53,11 +53,11 @@ theorem editQueue_length_lt (r : List ReadyEntry) (g : List WorkReport)
 /-- $Q(\mathbf{r})$ (GP §12.1): reports whose dependencies are all met, repeatedly. Each round
     removes at least one entry (`editQueue_length_lt`), so the recursion ends. -/
 def readyOrder (r : List ReadyEntry) : List WorkReport :=
-  match hg : r.filterMap fun (w, d) => if d.isEmpty then some w else none with
+  match _hg : r.filterMap fun (w, d) => if d.isEmpty then some w else none with
   | [] => []
   | w :: ws => (w :: ws) ++ readyOrder (editQueue r (pkgs (w :: ws)))
 termination_by r.length
-decreasing_by exact editQueue_length_lt r _ hg (List.cons_ne_nil w ws)
+decreasing_by exact editQueue_length_lt r _ _hg (List.cons_ne_nil w ws)
 
 /-- $D(r) = (r, \{\text{prerequisites}\} \cup \mathcal{K}(\text{segment-root lookup}))$. -/
 def deps (r : WorkReport) : ReadyEntry :=

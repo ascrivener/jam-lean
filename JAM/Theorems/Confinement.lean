@@ -159,17 +159,17 @@ macro "confined_tac" hc:term : tactic =>
 
 theorem checkpoint_confined (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx)
     (hc : ConfinedCtx e s c) : ConfinedCtx e s (checkpoint gas ω μ c).ctx := by
-  unfold checkpoint charge
+  unfold checkpoint
   apply charged_ctx _ _ _ _ _ _ _ hc
   exact ⟨hc.1, hc.1⟩
 
 theorem query_confined (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx)
     (hc : ConfinedCtx e s c) : ConfinedCtx e s (query gas ω μ c).ctx := by
-  unfold query charge; confined_tac hc
+  unfold query; confined_tac hc
 
 theorem yield_confined (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx)
     (hc : ConfinedCtx e s c) : ConfinedCtx e s (yield gas ω μ c).ctx := by
-  unfold yield charge
+  unfold yield
   apply charged_ctx _ _ _ _ _ _ _ hc
   dsimp only
   split
@@ -198,16 +198,16 @@ macro "put_tac" hn:term "," hc:term : tactic =>
 
 theorem write_confined (hn : NoSupervisee e.accounts s) (gas : Nat) (ω : Regs) (μ : Memory)
     (c : AccCtx) (hc : ConfinedCtx e s c) : ConfinedCtx e s (write gas ω μ c).ctx := by
-  unfold write charge; put_tac hn, hc
+  unfold write; put_tac hn, hc
 
 theorem upgrade_confined (hn : NoSupervisee e.accounts s) (gas : Nat) (ω : Regs) (μ : Memory)
     (c : AccCtx) (hc : ConfinedCtx e s c) : ConfinedCtx e s (upgrade gas ω μ c).ctx := by
-  unfold upgrade charge; put_tac hn, hc
+  unfold upgrade; put_tac hn, hc
 
 theorem solicit_confined (hn : NoSupervisee e.accounts s) (env : AccEnv) (gas : Nat) (ω : Regs)
     (μ : Memory) (c : AccCtx) (hc : ConfinedCtx e s c) :
     ConfinedCtx e s (solicit env gas ω μ c).ctx := by
-  unfold solicit charge
+  unfold solicit
   apply charged_ctx _ _ _ _ _ _ _ hc
   dsimp only
   (repeat' split) <;> (try simp only [r7, panic, updX, Bool.not_eq_true', Bool.not_eq_false] at *) <;>
@@ -221,7 +221,7 @@ theorem solicit_confined (hn : NoSupervisee e.accounts s) (env : AccEnv) (gas : 
 theorem forget_confined (hn : NoSupervisee e.accounts s) (env : AccEnv) (gas : Nat) (ω : Regs)
     (μ : Memory) (c : AccCtx) (hc : ConfinedCtx e s c) :
     ConfinedCtx e s (forget env gas ω μ c).ctx := by
-  unfold forget charge
+  unfold forget
   apply charged_ctx _ _ _ _ _ _ _ hc
   dsimp only
   (repeat' split) <;> (try simp only [r7, panic, updX, Bool.not_eq_true', Bool.not_eq_false] at *) <;>
@@ -234,7 +234,7 @@ theorem forget_confined (hn : NoSupervisee e.accounts s) (env : AccEnv) (gas : N
 
 theorem supervisor_confined (hn : NoSupervisee e.accounts s) (gas : Nat) (ω : Regs) (μ : Memory)
     (c : AccCtx) (hc : ConfinedCtx e s c) : ConfinedCtx e s (supervisor gas ω μ c).ctx := by
-  unfold supervisor charge
+  unfold supervisor
   apply charged_ctx _ _ _ _ _ _ _ hc
   dsimp only
   split
@@ -248,26 +248,44 @@ theorem supervisor_confined (hn : NoSupervisee e.accounts s) (gas : Nat) (ω : R
       exact put_of_mayModify hn hc hm ha rfl
   · exact hc
 
-/-- An OK from `transferCode` means both permissions held. -/
-theorem transferCode_ok {x : Implications} {src dst mode amount l o : Nat}
-    (h : transferCode x src dst mode amount l o = Result.OK) :
-    transferPs x src mode = true ∧ transferPd x src dst mode o = true := by
+/-- An OK from `transferCode` means both permissions held, and commits the debit and credit. -/
+theorem transferCode_ok {x : Implications} {src dst mode amount l o : Nat} {d' : Accounts}
+    (h : transferCode x src dst mode amount l o = .ok d') :
+    transferPs x src mode = true ∧ transferPd x src dst mode o = true ∧
+      (transferDebit x.state.accounts src mode amount).map (transferCredit · dst mode amount o) =
+        some d' := by
   unfold transferCode at h
   dsimp only at h
   split at h
-  · simp [Result.WHO, Result.OK] at h
+  · cases h
   · split at h
-    · simp [Result.HUH, Result.OK] at h
+    · cases h
     · rename_i hh
       simp only [Bool.or_eq_true, decide_eq_true_eq, Bool.not_eq_true', not_or] at hh
-      exact ⟨by simpa using hh.1.2, by simpa using hh.2⟩
+      split at h
+      · cases h
+      · split at h
+        · cases h
+        · rename_i d'' hm
+          split at h
+          · cases h
+          · cases h
+            exact ⟨by simpa using hh.1.2, by simpa using hh.2, hm⟩
 
-/-- The debit changes only src's account, keeping its creation slot. -/
-theorem transferDebit_get?_ne (d : Accounts) (src mode amount k : Nat) (hk : k ≠ src) :
-    (transferDebit d src mode amount).get? k = d.get? k := by
-  unfold transferDebit; split
-  · exact get?_insert_ne _ _ hk
-  · rfl
+/-- The debit changes only src's account. -/
+theorem transferDebit_get?_ne {d d' : Accounts} {src mode amount : Nat}
+    (h : transferDebit d src mode amount = some d') (k : Nat) (hk : k ≠ src) :
+    d'.get? k = d.get? k := by
+  unfold transferDebit at h
+  split at h
+  · split at h
+    · split at h
+      · cases h; exact get?_insert_ne _ _ hk
+      · cases h
+    · split at h
+      · cases h; exact get?_insert_ne _ _ hk
+      · cases h
+  · cases h; rfl
 
 theorem transferCredit_get?_ne (d : Accounts) (dst mode amount o k : Nat) (hk : k ≠ dst) :
     (transferCredit d dst mode amount o).get? k = d.get? k := by
@@ -277,15 +295,22 @@ theorem transferCredit_get?_ne (d : Accounts) (dst mode amount o k : Nat) (hk : 
     · exact get?_insert_ne _ _ hk
     · rfl
 
-theorem transferDebit_created (d : Accounts) (src mode amount : Nat) (a : ServiceAccount)
-    (ha : (transferDebit d src mode amount).get? src = some a) :
+theorem transferDebit_created {d d' : Accounts} {src mode amount : Nat}
+    (h : transferDebit d src mode amount = some d') (a : ServiceAccount)
+    (ha : d'.get? src = some a) :
     ∃ b, d.get? src = some b ∧ b.created = a.created := by
-  unfold transferDebit at ha; split at ha
+  unfold transferDebit at h
+  split at h
   · rename_i sa hsa
-    simp only [get?_insert_same, Option.some.injEq] at ha
     refine ⟨sa, hsa, ?_⟩
-    rw [← ha]; split <;> rfl
-  · exact ⟨a, by assumption, rfl⟩
+    split at h
+    · split at h
+      · cases h; simp only [get?_insert_same, Option.some.injEq] at ha; rw [← ha]
+      · cases h
+    · split at h
+      · cases h; simp only [get?_insert_same, Option.some.injEq] at ha; rw [← ha]
+      · cases h
+  · cases h; exact ⟨a, ha, rfl⟩
 
 theorem transferCredit_created (d : Accounts) (dst mode amount o : Nat) (a : ServiceAccount)
     (ha : (transferCredit d dst mode amount o).get? dst = some a) :
@@ -302,62 +327,61 @@ theorem transferCredit_created (d : Accounts) (dst mode amount o : Nat) (a : Ser
 theorem transfer_confined (hn : NoSupervisee e.accounts s) (env : AccEnv) (gas : Nat) (ω : Regs)
     (μ : Memory) (c : AccCtx) (hc : ConfinedCtx e s c) :
     ConfinedCtx e s (transfer env gas ω μ c).ctx := by
-  unfold transfer charge
+  unfold transfer
   apply charged_ctx _ _ _ _ _ _ _ hc
   dsimp only
   split
   · exact hc
-  · rename_i c' t' hcode ht
-    split
-    · exact hc
-    · rename_i hok
-      have hc' : c' = Result.OK := Classical.not_not.mp hok
-      simp only [Option.map_eq_some_iff] at hcode
-      obtain ⟨_, -, hcode⟩ := hcode
-      obtain ⟨hps, hpd⟩ := transferCode_ok (hcode.trans hc')
-      have hid := hc.1.1
-      -- the source is s
-      have hsrc : tgt (reg ω 7) c.1.id = s := by
-        unfold transferPs at hps
-        split at hps
-        · exact hc.1.mayModify_eq hn hps
-        · simp only [beq_iff_eq] at hps
-          by_cases h : tgt (reg ω 7) c.1.id = s
-          · exact h
-          · exact absurd (hps ▸ hid) (hc.1.noSupervisee hn _ h)
-      -- with o = 0 the destination is s too
-      have hdst : reg ω 12 = 0 → tgt (reg ω 8) c.1.id = s := by
-        intro h0
-        unfold transferPd at hpd
-        simp only [h0, ne_eq, not_true_eq_false, decide_false, Bool.false_or, Bool.and_eq_true]
-          at hpd
-        exact hc.1.mayModify_eq hn hpd.1
-      simp only [r7, updX]
-      refine ⟨?_, hc.2⟩
-      obtain ⟨_, hk, h1, h2, h3, h4, h5, h6, h7, h8, hcs⟩ := hc.1
-      refine ⟨hid, fun k hks => ?_, h1, h2, h3, h4, h5, h6, h7, h8, fun a ha => ?_⟩
-      · by_cases h0 : reg ω 12 = 0
-        · rw [transferCredit_get?_ne _ _ _ _ _ _ (by rw [hdst h0]; exact hks),
-            transferDebit_get?_ne _ _ _ _ _ (by rw [hsrc]; exact hks)]
-          exact hk k hks
-        · simp only [transferCredit, ne_eq, h0, not_false_eq_true, ↓reduceIte]
-          rw [transferDebit_get?_ne _ _ _ _ _ (by rw [hsrc]; exact hks)]
-          exact hk k hks
-      · by_cases h0 : reg ω 12 = 0
-        · rw [← hdst h0] at ha
-          obtain ⟨b, hb, hbc⟩ := transferCredit_created _ _ _ _ _ a ha
-          rw [hdst h0, ← hsrc] at hb
-          obtain ⟨b', hb', hbc'⟩ := transferDebit_created _ _ _ _ b hb
-          rw [hsrc] at hb'
-          obtain ⟨b'', hb'', hbc''⟩ := hcs b' hb'
-          exact ⟨b'', hb'', by rw [hbc'', hbc', hbc]⟩
-        · simp only [transferCredit, ne_eq, h0, not_false_eq_true, ↓reduceIte] at ha
-          rw [← hsrc] at ha
-          obtain ⟨b, hb, hbc⟩ := transferDebit_created _ _ _ _ a ha
-          rw [hsrc] at hb
-          obtain ⟨b', hb', hbc'⟩ := hcs b hb
-          exact ⟨b', hb', by rw [hbc', hbc]⟩
   · exact hc
+  · rename_i d' t' hres
+    simp only [Option.map_eq_some_iff, Prod.mk.injEq] at hres
+    obtain ⟨_, -, hcode, -⟩ := hres
+    obtain ⟨hps, hpd, hd'⟩ := transferCode_ok hcode
+    simp only [Option.map_eq_some_iff] at hd'
+    obtain ⟨d1, hd1, hd2⟩ := hd'
+    subst hd2
+    have hid := hc.1.1
+    -- the source is s
+    have hsrc : tgt (reg ω 7) c.1.id = s := by
+      unfold transferPs at hps
+      split at hps
+      · exact hc.1.mayModify_eq hn hps
+      · simp only [beq_iff_eq] at hps
+        by_cases h : tgt (reg ω 7) c.1.id = s
+        · exact h
+        · exact absurd (hps ▸ hid) (hc.1.noSupervisee hn _ h)
+    -- with o = 0 the destination is s too
+    have hdst : reg ω 12 = 0 → tgt (reg ω 8) c.1.id = s := by
+      intro h0
+      unfold transferPd at hpd
+      simp only [h0, ne_eq, not_true_eq_false, decide_false, Bool.false_or, Bool.and_eq_true]
+        at hpd
+      exact hc.1.mayModify_eq hn hpd.1
+    simp only [r7, updX]
+    refine ⟨?_, hc.2⟩
+    obtain ⟨_, hk, h1, h2, h3, h4, h5, h6, h7, h8, hcs⟩ := hc.1
+    refine ⟨hid, fun k hks => ?_, h1, h2, h3, h4, h5, h6, h7, h8, fun a ha => ?_⟩
+    · by_cases h0 : reg ω 12 = 0
+      · rw [transferCredit_get?_ne _ _ _ _ _ _ (by rw [hdst h0]; exact hks),
+          transferDebit_get?_ne hd1 _ (by rw [hsrc]; exact hks)]
+        exact hk k hks
+      · simp only [transferCredit, ne_eq, h0, not_false_eq_true, ↓reduceIte]
+        rw [transferDebit_get?_ne hd1 _ (by rw [hsrc]; exact hks)]
+        exact hk k hks
+    · by_cases h0 : reg ω 12 = 0
+      · rw [← hdst h0] at ha
+        obtain ⟨b, hb, hbc⟩ := transferCredit_created _ _ _ _ _ a ha
+        rw [hdst h0, ← hsrc] at hb
+        obtain ⟨b', hb', hbc'⟩ := transferDebit_created hd1 b hb
+        rw [hsrc] at hb'
+        obtain ⟨b'', hb'', hbc''⟩ := hcs b' hb'
+        exact ⟨b'', hb'', by rw [hbc'', hbc', hbc]⟩
+      · simp only [transferCredit, ne_eq, h0, not_false_eq_true, ↓reduceIte] at ha
+        rw [← hsrc] at ha
+        obtain ⟨b, hb, hbc⟩ := transferDebit_created hd1 a ha
+        rw [hsrc] at hb
+        obtain ⟨b', hb', hbc'⟩ := hcs b hb
+        exact ⟨b', hb', by rw [hbc', hbc]⟩
 
 /-- **The accumulate dispatcher keeps a service confined**, for every id outside `reachingIds`,
     while no other service has it as effective supervisor. -/

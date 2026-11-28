@@ -81,63 +81,63 @@ namespace AccHost
 
 theorem write_gas (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (write gas ω μ c).gas ≤ gas := by
-  unfold write charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+  unfold write; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem supervisor_gas (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (supervisor gas ω μ c).gas ≤ gas := by
-  unfold supervisor charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+  unfold supervisor; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem bless_gas (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (bless env gas ω μ c).gas ≤ gas := by
-  unfold bless charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+  unfold bless; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem assign_gas (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (assign env gas ω μ c).gas ≤ gas := by
-  unfold assign charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+  unfold assign; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem designate_gas (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (designate env gas ω μ c).gas ≤ gas := by
-  unfold designate charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+  unfold designate; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem new_gas (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (new env gas ω μ c).gas ≤ gas := by
-  unfold new charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+  unfold new; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem transfer_gas (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (transfer env gas ω μ c).gas ≤ gas := by
-  unfold transfer charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+  unfold transfer; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem eject_gas (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (eject env gas ω μ c).gas ≤ gas := by
-  unfold eject charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+  unfold eject; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem solicit_gas (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (solicit env gas ω μ c).gas ≤ gas := by
-  unfold solicit charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+  unfold solicit; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem forget_gas (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (forget env gas ω μ c).gas ≤ gas := by
-  unfold forget charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+  unfold forget; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem checkpoint_gas (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (checkpoint gas ω μ c).gas ≤ gas := by
-  unfold checkpoint charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+  unfold checkpoint; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem upgrade_gas (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (upgrade gas ω μ c).gas ≤ gas := by
-  unfold upgrade charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+  unfold upgrade; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem query_gas (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (query gas ω μ c).gas ≤ gas := by
-  unfold query charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+  unfold query; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem yield_gas (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (yield gas ω μ c).gas ≤ gas := by
-  unfold yield charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+  unfold yield; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem provide_gas (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (provide gas ω μ c).gas ≤ gas := by
-  unfold provide charge; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
+  unfold provide; exact charged_gas_le _ _ _ _ _ _ (by gas_body)
 
 theorem dispatch_gas (env : AccEnv) (n gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (dispatch env n gas ω μ c).gas ≤ gas := by

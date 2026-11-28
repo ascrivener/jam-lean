@@ -36,63 +36,63 @@ namespace AccHost
 
 theorem bless_mem (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (bless env gas ω μ c).mem = μ := by
-  unfold bless charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+  unfold bless; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
 theorem assign_mem (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (assign env gas ω μ c).mem = μ := by
-  unfold assign charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+  unfold assign; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
 theorem designate_mem (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (designate env gas ω μ c).mem = μ := by
-  unfold designate charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+  unfold designate; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
 theorem new_mem (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (new env gas ω μ c).mem = μ := by
-  unfold new charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+  unfold new; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
 theorem transfer_mem (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (transfer env gas ω μ c).mem = μ := by
-  unfold transfer charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+  unfold transfer; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
 theorem eject_mem (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (eject env gas ω μ c).mem = μ := by
-  unfold eject charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+  unfold eject; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
 theorem solicit_mem (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (solicit env gas ω μ c).mem = μ := by
-  unfold solicit charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+  unfold solicit; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
 theorem forget_mem (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (forget env gas ω μ c).mem = μ := by
-  unfold forget charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+  unfold forget; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
 theorem checkpoint_mem (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (checkpoint gas ω μ c).mem = μ := by
-  unfold checkpoint charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+  unfold checkpoint; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
 theorem upgrade_mem (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (upgrade gas ω μ c).mem = μ := by
-  unfold upgrade charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+  unfold upgrade; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
 theorem query_mem (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (query gas ω μ c).mem = μ := by
-  unfold query charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+  unfold query; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
 theorem yield_mem (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (yield gas ω μ c).mem = μ := by
-  unfold yield charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+  unfold yield; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
 theorem provide_mem (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (provide gas ω μ c).mem = μ := by
-  unfold provide charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+  unfold provide; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
 theorem write_mem (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (write gas ω μ c).mem = μ := by
-  unfold write charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+  unfold write; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
 theorem supervisor_mem (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     (supervisor gas ω μ c).mem = μ := by
-  unfold supervisor charge; exact charged_mem _ _ _ _ _ _ (by mem_body)
+  unfold supervisor; exact charged_mem _ _ _ _ _ _ (by mem_body)
 
 end AccHost
 

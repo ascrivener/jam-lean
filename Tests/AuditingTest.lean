@@ -128,9 +128,11 @@ def hdr : List UInt8 := List.replicate 32 5   -- ℋ(H)
 #guard announcementItems [report 1, report 256] = announcementItems [report 256, report 1]
 #guard announcementItems [w0, w0] = announcementItems [w0]
 #guard (announcementItems []).isEmpty
--- n as ℰ(n): one octet below 128, two from 128 (reading 2)
+-- n as one octet (x ⧺ i ≡ x ⌢ [i]); mod 2^8 from 256 (reading 2)
 #guard announcementMessage 127 [] hdr = Xannounce ++ [127] ++ hdr
-#guard announcementMessage 128 [] hdr = Xannounce ++ [128, 128] ++ hdr
+#guard announcementMessage 128 [] hdr = Xannounce ++ [128] ++ hdr
+#guard announcementMessage 255 [] hdr = Xannounce ++ [255] ++ hdr
+#guard announcementMessage 257 [] hdr = Xannounce ++ [1] ++ hdr
 #guard announcementValid oracle edKey 0 (tranche0 q9 y0) hdr
   (edKey ++ announcementMessage 0 (tranche0 q9 y0) hdr)
 #guard !announcementValid oracle edKey 1 (tranche0 q9 y0) hdr
@@ -186,6 +188,8 @@ def y1 (w : WorkReport) : List UInt8 := if w.core == 0 then vrfOut [100] else vr
 
 -- s_n(w)'s context is X_U ⌢ Y(H_V) ⌢ ℋ(w) ⧺ n
 #guard laterContext oracle hv w0 1 = Xaudit ++ vrfOut [42] ++ h0 ++ [1]
+#guard laterContext oracle hv w0 200 = Xaudit ++ vrfOut [42] ++ h0 ++ [200]
+#guard laterContext oracle hv w0 300 = Xaudit ++ vrfOut [42] ++ h0 ++ [44]
 #guard laterSeedValid oracle bsKey hv w0 1 (bsSign (vrfOut [100]) bsKey (laterContext oracle hv w0 1))
 #guard !laterSeedValid oracle bsKey hv w0 2 (bsSign (vrfOut [100]) bsKey (laterContext oracle hv w0 1))
 #guard !laterSeedValid oracle bsKey hv w2 1 (bsSign (vrfOut [100]) bsKey (laterContext oracle hv w0 1))
@@ -249,7 +253,7 @@ def outcomeOf : Option (Outcome × List Judgment) → Option Outcome
     [(0, true), (1, true), (2, true), (3, false), (4, false), (5, false), (6, false)]
 
 -- End to end: the votes `formVerdict` builds from auditing judgments pass §10's verdict check
--- (`JAM.checkVerdict`) under the oracle, with key [i, i, …, i] (32 octets) for validator i.
+-- (`JAM.checkVerdict`, outcome from `JAM.verdicts`) under the oracle, with key [i, i, …, i] (32 octets) for validator i.
 def edKeys9 : List (List UInt8) := (List.range 9).map fun i => List.replicate 32 (UInt8.ofNat i)
 def disputesIn : DisputesInput := { slot := 0, activeEd := edKeys9, previousEd := edKeys9 }
 
@@ -260,7 +264,7 @@ def verdictFor (w : WorkReport) (pos neg : List Nat) : Option Verdict :=
 def checks (w : WorkReport) (pos neg : List Nat) : Option Outcome :=
   match verdictFor w pos neg with
   | some v => match checkVerdict Params.tiny oracle disputesIn {} v with
-    | .ok (_, o) => some o
+    | .ok () => (verdicts Params.tiny disputesIn [v]).bind fun vs => vs.head?.map (·.2)
     | .error _ => none
   | none => none
 

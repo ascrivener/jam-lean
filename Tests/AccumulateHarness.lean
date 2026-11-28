@@ -88,7 +88,7 @@ def compare (params : Params) (j : Json) (res : AccResult) : Except String (List
   let mut diffs : List String := []
   let out ← field j "output"
   if let .ok h := hexField out "ok" then
-    if h.toList != res.root then diffs := diffs ++ [s!"output root {hexS res.root} ≠ {hexS h.toList}"]
+    if h.toList != accOutRoot res.outputs then diffs := diffs ++ [s!"output root {hexS (accOutRoot res.outputs)} ≠ {hexS h.toList}"]
   let got := res.state
   let rq (q : List (List ReadyEntry)) := q.map fun l => l.map fun (w, d) => (hexS w.pkg, d.toList.map hexS)
   if rq got.ready != rq post.ready then diffs := diffs ++ ["ready queue differs"]

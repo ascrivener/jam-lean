@@ -123,7 +123,11 @@ $$`\forall c \in \mathbb{N}_{\mathsf{C}} : \pi'_C[c] \equiv \begin{pmatrix} i \m
 
 {gpeq "13.12"}
 
-In {api}`JAM.coreStats`, the ceiling $`\lceil n \cdot 65/64 \rceil` is computed as `(n * 65 + 63) / 64`:
+{api}`JAM.coreStats` names $`R(c)`, $`L(c)` and $`D(c)` as the paper does. The tuple sums of $`R(c)` and
+$`R(s)` (below) are {api}`JAM.digestTotals`, whose count $`n` only $`R(s)` uses. The ceiling
+$`\lceil n \cdot 65/64 \rceil` is computed as `(n * 65 + 63) / 64`:
+
+{leanSource JAM.digestTotals}
 
 {leanSource JAM.coreStats}
 
@@ -146,7 +150,7 @@ $$`\forall s \in \mathbf{s} : \pi'_S[s] \equiv \begin{pmatrix} i \mathrel{\subst
 
 $`\mathbf{S}` is the accumulation statistics of {ref "accumulation"}[§12] (eq. {eq}`12.29`), and $`\mathcal{U}(x, y)` is $`x` unless $`x` is $`\emptyset`, in which case it
 is $`y`. v0.8.1 states the provision sum's filter $`\mathbf{p}_s = s` explicitly (GP #567). In {api}`JAM.serviceStats`,
-`active` is $`\mathbf{s}`, and `(acc.lookup s).getD (0, 0, 0)` is $`\mathcal{U}(\mathbf{S}[s], (0, 0, 0))`:
+`active` is $`\mathbf{s}`, `R` is $`R(s)`, and `(acc.lookup s).getD (0, 0, 0)` is $`\mathcal{U}(\mathbf{S}[s], (0, 0, 0))`:
 
 {leanSource JAM.serviceStats}
 

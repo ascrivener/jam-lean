@@ -8,8 +8,8 @@ import JAM.Merkle
 
 The accumulation state transition: the queue functions $E$, $Q$ and $P$ (§12.1), the single,
 parallel and outer accumulation functions $\Delta_1$, $\Delta_{\ast}$ and $\Delta_+$ (eqs. `accone`,
-`accpar`, `accseq`), and the final state integration (§12.3), together with the accumulation output
-root of §7 (eq. `accoutbeltdef`: $\mathcal{M}_B$ over $\mathcal{E}_4(s) \frown h$ with Keccak).
+`accpar`, `accseq`), and the final state integration (§12.3). The accumulation output root of §7
+(eq. `accoutbeltdef`) is `JAM.accOutRoot`, in `JAM/History.lean`.
 -/
 
 namespace JAM
@@ -74,14 +74,13 @@ structure AccState where
   accumulated : List OctetSet
   pstate : PartialState
 
-/-- The result of the accumulation STF: the posterior state, the output root, and the statistics. -/
+/-- The result of the accumulation STF: the posterior state, the statistics and the outputs
+    $\theta'$. The output root that §7 appends to the belt is computed there, by `JAM.accOutRoot`. -/
 structure AccResult where
   state : AccState
-  root : List UInt8
   stats : List (Nat × AccStat)
   /-- $\theta' = [(s, h) \in \mathbf{b}]$ (GP v0.8.1 eq. `finalstateaccumulation`,
-      accumulation.tex:401): the set $\mathbf{b}$ without repeats, ordered by service and then hash;
-      `root` is the Merkle root of its encoding. -/
+      accumulation.tex:401): the set $\mathbf{b}$ without repeats, ordered by service and then hash. -/
   outputs : List (Nat × List UInt8) := []
 
 section
@@ -256,7 +255,7 @@ def accSeq : Nat → Int → List DeferredTransfer → List WorkReport → Parti
 end
 
 /-- The accumulation state transition (GP §12) for the block with timeslot `slot` and newly
-    available reports $\mathbf{R}$, with the accumulation output root (GP eq. `accoutbeltdef`). -/
+    available reports $\mathbf{R}$. -/
 def accumulate (params : Params) (pre : AccState) (slot : Nat) (reports : List WorkReport) :
     Except AccumulationError AccResult := do
   let E := params.epochLen
@@ -297,10 +296,9 @@ def accumulate (params : Params) (pre : AccState) (slot : Nat) (reports : List W
   -- as merklization.tex:93 serializes it. A service yielding in two rounds of a block gives two
   -- entries ordered by hash, and the same (s, h) twice gives one.
   let theta := (Std.ExtTreeSet.ofList b : Provisions).toList
-  let outs := theta.map fun (s, h) => Codec.fixed 4 s ++ h
   let res : AccResult :=
     { state := { slot, entropy := pre.entropy, ready, accumulated, pstate := { e' with accounts } },
-      root := Merkle.root Keccak.keccak256 outs, stats, outputs := theta }
+      stats, outputs := theta }
   return res
 
 end JAM

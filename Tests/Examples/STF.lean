@@ -240,7 +240,7 @@ def disputesExample : IO Example := do
       The report of a pending core is matched by the hash of its encoding.",
       s!"The pending reports' timeslots are the vector's set-up (prior $\\tau$ = {i.slot}); the disputes step \
       does not check $\\rho$'s timeslots."],
-    model := ["JAM.disputesTransition", "JAM.verdictOutcome", "JAM.clearNonPositive", "JAM.assimilate"],
+    model := ["JAM.disputesTransition", "JAM.verdictOutcome", "JAM.clearNonPositive", "JAM.verdicts", "JAM.disputesPosterior"],
     equations := ["10.12", "10.13", "10.14", "10.15", "10.16", "10.17", "10.18", "10.19"],
     check := stfCheck "disputestest" ++ " Signatures are checked by the suite's oracle, which accepts \
       them all for this vector." }

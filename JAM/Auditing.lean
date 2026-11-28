@@ -49,10 +49,11 @@ Equations covered (labels of `auditing.tex` where it has them):
    $\leq$ current
    (`JAM.Auditing.audited_of_empty_tranche`). `AuditedLiteral` is the literal reading, and
    `JAM.Auditing.auditedLiteral_degenerate` shows the collapse.
-2. **The width of $n$ in $\mathsf{X}_I \mathbin{+\!\!+} n$ and $\mathcal{H}(w) \mathbin{+\!\!+} n$.**
-   $\mathbin{+\!\!+}$ appends one element to an octet sequence, but $n$ is a natural. We use
-   $\mathcal{E}(n)$ (the general natural encoding, Appendix C), which is the single octet $n$ for
-   $n < 128$; Safrole's ticket context uses one octet for the same notation.
+2. **$n \geq 256$ in $\mathsf{X}_I \mathbin{+\!\!+} n$ and $\mathcal{H}(w) \mathbin{+\!\!+} n$.**
+   $x \mathbin{+\!\!+} i \equiv x \frown [i]$ appends one element (GP §3, `notation.tex`), with
+   naturals and octets coerced implicitly, so $n$ is one octet. The coercion is undefined for
+   $n \geq 256$; we append $\mathcal{E}_1(n \bmod 2^8)$ there (`UInt8.ofNat`), as Safrole's ticket
+   context does for the same notation.
 3. **The order of the set in $\mathbf{x}_n$.** $\mathcal{E}$ of a set is its elements "in proper
    order" (Appendix C); the elements are the octet strings $\mathcal{E}_2(w_c) \frown \mathcal{H}(w)$,
    which we order lexicographically (as the model's other sets, `OctetSet`). Since $\mathcal{E}_2$
@@ -184,9 +185,11 @@ def announcementItems (a : List WorkReport) : List UInt8 :=
   ((Std.ExtTreeSet.ofList (a.map fun w => fixed 2 w.core ++ reportHash w) : OctetSet).toList).flatten
 
 /-- $\mathsf{X}_I \mathbin{+\!\!+} n \frown \mathbf{x}_n \frown \mathcal{H}(\mathbf{H})$ (GP §17.3 eq.
-    `announcement`), $n$ as $\mathcal{E}(n)$; `headerHash` is $\mathcal{H}(\mathbf{H})$. -/
+    `announcement`), $n$ as one octet ($x \mathbin{+\!\!+} i \equiv x \frown [i]$, GP §3), reduced mod $2^8$
+    for $n \geq 256$ where the paper's coercion is undefined (reading 2); `headerHash` is
+    $\mathcal{H}(\mathbf{H})$. -/
 def announcementMessage (n : Nat) (a : List WorkReport) (headerHash : List UInt8) : List UInt8 :=
-  Xannounce ++ nat n ++ announcementItems a ++ headerHash
+  Xannounce ++ [UInt8.ofNat n] ++ announcementItems a ++ headerHash
 
 /-- $S \equiv \edsignaturebase_{\kappa_v, e}\langle \mathsf{X}_I \mathbin{+\!\!+} n \frown \mathbf{x}_n \frown \mathcal{H}(\mathbf{H}) \rangle$
     (GP §17.3 eq. `announcement`): an announcement signature verifies under $v$'s Ed25519 key. -/
@@ -212,9 +215,10 @@ structure View where
 
 /-- The context of $s_n(w)$,
     $\mathsf{X}_U \frown \mathcal{Y}(\mathbf{H}_V) \frown \mathcal{H}(w) \mathbin{+\!\!+} n$ (GP §17.3
-    eq. `latertranches`), $n$ as $\mathcal{E}(n)$. -/
+    eq. `latertranches`), $n$ as one octet ($x \mathbin{+\!\!+} i \equiv x \frown [i]$, GP §3), reduced mod
+    $2^8$ for $n \geq 256$ where the paper's coercion is undefined (reading 2). -/
 def laterContext (crypto : Crypto) (vrfSig : List UInt8) (w : WorkReport) (n : Nat) : List UInt8 :=
-  Xaudit ++ crypto.bsOut vrfSig ++ reportHash w ++ nat n
+  Xaudit ++ crypto.bsOut vrfSig ++ reportHash w ++ [UInt8.ofNat n]
 
 /-- $s_n(w) \in \bssignaturebase{}^{[]}_{\kappa_v, b}\langle \mathsf{X}_U \frown \mathcal{Y}(\mathbf{H}_V) \frown \mathcal{H}(w) \mathbin{+\!\!+} n \rangle$
     (GP §17.3 eq. `latertranches`). -/

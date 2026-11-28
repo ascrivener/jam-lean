@@ -139,7 +139,8 @@ binding or function, what it computes, and the equations and section:
 * `assurances`: $`\rho^\ddagger`, $`\mathbf{R}^*`; {eq}`4.13`, {eq}`4.15` ({ref "reports"}[§11]).
 * `guarantees`: $`\rho'`; {eq}`4.14` ({ref "reports"}[§11]).
 * `accumulate`: $`\omega'`, $`\xi'`, $`\delta^\ddagger`, $`\chi'`, $`\iota'`, $`\phi'`, $`\theta'`, $`\mathbf{S}`; {eq}`4.16` ({ref "accumulation"}[§12]).
-* `recentHistory`: $`\beta'` (both $`\beta'_H`, eq. {eq}`4.17`, and $`\beta'_B`, eq. {eq}`7.7`) ({ref "history"}[§7]).
+* `accOutRoot`: $`\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)`, the root of $`\theta'`; {eq}`7.6` ({ref "history"}[§7]).
+* `recentHistoryOf`: $`\beta'` from $`\beta^\dagger_H` (both $`\beta'_H`, eq. {eq}`4.17`, and $`\beta'_B`, eq. {eq}`7.7`) ({ref "history"}[§7]).
 * `preimages`: $`\delta'`; {eq}`4.18` ({ref "accumulation"}[§12]).
 * `authorizations`: $`\alpha'`; {eq}`4.19` ({ref "authorization"}[§8]).
 * `validatorStats`, `coreStats`, `serviceStats`: $`\pi'`; {eq}`4.20` ({ref "statistics"}[§13]).

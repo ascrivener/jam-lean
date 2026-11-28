@@ -3,6 +3,7 @@ import Companion.Source
 import Companion.Paper
 import Companion.Docstring
 import JAM.Accumulation
+import JAM.History
 import JAM.Preimages
 import JAM.Theorems.Confinement
 
@@ -363,8 +364,8 @@ $`\xi`, the oldest entry leaves, and the queue drops what was accumulated and th
 
 {gpeq "12.34"}
 
-All of §12.1–§12.3 is one function in the model, returning the posterior state, the output root and
-the statistics, or the error that makes the block invalid:
+All of §12.1–§12.3 is one function in the model, returning the posterior state, the statistics and
+the outputs $`\theta'`, or the error that makes the block invalid:
 
 {leanSource JAM.AccResult}
 
@@ -381,9 +382,9 @@ How the code maps to the equations:
 * `newAcc` and `accumulated` are {eq}`12.32, 12.33`. In `ready`, entry `idx` is
   $`{\omega'}^{\circlearrowleft}_{m-i}` with $`i = (m - \mathit{idx}) \bmod \mathsf{E}`, and the three branches
   are the cases of {eq}`12.34`.
-* `theta` is $`\theta'`, and `root` is $`\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)`, the Keccak Merkle root over
-  $`\mathbf{s} = [\mathcal{E}_4(s) \frown \mathcal{E}(h) \mid (s, h) \mathrel{\mathrlap{<}{-}} \theta']` that {ref "history"}[§7] appends to the
-  accumulation-output log (eqs. {eq}`7.6, 7.7`); $`\mathcal{E}(h)` of a hash is the hash itself.
+* `theta` is $`\theta'`. Its Keccak Merkle root $`\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)`, which
+  {ref "history"}[§7] appends to the accumulation-output log (eqs. {eq}`7.6, 7.7`), is computed there,
+  by {api}`JAM.accOutRoot`.
 
 Here is {api}`JAM.accumulate` on a block with no reports, where only the always-accumulate service runs:
 
@@ -506,6 +507,12 @@ Each is a note in the model's
   bound is an error, {api}`JAM.AccumulationError`'s `fuelExhausted`, which makes the block invalid.
   No theorem yet shows that the bound is never reached. ($`Q`'s recursion needs no bound: each
   round removes the reports it returns, {api}`JAM.editQueue_length_lt`.)
+* *Note v0.8.1-A61, gas above $`2^{64}`.* $`\Delta_1`'s gas
+  $`g = \mathbf{f}[s] + \sum \mathbf{t}_g + \sum \mathbf{d}_g` ({eq}`12.24`) has no upper bound:
+  the manager may bless $`\mathbf{z} = \{s \mapsto 2^{64} - 1\}` and $`s` may still receive
+  transfer or digest gas. $`\Psi_A` passes $`g` to $`\Psi_M`, whose gas is in $`\mathbb{N}_G`
+  ($`< 2^{64}`). The model saturates, running $`\Psi_M` with $`\min(g, 2^{64} - 1)`
+  ({api}`JAM.psiARun`), rather than letting $`g` wrap to a small number.
 * *Note 25 and v0.8.1-A3, the preimages extrinsic.* The paper names no errors for an invalid
   $`\mathbf{E}_P` and orders none of its conditions. The model checks the two bounds, then the order,
   then $`Y`, with the error names of {api}`JAM.PreimageError` (the test vectors' names where they

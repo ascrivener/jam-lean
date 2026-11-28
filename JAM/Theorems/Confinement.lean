@@ -446,7 +446,7 @@ theorem psiARun_confined (params : Params) (entropy : List UInt8) (e st : Partia
   · have conf_init : Confined st s (initImplications st s t entropy m) :=
       ⟨rfl, fun _ _ => rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl,
         fun a ha => ⟨a, ha, rfl⟩⟩
-    have hinv := psiM_ctx_inv code 5 (UInt64.ofNat g)
+    have hinv := psiM_ctx_inv code 5 (UInt64.ofNat (min g (2 ^ 64 - 1)))
       ⟨(Codec.nat t ++ Codec.nat s ++ Codec.nat inputs.length).toArray⟩
       (initImplications st s t entropy m, initImplications st s t entropy m) (ConfinedCtx st s)
       (accHostFn { params, slot := t, entropy, inputs, code })

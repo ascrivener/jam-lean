@@ -371,7 +371,7 @@ def accPre (e : PartialState) : AccState :=
 def accAt (e : PartialState) : AccResult :=
   match accumulate .tiny (accPre e) 10 [] with
   | .ok r => r
-  | .error _ => { state := accPre e, root := [], stats := [] }
+  | .error _ => { state := accPre e, stats := [] }
 
 /-- The accumulation STF succeeds on this state. -/
 def accOk (e : PartialState) : Bool :=
@@ -395,7 +395,7 @@ def hArgs (k : Nat) : List UInt8 := [10, 20, k.toUInt8] ++ List.replicate 29 0
 def thetaRes := accAt (psOf [(20, svc (some argYield))] [20])
 #guard accOk (psOf [(20, svc (some argYield))] [20])
 #guard thetaRes.outputs == [(20, hArgs 0), (20, hArgs 1), (20, hArgs 2)]
-#guard thetaRes.root ==
+#guard accOutRoot thetaRes.outputs ==
   Merkle.root Keccak.keccak256 ([0, 1, 2].map fun k => Codec.fixed 4 20 ++ hArgs k)
 -- three rounds' transfers: two from round 1, one from round 2
 #guard thetaRes.stats == [(20, (0, 3, (thetaRes.stats.lookup 20).elim 0 (·.2.2)))]
@@ -466,6 +466,18 @@ def psiSup := psiA .tiny (List.replicate 32 0) (psOf [(43, svc none)] []) 10 43 
 #guard (psiSup.state.accounts.getD 43 default).supervisorBalance == rich.supervisorBalance + 5 &&
   (psiSup.state.accounts.getD 43 default).balance == rich.balance &&
   psiSup.modified.contains 43 && psiSup.gasUsed == 0
+
+/-! Ψ_A's gas saturates at 2^64 − 1 (note v0.8.1-A61): with free gas 2^64 − 1 (which the manager may
+bless, χ_Z) and an incoming transfer of gas 1, Δ_1's g = 2^64 is outside ℕ_G. Ψ_M runs with
+2^64 − 1, so service 44 yields its hash; wrapping to 0 would run out of gas at once and yield
+nothing. -/
+def bigXfer : DeferredTransfer :=
+  { source := 1, dest := 44, destSupervisor := false, amount := 0, memo := ⟨#[]⟩, gas := 1 }
+def yieldConst : List UInt8 := svcProgram [.set 7 roBase, .call 27] constHash
+def bigOne := accOne .tiny (List.replicate 32 0) 10 (psOf [(44, svc (some yieldConst))] []) [bigXfer] []
+  (Std.ExtTreeMap.ofList [(44, 2 ^ 64 - 1)]) 44
+#guard bigOne.yield == some constHash
+#guard 0 < bigOne.gasUsed && bigOne.gasUsed ≤ 2 ^ 64 - 1
 
 /-! R: manager 50 and delegator 51 both bless the delegator role in one round, 50 to 60 and 51 to
 61: the manager's choice wins (GP v0.8.1 eq. `accpar`, R); with a manager that does nothing, 51's. -/

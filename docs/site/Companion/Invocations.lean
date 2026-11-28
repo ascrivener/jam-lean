@@ -202,7 +202,9 @@ $$`\begin{aligned} \text{where } & \mathfrak{j} = \mathbf{e}_\mathbf{d}[s]_\math
 
 Here $`b` is the balance and $`x` the supervisor balance of an account, and $`r_u` says whether a
 transfer goes to the supervisor balance. In the model, {api}`JAM.psiA` forms $`\mathbf{s}` and
-$`\mathbf{w}`, and {api}`JAM.psiARun` does the rest:
+$`\mathbf{w}`, and {api}`JAM.psiARun` does the rest. $`\Psi_M` takes its gas in $`\mathbb{N}_G`,
+but $`g` can exceed $`2^{64} - 1` (see {ref "accumulation-readings"}[note v0.8.1-A61]); the model
+runs $`\Psi_M` with $`\min(g, 2^{64} - 1)`:
 
 {leanSource JAM.psiA}
 

@@ -1,0 +1,37 @@
+{"title": "Shuffling eight indices",
+ "summary":
+ "$\\mathcal{F}([0, \\dots, 7], h)$: the entropy $h$ is stretched into 8 numbers $\\mathcal{Q}_8(h)$, and each step uses the next one to pick an element of what is left.",
+ "source":
+ {"url": "https://github.com/davxy/jam-test-vectors/blob/v0.8.0/shuffle/shuffle_tests.json",
+  "repo": "davxy/jam-test-vectors v0.8.0",
+  "path": "shuffle/shuffle_tests.json"},
+ "rows":
+ [{"label": "1",
+   "cells": ["[0, 1, 2, 3, 4, 5, 6, 7]", "3180133873", "1", "1", "last (7) → position 1"]},
+  {"label": "2",
+   "cells": ["[0, 7, 2, 3, 4, 5, 6]", "2874123541", "2", "2", "last (6) → position 2"]},
+  {"label": "3", "cells": ["[0, 7, 6, 3, 4, 5]", "1702679006", "2", "6", "last (5) → position 2"]},
+  {"label": "4", "cells": ["[0, 7, 5, 3, 4]", "3779386820", "0", "0", "last (4) → position 0"]},
+  {"label": "5", "cells": ["[4, 7, 5, 3]", "313342713", "1", "7", "last (3) → position 1"]},
+  {"label": "6", "cells": ["[4, 3, 5]", "1075366959", "0", "4", "last (5) → position 0"]},
+  {"label": "7", "cells": ["[5, 3]", "2867850673", "1", "3", "it was last: dropped"]},
+  {"label": "8", "cells": ["[5]", "573291173", "0", "5", "it was last: dropped"]},
+  {"label": "Result", "cells": ["[1, 2, 6, 0, 7, 4, 3, 5]", "", "", "", ""]}],
+ "params": "no chain parameters: case 1 of the shuffle vectors",
+ "nowrapColumns": [1, 2, 3],
+ "notes":
+ ["$l$ is the length of what is left. The picked element is replaced by the last one, the last position is dropped, and $\\mathbf{r}$ moves on by one, as in eq. F.1.",
+  "The 8 numbers of $\\mathcal{Q}_8(h)$ are the eight four-octet words of $\\mathcal{H}(h \\frown \\mathcal{E}_4(0))$ (eq. F.2)."],
+ "name": "shuffle-eight",
+ "model": ["JAM.Shuffle.shuffleHash", "JAM.Shuffle.shuffle", "JAM.Shuffle.seqFromHash"],
+ "inputs":
+ [{"value": "[0, 1, 2, 3, 4, 5, 6, 7]", "label": "Sequence $\\mathbf{s}$"},
+  {"value": "`0xffffffff…`", "label": "Entropy $h$"},
+  {"value":
+   "[3180133873, 2874123541, 1702679006, 3779386820, 313342713, 1075366959, 2867850673, 573291173]",
+   "label": "$\\mathcal{Q}_8(h)$"}],
+ "equations": ["F.1", "F.2", "F.3"],
+ "columns":
+ ["Step", "Left $\\mathbf{s}$", "$\\mathbf{r}_0$", "$\\mathbf{r}_0 \\bmod l$", "Picked", "Then"],
+ "check":
+ "The model's result equals the vector's expected order (the comparison `lake build shuffletest` makes on every shuffle vector), and each step above agrees with the model's `shuffle` on what is left."}

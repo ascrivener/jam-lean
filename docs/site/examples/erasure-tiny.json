@@ -1,6 +1,6 @@
 {"title": "Erasure coding for six validators: three octets into six chunks, and back",
  "summary":
- "The data $\\mathbf{d}$, 3 octets, is padded with zeroes to a multiple of $2\\mathcal{D}(v)$ = 6 octets, so it is one word (two octets) for each of 3 runs. The code $\\mathcal{C}^6_1$ is systematic: the first 3 chunks are the data itself, and the other 3 are parity. Any 3 chunks give the data back.",
+ "The data $\\mathbf{d}$, 3 octets, is padded with zeroes to a multiple of $2\\mathcal{D}(v)$ = 6 octets: one piece ($k$ = 1) of 3 two-octet words. The code $\\mathcal{C}^6_1$ is systematic: the first 3 chunks are the data itself, and the other 3 are parity. Any 3 chunks give the data back.",
  "source":
  {"url": "https://github.com/davxy/jam-test-vectors/blob/v0.8.0/erasure/tiny/ec-3.json",
   "repo": "davxy/jam-test-vectors v0.8.0",
@@ -19,7 +19,7 @@
  "params": "$v$ = 6 validators, so $\\mathcal{D}(v)$ = 3: any 3 of the 6 chunks recover the data",
  "nowrapColumns": [1],
  "notes":
- ["Each chunk is one word because the padded data is one word per run ($k$ = 1). Longer data gives each chunk one word per piece, with the same code applied to every piece.",
+ ["Each chunk is one word because there is one piece ($k$ = 1). Longer data has more pieces, and each chunk gets one word per piece, with the same code applied to every piece.",
   "The first recovery uses only parity chunks, so the model interpolates through the field of §H.2; the second mixes data and parity."],
  "name": "erasure-tiny",
  "model": ["JAM.Erasure.encode", "JAM.Erasure.recover", "JAM.Erasure.originalShards"],

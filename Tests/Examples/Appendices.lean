@@ -105,8 +105,8 @@ def codecPreimages : IO Example := do
     nowrapColumns := [2, 3],
     rows := pieceRows ps,
     notes := ["Every number below 128 is a single octet under $\\mathcal{E}$ (the case $x < 2^7$ of eq. C.6), so the \
-      count 3 and the length 16 are the octets `03` and `10`. Larger numbers take two to nine octets, the \
-      first of which says how many follow.",
+      count 3 and the length 16 are the octets `03` and `10`. Larger numbers take two to nine octets: the \
+      leading 1-bits of the first octet say how many follow.",
       "$\\mathcal{E}_4$ writes the least significant octet first: 16909060 is `0x01020304`, written `04 03 02 01`.",
       "A long run shows its first four and last two octets; \"Octets at\" gives its place in the encoding."],
     model := ["JAM.encodePreimages", "JAM.Codec.varSeq", "JAM.Codec.var", "JAM.Codec.nat", "JAM.Codec.fixed", "JAM.Codec.blob"],
@@ -190,8 +190,8 @@ def trieExample (case : Nat) : IO Example := do
   let name (h : List UInt8) := if h == zero then "$\\mathbb{H}_0$ (empty)" else abbr h
   let leafRow (k v : List UInt8) : Row :=
     let n := Trie.leaf k v
-    let kind := if v.length ≤ 32 then s!"embedded: the {v.length}-octet value, padded to 32"
-      else s!"regular: $\\mathcal\{H}(v)$ of the {v.length}-octet value"
+    let kind := if v.length ≤ 32 then s!"embedded, {v.length} octets"
+      else s!"regular, $\\mathcal\{H}(v)$ of {v.length} octets"
     { label := s!"Leaf $L(k, v)$ for $k$ = {abbr k}",
       cells := [kind, octets (n.take 1), abbr (Trie.hashNode n)] }
   let mut levels : Array Row := #[]
@@ -223,8 +223,8 @@ def trieExample (case : Nat) : IO Example := do
     columns := ["Node", "Contents", "First octet", "Hash $\\mathcal{H}$ of the node"],
     nowrapColumns := [2, 3],
     rows := leaves ++ levels.toList.reverse ++ [{ label := "Root $M(d)$", cells := ["the top branch's hash", "", abbr got] }],
-    notes := ["Every node is 64 octets. The first bit says what it is: a branch has 0, a leaf 1. An embedded-value leaf's first octet is \
-      $2^7$ plus the value's length; a regular leaf's is $2^7 + 2^6$ = `c0`. A branch is its two children's hashes, with \
+    notes := ["Every node is 64 octets. The first bit says what it is: a branch has 0, a leaf 1. An embedded-value leaf holds the value padded to 32 octets, \
+      and its first octet is $2^7$ plus the value's length; a regular leaf's is $2^7 + 2^6$ = `c0`. A branch is its two children's hashes, with \
       the left one's first bit cleared, so its first octet is the left child's first octet without its high bit. \
       $l$ is the root of the entries whose bit is 0, $r$ of those whose bit is 1.",
       "The vectors' keys are 32 octets; as in `trietest`, the model is given their first 31, the paper's state-key length."],
@@ -319,8 +319,8 @@ def erasureExample (file : String) (subsets : List (List Nat)) : IO Example := d
     name := "erasure-tiny", title := "Erasure coding for six validators: three octets into six chunks, and back",
     source := jamSource s!"erasure/tiny/{file}",
     params := s!"$v$ = {v} validators, so $\\mathcal\{D}(v)$ = {d}: any {d} of the {v} chunks recover the data",
-    summary := s!"The data $\\mathbf\{d}$, {count data.size "octet" "octets"}, is padded with zeroes to a multiple of $2\\mathcal\{D}(v)$ = {2 * d} octets, \
-      so it is one word (two octets) for each of {d} runs. The code $\\mathcal\{C}^{v}_1$ is systematic: the first {d} chunks are the data itself, \
+    summary := s!"The data $\\mathbf\{d}$, {count data.size "octet" "octets"}, is padded with zeroes to a multiple of $2\\mathcal\{D}(v)$ = {2 * d} octets: \
+      one piece ($k$ = 1) of {d} two-octet words. The code $\\mathcal\{C}^{v}_1$ is systematic: the first {d} chunks are the data itself, \
       and the other {v - d} are parity. Any {d} chunks give the data back.",
     inputs := [
       { label := "Data $\\mathbf{d}$", value := octets data.toList },
@@ -328,7 +328,7 @@ def erasureExample (file : String) (subsets : List (List Nat)) : IO Example := d
     columns := ["", "Octets", "What it is"],
     nowrapColumns := [1],
     rows := (got.zipIdx.map fun (c, i) => chunkRow c i) ++ recRows.toList,
-    notes := ["Each chunk is one word because the padded data is one word per run ($k$ = 1). Longer data gives each chunk one \
+    notes := ["Each chunk is one word because there is one piece ($k$ = 1). Longer data has more pieces, and each chunk gets one \
       word per piece, with the same code applied to every piece.",
       "The first recovery uses only parity chunks, so the model interpolates through the field of §H.2; the second mixes data and parity."],
     model := ["JAM.Erasure.encode", "JAM.Erasure.recover", "JAM.Erasure.originalShards"],

@@ -1,5 +1,6 @@
 import JAM.Auditing
 import JAM.Theorems.Auditing
+import Tests.GuaranteeTest
 
 /-!
 # Auditing scenarios (`lake build Tests.AuditingTest`)
@@ -275,5 +276,46 @@ def checks (w : WorkReport) (pos neg : List Nat) : Option Outcome :=
 #guard (match (verdictFor w0 [0, 1, 2, 3, 4, 5, 6] []) with
   | some v => (checkVerdict Params.tiny oracle disputesIn {} { v with target := ⟨h2.toArray⟩ }).isOk
   | none => true) = false
+
+/-! ## Evaluation (eq. 17.16), with the Ξ fixtures of `Tests.GuaranteeTest` -/
+
+namespace Ev
+open JAM.Tests.Guarantee (accts pkgE pkg32)
+open JAM.Tests.Refine (echo exportThenHalt)
+
+/-- `pkgE e` with 32-octet context hashes, so that its bundle decodes. -/
+def pkgD (e : Nat) : WorkPackage := { pkgE e with context := pkg32.context }
+
+/-- C(r): the bundle of `pkgD 0`, which imports and carries nothing. -/
+def bundle0 : List UInt8 := Guarantee.bundle (pkgD 0) [⟨[], [], []⟩]
+
+/-- Ξ(p, 1, ∅, 6) for `pkgD e` with refine code `code`. -/
+def xiD (code : List UInt8) (e : Nat) : Option WorkReport :=
+  Guarantee.computeReport .tiny (accts code) (pkgD e) 1 ∅ 6 [⟨[], [], []⟩]
+
+-- the report Ξ gives for the package evaluates as valid
+#guard match xiD echo 0 with
+  | some r => evaluation .tiny (accts echo) bundle0 r
+  | none => false
+-- the same report claiming another core, or another number of shards: invalid
+#guard match xiD echo 0 with
+  | some r => !evaluation .tiny (accts echo) bundle0 { r with core := 0 } &&
+      !evaluation .tiny (accts echo) bundle0 { r with spec := { r.spec with erasureShards := 9 } }
+  | none => false
+-- a report for a different package (another export count): invalid
+#guard match xiD exportThenHalt 1 with
+  | some r => !evaluation .tiny (accts exportThenHalt) bundle0 r
+  | none => false
+-- a bundle with a trailing octet, or truncated: invalid
+#guard match xiD echo 0 with
+  | some r => !evaluation .tiny (accts echo) (bundle0 ++ [0]) r &&
+      !evaluation .tiny (accts echo) bundle0.dropLast r
+  | none => false
+-- other accounts, so that Ξ gives ∇ (no authorizer code): invalid
+#guard match xiD echo 0 with
+  | some r => !evaluation .tiny ∅ bundle0 r
+  | none => false
+
+end Ev
 
 end JAM.Tests.Auditing

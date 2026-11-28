@@ -2,6 +2,7 @@ import JAM.Fast.Blake2b
 import JAM.Assurances
 import JAM.Shuffle
 import JAM.Constants
+import JAM.Guarantee
 
 /-!
 # Auditing and judging (GP v0.8.1 §17, `auditing.tex`)
@@ -28,9 +29,11 @@ Equations covered (labels of `auditing.tex` where it has them):
 * $s_n(w)$, $a_n(w)$, $\mathbf{a}_n$ (eq. `latertranches`): the later-tranche VRF context, the
   no-show rule with the bias factor $\mathsf{F} = 2$ (`laterSeedValid`, `noShows`, `laterSelected`,
   `laterTranche`).
+* $e_n$ (eq. 17.16): the evaluation of a report from a candidate bundle $C(w)$, by decoding and
+  checking the bundle and recomputing $\Xi$ (`evaluation`). Recovering $C(w)$ from erasure-coded
+  chunks is not composed here (its parts are in `JAM.Erasure`).
 * $\mathbf{j}_n$ (eq. `judgments`): the judgment message $\mathsf{X}_{e_n(w)} \frown \mathcal{H}(w)$
-  and its check (`judgmentMessage`, `judgmentValid`). The evaluation $e_n$ itself (bundle
-  reconstruction and $\Xi$, eq. `computereport`) is an input here.
+  and its check (`judgmentMessage`, `judgmentValid`), with $e_n(w)$ as the input `valid`.
 * $U(w)$ and $\mathbf{U}$ (the audited conditions; `audited`, `blockAudited`).
 * The link to §10: the supermajority clause of $U$ is the threshold of a good verdict
   (`JAM.Auditing.supermajority_iff_verdictGood` in `JAM.Theorems.Auditing`); a block author's verdict
@@ -64,8 +67,9 @@ Equations covered (labels of `auditing.tex` where it has them):
 5. **⅓ in the best-block rule.** The overview says a report is ban-listed when *greater than* ⅓ of
    validators judge it invalid; the best-block paragraph disregards chains with a report that *at
    least* ⅓ judge invalid. `disregarded` follows the latter ($3 \cdot |J_\bot| \geq |\kappa|$).
-6. **$\mathcal{H}(w)$, $\mathcal{H}(\mathbf{H})$** are read as $\mathcal{H}(\mathcal{E}(w))$ and
-   $\mathcal{H}(\mathcal{E}(\mathbf{H}))$, as elsewhere in the paper.
+6. **$\mathcal{H}(w)$, $\mathcal{H}(\mathbf{H})$** are $\mathcal{H}(\mathcal{E}(w))$ and
+   $\mathcal{H}(\mathcal{E}(\mathbf{H}))$. This is settled, not a reading: §3.8 passes the inputs of a
+   hash function through $\mathcal{E}$.
 7. **$|\mathbf{q}| = |\kappa|/3$** (the number of active cores), while $\rho$ has $\mathsf{C}$
    entries; for both chains $|\kappa|/3 = \mathsf{C}$. We read $\rho$ at indices below $|\kappa|/3$,
    missing entries as $\emptyset$.
@@ -259,6 +263,23 @@ def laterTrancheWithNegatives (V : Nat) (view : View) (n : Nat) (q : List (Optio
 def tranche (V : Nat) (view : View) (n : Nat) (q : List (Option WorkReport)) (y0 : List UInt8)
     (y : WorkReport → List UInt8) : List WorkReport :=
   if n = 0 then tranche0 q y0 else laterTranche V view n q y
+
+/-! ## Evaluation (§17.3 eq. 17.16) -/
+
+/-- $e_n(w)$ (GP §17.3 eq. 17.16): with $C(w)$ = `C` the candidate bundle,
+    $e_n(w) \Leftrightarrow M(w, p)$ when some $p$ has $B(p, w_l) = C(w)$, else $\bot$, where
+    $M(w, p) \equiv w = \Xi(p, w_c, w_l, (w_s)_n)$. The model decodes and checks $C(w)$
+    (`JAM.Guarantee.verifyBundle`: "a failure to decode or verify the bundle implies an invalid
+    work-report"), requires the decoded package and data to re-assemble to exactly $C(w)$
+    (`JAM.Guarantee.bundle`), and compares $w$ with $\Xi$ (`JAM.Guarantee.computeReport`, over the
+    accounts `d`, with the decoded item data), $\nabla$ counting as unequal. -/
+def evaluation (params : Params) (d : Accounts) (C : List UInt8) (w : WorkReport) : Bool :=
+  match Guarantee.verifyBundle Blake2b.hash256 w.segmentRootLookup C with
+  | none => false
+  | some b =>
+    Guarantee.bundle b.package b.items == C &&
+      decide (Guarantee.computeReport params d b.package w.core w.segmentRootLookup
+        w.spec.erasureShards b.items = some w)
 
 /-! ## Judgments (§17.3 eq. `judgments`) -/
 

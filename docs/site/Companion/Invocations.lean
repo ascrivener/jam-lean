@@ -685,5 +685,11 @@ These points are recorded in the model's
   also changes $`\mathbf{d}'[s]`'s balance, which conflict. The model tests $`\mathtt{CASH}` on $`s`'s
   own balances, then answers $`\mathtt{FULL}`.
 
+* *Note v0.8.1-A63, an empty export.* With $`\varphi_8 = 0`, `export`'s segment is $`\mathcal{P}_{\mathsf{W}_G}([])`, and
+  {eq}`14.20` pads the empty sequence to itself, so read literally the exported segment is empty, not a member of
+  $`\mathbb{J}`. The model appends $`\mathsf{W}_G` zero octets ({api}`JAM.RefineHost.exportSeg`).
+* *Note v0.8.1-A64, a missing authorizer host.* $`\mathbf{p}_\mathbf{u} = \Lambda(\delta[p_h], \ldots)` is undefined when $`p_h` is not a
+  service. The model gives BAD, as for a missing preimage ({api}`JAM.WorkPackage.authCode`, {api}`JAM.psiI`).
+
 * *Note v0.8.1-A36, a missing work item.* $`\Psi_R` reads $`w = p_\mathbf{w}[i]` without saying what happens when the
   package has no item $`i`. The model answers $`(\texttt{BAD}, [], 0)`, as for a missing service.

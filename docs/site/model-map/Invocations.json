@@ -11,7 +11,7 @@
     "B.7": { "kind": "type", "name": "JAM.Implications" },
     "B.8": { "kind": "def", "name": "JAM.Implications.self" },
     "B.9": { "kind": "def", "name": "JAM.psiA",
-             "note": "the cases after e′ is formed are `JAM.psiARun`" },
+             "note": "the cases after e′ is formed are `JAM.psiARun`, which runs Ψ_M with min(g, 2^64 − 1) since g may exceed ℕ_G (note v0.8.1-A61)" },
     "B.10": { "kind": "def", "name": "JAM.initImplications" },
     "B.13": { "kind": "def", "name": "JAM.checkId",
               "note": "`fuel` bounds the search; |d| + 1 steps always suffice (by counting; not a theorem)" },

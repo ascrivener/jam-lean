@@ -588,7 +588,15 @@ def initImplications (e : PartialState) (s slot : Nat) (entropy : List UInt8)
 
 /-- $\Psi_A$ from the state $\mathbf{e}'$ with the incoming transfers already credited and the
     modified set $\mathbf{m}$: look up $s$'s code and run it (GP v0.8.1 eq. `accinvocation`, the
-    cases after $\mathbf{e}'$ is formed). -/
+    cases after $\mathbf{e}'$ is formed).
+
+    $\Psi_M$ takes its gas in $\mathbb{N}_G$ ($< 2^{64}$), but $\Delta_1$'s
+    $g = \mathbf{f}[s] + \sum \mathbf{t}_g + \sum \mathbf{d}_g$ (eq. `accone`) is unbounded: the
+    manager may bless $\mathbf{z} = \{s \mapsto 2^{64} - 1\}$ and $s$ still receive transfer or
+    digest gas. The model saturates, running $\Psi_M$ with $\min(g, 2^{64} - 1)$ rather than letting
+    the gas wrap modulo $2^{64}$. A project decision; the paper gap is
+    [`docs/upstream-candidates.md`](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues)
+    v0.8.1-A61. -/
 def psiARun (params : Params) (entropy : List UInt8) (st : PartialState) (t s g : Nat)
     (inputs : List AccumulateInput) (m : Std.ExtTreeSet Nat := ∅) : AccOut :=
   let code := (st.accounts.get? s).bind (·.code)
@@ -600,7 +608,7 @@ def psiARun (params : Params) (entropy : List UInt8) (st : PartialState) (t s g 
       let env : AccEnv := { params, slot := t, entropy, inputs, code := c }
       let x := initImplications st s t entropy m
       let args : ByteArray := ⟨(Codec.nat t ++ Codec.nat s ++ Codec.nat inputs.length).toArray⟩
-      let (u, o, (x, y)) := psiM c 5 (UInt64.ofNat g) args (accHostFn env) (x, x)
+      let (u, o, (x, y)) := psiM c 5 (UInt64.ofNat (min g (2 ^ 64 - 1))) args (accHostFn env) (x, x)
       match o with
       | .oog | .panic => ⟨y.state, y.modified, y.xfers, y.yield, u, y.provisions⟩
       | .ok out =>

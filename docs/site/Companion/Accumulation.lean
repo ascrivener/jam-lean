@@ -503,6 +503,12 @@ Each is a note in the model's
   is the base gas of the `transfer` host call (Appendix B). If a bound were reached, the model would
   stop accumulating (and $`Q` would return the reports found so far). No theorem yet shows that
   these bounds are never reached.
+* *Note v0.8.1-A61, gas above $`2^{64}`.* $`\Delta_1`'s gas
+  $`g = \mathbf{f}[s] + \sum \mathbf{t}_g + \sum \mathbf{d}_g` ({eq}`12.24`) has no upper bound:
+  the manager may bless $`\mathbf{z} = \{s \mapsto 2^{64} - 1\}` and $`s` may still receive
+  transfer or digest gas. $`\Psi_A` passes $`g` to $`\Psi_M`, whose gas is in $`\mathbb{N}_G`
+  ($`< 2^{64}`). The model saturates, running $`\Psi_M` with $`\min(g, 2^{64} - 1)`
+  ({api}`JAM.psiARun`), rather than letting $`g` wrap to a small number.
 * *Note 25 and v0.8.1-A3, the preimages extrinsic.* The paper names no errors for an invalid
   $`\mathbf{E}_P` and orders none of its conditions. The model checks the two bounds, then the order,
   then $`Y`, with the error names of {api}`JAM.PreimageError` (the test vectors' names where they

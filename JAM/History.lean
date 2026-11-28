@@ -88,7 +88,7 @@ structure HistoryInput where
   /-- $\mathbf{H}_R$, the parent block's state root. -/
   parentStateRoot : List UInt8
   /-- $\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)$: the root of the block's accumulation outputs (GP eq.
-      `accoutbeltdef`; `JAM.importBlock` computes it with `JAM.accOutRoot`). -/
+      `accoutbeltdef`; `JAM.importBlockWith` computes it with `JAM.accOutRoot`). -/
   accRoot : List UInt8
   /-- $\mathbf{H}_T$. -/
   slot : Nat
@@ -117,7 +117,7 @@ def recentHistoryOf (params : Params) (dagger : List RecentBlock) (beltPre : MMR
 
 /-- The recent-history transition $\beta \mapsto \beta'$ (GP §7): correct the last state root to form
     $\beta_H^\dagger$ (eq. `correctlaststateroot`), then `JAM.recentHistoryOf` (eqs. `accoutbeltdef`,
-    `recenthistorydef`). `JAM.importBlock` forms $\beta_H^\dagger$ itself and calls
+    `recenthistorydef`). `JAM.importBlockWith` forms $\beta_H^\dagger$ itself and calls
     `JAM.recentHistoryOf` directly. -/
 def recentHistory (params : Params) (pre : Recent) (i : HistoryInput) : Recent :=
   recentHistoryOf params (Recent.withParentRoot pre.history i.parentStateRoot) pre.belt i

@@ -101,7 +101,7 @@ the log:
 {gpeq "7.7"}
 
 In the model, {api}`JAM.accOutRoot` computes the root $`\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)` from
-$`\theta'` (`AccResult.outputs`, returned by {api}`JAM.accumulate`). {api}`JAM.importBlock` passes it to
+$`\theta'` (`AccResult.outputs`, returned by {api}`JAM.accumulate`). {api}`JAM.importBlockWith` passes it to
 {api}`JAM.recentHistoryOf` as `HistoryInput.accRoot`:
 
 {leanSource JAM.accOutRoot}
@@ -149,7 +149,7 @@ availability specification to its segment root. The new state root is $`\mathbb{
 {leanSource JAM.recentHistoryOf}
 
 {api}`JAM.recentHistoryOf` takes $`\beta^\dagger_H` as its argument `dagger`, as eq. {eq}`7.8` does:
-{api}`JAM.importBlock` forms $`\beta^\dagger_H` once (it also gives it to the guarantees step) and
+{api}`JAM.importBlockWith` forms $`\beta^\dagger_H` once (it also gives it to the guarantees step) and
 builds `reported`, the map $`\mathbf{p}`, from $`\mathbf{E}_G`. The whole transition of §7, as the
 history test vectors exercise it, forms $`\beta^\dagger_H` first:
 

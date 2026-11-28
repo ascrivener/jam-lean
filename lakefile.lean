@@ -29,8 +29,8 @@ lean_lib JAM
 lean_lib Services
 
 /-- The crypto parameter of the model in plain Lean (Ed25519, Bandersnatch IETF / Thin / Pedersen
-    VRFs, the ring root and ring VRF), moved from jam-lean-target. The model never imports it; see
-    `docs/jamcrypto.md`. Not a default target. -/
+    VRFs, the ring root and ring VRF), moved from jam-lean-target. Of the model's modules only `JAM.Model` imports it (the closed Υ,
+    `JAM.importBlock`), so `lake build` builds the parts it uses; see `docs/jamcrypto.md`. -/
 lean_lib JamCrypto
 
 /-- JamCrypto's Ed25519 and Bandersnatch VRF vectors: `lake build cryptotest &&
@@ -250,7 +250,7 @@ lean_exe «tracetest-exe» where
   exeName := "tracetest"
 
 /-- Import every block of each block-import trace fetched by `scripts/fetch-trace-vectors.sh`
-    with Υ (`JAM.importBlock`), comparing the state after each block (see `Tests/TraceTest.lean`). -/
+    with Υ (`JAM.importBlockWith`), comparing the state after each block (see `Tests/TraceTest.lean`). -/
 target tracetest pkg : Unit := do
   runOnVectors `«tracetest-exe» #[(pkg.dir / "vendor" / "jam-traces" / "traces").toString]
 

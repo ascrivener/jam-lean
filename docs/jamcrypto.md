@@ -1,27 +1,34 @@
 # JamCrypto: the crypto parameter in plain Lean
 
-The JAM model takes its cryptography as a parameter (`JAM.Crypto`; standing decision "Crypto stays a
-parameter"). `JamCrypto` implements that parameter in plain Lean, with core and Std only. It was moved
+The JAM model's parametric core (`JAM.importBlockWith`) takes its cryptography as a parameter
+(`JAM.Crypto`). `JamCrypto` implements that parameter in plain Lean, with core and Std only. It was moved
 here from jam-lean-target (main 431a9b6) on 2026-11-25, with Adam's approval. The JAM model never
-imports it.
+imports it, with one exception (Adam, 2026-11-28): `JAM/Model.lean` fixes the crypto to define the
+closed model.
+
+## The closed model (`JAM/Model.lean`)
+
+`JAM.crypto srs` is the full GP v0.8.1 crypto: Ed25519 under ZIP 215, the Thin VRF, and the Draft 35
+ring root and ring VRF, in `Reading.vectors`. Every field is computed by JamCrypto; the base record
+`JAM.cryptoBase` is fully overridden. `JAM.importBlock srs params chain σ B` is
+`JAM.importBlockWith params (JAM.crypto srs) chain σ B`, the target of a conformance proof.
+`JAM.crypto_eq_compose` (rfl) shows `JAM.crypto srs` is the composition
+`withSignatures (Ring.crypto srs V c)` on the v0.8.1 path for any `V` and `c`, and
+`JAM.importBlock_eq` (rfl) that the closed model is the parametric core at it. `JAM/Model.lean` is
+the only model module that imports JamCrypto; the paper-shaped modules never do. `tracetest` runs
+the closed model once on a trace block and checks it against the core (`closedAgrees`).
 
 ## Layout
 
 * `JamCrypto.lean`, `JamCrypto/*.lean` (21 files), and `JamCrypto/Fast/` (see "Fast implementations"). Twenty were copied verbatim, except for the
   path of the SRS in two docstrings, and have changed since (the v0.8.1 reading switch); `Reading`
   is new. The only imports from outside JamCrypto are `JAM.Crypto`, `JAM.Sha512`,
-  `JAM.Keccak` and `JAM.Blake2b`, and `JAM.BlockImport` in `Model`.
+  `JAM.Keccak` and `JAM.Blake2b`.
   * Ed25519 (`Ed25519`, `Ed25519Sign`).
   * Bandersnatch IETF VRF (`Bandersnatch`, `BandersnatchSign`), Thin VRF (`ThinVrf`) and Pedersen
     VRF (`PedersenVrf`).
   * The ring root and ring VRF (`Ring*`), over BLS12-381 (`Bls12381*`).
   * Development keys (`DevKeys`) and the `JAM.Crypto` instance (`Crypto`).
-  * The closed state-transition function (`Model`, new): `Model.crypto srs`, the full GP v0.8.1
-    crypto (ZIP 215, Thin VRF, Draft 35 ring VRF, `Reading.vectors`; every field computed by
-    JamCrypto), and `Model.importBlock srs` := `JAM.importBlock` with it fixed, the target of a
-    conformance proof. It is the only JamCrypto module that imports the model beyond `JAM.Crypto`
-    (`JAM.BlockImport`); the model still never imports JamCrypto. `tracetest` runs it once on a
-    trace block and checks it against the parametric call (`closedAgrees`).
   * The reading of the v0.8.1 path's spec, Draft 35 (`Reading`: `.prose`, the default, or `.vectors`).
 * `JamCryptoTest.lean` (`cryptotest`) and its vectors `JamCryptoTest/vectors/` (see their README).
   The provenance generator is in `JamCryptoTest/generator/` and is not built.

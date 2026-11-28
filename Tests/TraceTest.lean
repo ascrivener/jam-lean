@@ -2,12 +2,12 @@ import JAM.BlockImport
 import Tests.TraceState
 import Tests.V080
 import JamCrypto.Bandersnatch
-import JamCrypto.Model
+import JAM.Model
 
 /-!
 # Block-import trace runner (davxy/jam-test-vectors `traces/`, GP v0.8.0)
 
-`tracetest [DIR [TRACE …]]` imports each trace's blocks in order with Υ (`JAM.importBlock`) under
+`tracetest [DIR [TRACE …]]` imports each trace's blocks in order with Υ (`JAM.importBlockWith`, the parametric core) under
 the tiny parameters; by default every trace present under `vendor/jam-traces/traces`, fetched by
 `scripts/fetch-trace-vectors.sh`. **On `gp-v0.8.1` block import is suspended** until v0.8.1 traces
 exist (`blockImportSuspended`); only the T(σ) round trip below runs.
@@ -19,9 +19,9 @@ reject; the runner then expects an error and keeps σ. If the model's σ does no
 post-state, the runner reports it (or, at a step listed in `knownDeviations`, counts it as a
 known deviation) and continues from the trace's post-state, which `decodeState` always decodes.
 
-The closed state-transition function `JamCrypto.Model.importBlock` (Υ with the GP v0.8.1 crypto
-fixed) is also run once, on the first block of the first trace present, and checked to give the same
-result as the parametric call `JAM.importBlock` with the composition it fixes (`closedAgrees`).
+The closed model `JAM.importBlock` (Υ with the GP v0.8.1 crypto fixed) is also run once, on the
+first block of the first trace present, and checked to give the same result as the parametric core
+`JAM.importBlockWith` at the composition it fixes (`closedAgrees`).
 
 Every raw state of the trace (genesis, and each step's pre- and post-state) is also checked by
 `roundTrip`: decoded and serialized again, it must give the same key-values and root.
@@ -165,7 +165,7 @@ def runTrace (dir : System.FilePath) (name : String) : IO Summary := do
     unless roots.any (·.1 == key) do roots := (key, σ.ringRoot) :: roots
     let expectReject := st.pre.root.toList == st.post.root.toList
     let t0 ← IO.monoMsNow
-    let r := importBlock p (oracle roots) chain σ st.block
+    let r := importBlockWith p (oracle roots) chain σ st.block
     let r ← match r with
       | .ok (s', _) => do let _ := s'.root.length; pure r
       | .error _ => pure r
@@ -235,10 +235,10 @@ def laCtx (lookupRoot : ByteArray) : RefineContext :=
 #guard !lookupAnchorKnown [laAnchor, laChild] (laCtx (h32 0xaa))
 #guard !lookupAnchorKnown [laAnchor, laChild] { laCtx (h32 0xbb) with anchorStateRoot := h32 0xbb, lookupAnchorStateRoot := h32 0xaa }
 
-/-- `JamCrypto.Model.importBlock srs` agrees with `JAM.importBlock` at the composed crypto
+/-- `JAM.importBlock srs` (the closed model) agrees with `JAM.importBlockWith` at the composed crypto
     `withSignatures (Ring.crypto srs V c)` (v0.8.1, `Reading.vectors`) on the first block of trace
     `name`: the same error, or post-states with the same root. They are equal by definition
-    (`JamCrypto.Model.importBlock_eq`, `crypto_eq_compose`); this checks that the closed function
+    (`JAM.importBlock_eq`, `JAM.crypto_eq_compose`); this checks that the closed function
     runs on a vector. -/
 def closedAgrees (dir : System.FilePath) (name : String) : IO Bool := do
   let p := V080.tiny080
@@ -263,9 +263,9 @@ def closedAgrees (dir : System.FilePath) (name : String) : IO Bool := do
     match r with
     | .ok (s', _) => s!"ok {hexS s'.root}"
     | .error e => s!"error {repr e}"
-  let closed := outcome (JamCrypto.Model.importBlock srs p chain σ st.block)
-  let param := outcome (importBlock p composed chain σ st.block)
-  IO.println s!"{name}/{f}: closed Υ (JamCrypto.Model.importBlock): {closed}"
+  let closed := outcome (JAM.importBlock srs p chain σ st.block)
+  let param := outcome (importBlockWith p composed chain σ st.block)
+  IO.println s!"{name}/{f}: closed Υ (JAM.importBlock): {closed}"
   if closed == param then return true
   IO.println s!"  differs from the parametric call: {param}"
   return false

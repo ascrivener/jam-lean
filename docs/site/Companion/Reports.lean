@@ -359,8 +359,15 @@ These points are recorded, under the note numbers given, in the model's
   rows or against the other conditions. The model uses the test vectors' later error names
   (`refineLoadTooHigh`, `badExportsCount`, `bundleTooBig`, `authGasTooHigh`) and checks the rows in
   the paper's order ({api}`JAM.checkReportLoad`).
-* *Note v0.8.1-A51, report equality in {eq}`11.17`.* $`(p_\mathbf{g})_\mathbf{r} \in \mathbf{R}` compares work-reports without
-  saying how. The model compares their encodings ({api}`JAM.assurances`).
+* *Note v0.8.1-A51, report equality in {eq}`11.17`.* $`(p_\mathbf{g})_\mathbf{r} \in \mathbf{R}` compares work-reports as
+  values. The model compares their encodings ({api}`JAM.assurances`), which agrees because $`\mathcal{E}` is
+  injective; this is an implementation note, not a gap in the paper.
+* *Note v0.8.1-A66, a package hash in two entries of $`\beta_H`.* {eq}`11.44` unites dictionaries, and the
+  paper's dictionary union is right-biased: if a package hash were a key of two entries of
+  $`\beta_H`, only one of its segment roots would be in the union. The model accepts a lookup that
+  matches any entry (`recentReported.contains` in {api}`JAM.guarantees`). This cannot arise from
+  genesis, since {eq}`11.41` never lets a package already in $`\beta_H` be reported again, but an
+  arbitrary pre-state (such as a fuzzer's) can contain it.
 * *Note v0.8.1-A53, a digest for a service that does not exist.* {eq}`11.32` and {eq}`11.45` read
   $`\delta[\mathbf{d}_s]`, which is undefined when $`\mathbf{d}_s \notin \mathcal{K}(\delta)`. The model rejects such a report
   (`badServiceId`, the test vectors' name), before the minimum-gas condition ({api}`JAM.guarantees`).

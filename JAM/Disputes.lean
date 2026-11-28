@@ -87,14 +87,13 @@ def Xvalidif (v : Bool) : List UInt8 := if v then Xvalid else Xinvalid
 
 /-- A sequence is strictly ascending under a key: $[x \in \mathbf{s}]$-ordered-unique by that key
     (GP §3.7, `sqorderuniqby`). -/
-def orderedUniqBy {α : Type} (key : α → List UInt8) : List α → Bool
+def orderedUniqBy {α β : Type} [LT β] [DecidableLT β] (key : α → β) : List α → Bool
   | a :: b :: rest => decide (key a < key b) && orderedUniqBy key (b :: rest)
   | _ => true
 
-/-- The same for natural-number keys. -/
-def orderedUniqByNat {α : Type} (key : α → Nat) : List α → Bool
-  | a :: b :: rest => key a < key b && orderedUniqByNat key (b :: rest)
-  | _ => true
+/-- `orderedUniqBy` at natural-number keys: the same definition, kept as a name for its existing
+    users. -/
+abbrev orderedUniqByNat {α : Type} (key : α → Nat) : List α → Bool := orderedUniqBy key
 
 /-- A verdict's outcome: good ($\top$), bad ($\bot$) or wonky ($\varnothing$) (GP eq. `verdicts`). -/
 inductive Outcome where
@@ -133,12 +132,13 @@ def verdictOutcome (k : Nat) (votes : List Judgment) : Option Outcome :=
 
 /-- The conditions on one verdict $(r, a, \mathbf{j})$ (GP §10.2): $a \in \lfloor \tau/\mathsf{E} \rfloor - \mathbb{N}_2$, $\mathbf{j}$ ordered and
     unique by judge index, $|\mathbf{j}| = \lfloor 2/3 \cdot |\mathbf{k}| \rfloor + 1$, every judge index below $|\mathbf{k}|$ and every
-    signature valid, $r$ not already judged, and $V(a, \mathbf{j})$ defined. Returns $(r, V(a, \mathbf{j}))$. -/
+    signature valid, $r$ not already judged, and $V(a, \mathbf{j})$ defined. It only validates: the
+    verdict's entry of $\mathbf{v}$ is `verdicts`. -/
 def checkVerdict (params : Params) (crypto : Crypto) (i : DisputesInput) (ψ : DisputesState)
-    (v : Verdict) : Except DisputesError (List UInt8 × Outcome) := do
+    (v : Verdict) : Except DisputesError Unit := do
   let e := i.slot / params.epochLen
   unless v.age = e ∨ v.age + 1 = e do throw .badJudgementAge
-  unless orderedUniqByNat (·.index) v.votes do throw .judgementsNotSortedUnique
+  unless orderedUniqBy (·.index) v.votes do throw .judgementsNotSortedUnique
   let k := judgeKeys params i v.age
   unless v.votes.length = 2 * k.length / 3 + 1 do throw .badVotesCount
   let r := v.target.toList
@@ -147,17 +147,39 @@ def checkVerdict (params : Params) (crypto : Crypto) (i : DisputesInput) (ψ : D
     unless crypto.edVerify (k.getD j.index []) (Xvalidif j.valid ++ r) j.signature.toList do
       throw .badSignature
   if ψ.good.contains r || ψ.bad.contains r || ψ.wonky.contains r then throw .alreadyJudged
-  let some o := verdictOutcome k.length v.votes | throw .badVoteSplit
-  return (r, o)
+  if (verdictOutcome k.length v.votes).isNone then throw .badVoteSplit
 
-/-- $\psi'_G$, $\psi'_B$, $\psi'_W$ (GP eqs. `goodsetdef`–`wonkysetdef`): each set assimilates the report
-    hashes of its verdicts. -/
-def assimilate (ψ : DisputesState) (verdicts : List (List UInt8 × Outcome)) : DisputesState :=
-  verdicts.foldl (init := ψ) fun s (r, o) =>
-    match o with
-    | .good => { s with good := s.good.insert r }
-    | .bad => { s with bad := s.bad.insert r }
-    | .wonky => { s with wonky := s.wonky.insert r }
+/-- $\mathbf{v} \equiv [(r, V(a, \mathbf{j})) \mid (r, a, \mathbf{j}) \in \mathbf{E}_V]$ (GP eq. `verdicts`), with $\mathbf{k} = K(a)$. It is
+    `none` when some $V(a, \mathbf{j})$ is undefined, which `checkVerdict` has already rejected. -/
+def verdicts (params : Params) (i : DisputesInput) (xv : List Verdict) :
+    Option (List (List UInt8 × Outcome)) :=
+  xv.mapM fun v =>
+    (verdictOutcome (judgeKeys params i v.age).length v.votes).map (v.target.toList, ·)
+
+/-- $\{r \mid (r, o) \in \mathbf{v}\}$: the report hashes of the verdicts with outcome $o$. -/
+def judgedAs (v : List (List UInt8 × Outcome)) (o : Outcome) : OctetSet :=
+  .ofList ((v.filter (·.2 == o)).map (·.1))
+
+/-- $\psi'$ (GP eqs. `goodsetdef`–`offendersdef`):
+    $\psi'_G \equiv \psi_G \cup \{r \mid (r, \top) \in \mathbf{v}\}$, $\psi'_B \equiv \psi_B \cup \{r \mid (r, \bot) \in \mathbf{v}\}$,
+    $\psi'_W \equiv \psi_W \cup \{r \mid (r, \varnothing) \in \mathbf{v}\}$ and
+    $\psi'_O \equiv \psi_O \cup \{f \mid (f, \dots) \in \mathbf{E}_C\} \cup \{f \mid (f, \dots) \in \mathbf{E}_F\}$. -/
+def disputesPosterior (ψ : DisputesState) (v : List (List UInt8 × Outcome)) (x : Disputes) :
+    DisputesState where
+  good := ψ.good.union (judgedAs v .good)
+  bad := ψ.bad.union (judgedAs v .bad)
+  wonky := ψ.wonky.union (judgedAs v .wonky)
+  offenders := (ψ.offenders.union (.ofList (x.culprits.map (·.key.toList)))).union
+    (.ofList (x.faults.map (·.key.toList)))
+
+/-- $\mathbf{H}_O \equiv [f \mid (f, \dots) \in \mathbf{E}_C] \frown [f \mid (f, \dots) \in \mathbf{E}_F]$ (GP §10.3, `sec:judgmentmarker`). -/
+def offendersMark (x : Disputes) : List (List UInt8) :=
+  x.culprits.map (·.key.toList) ++ x.faults.map (·.key.toList)
+
+/-- $\mathbf{k} = \{i_e \mid i \in \lambda \cup \kappa\} \setminus \psi_O$ (GP §10.2, eqs. `culprits`/`faults`): the keys a culprit or
+    fault may name. -/
+def offenceKeys (i : DisputesInput) (ψ : DisputesState) : List (List UInt8) :=
+  (i.previousEd ++ i.activeEd).filter (!ψ.offenders.contains ·)
 
 /-- $\availassignmentspostjudgment$ (GP eq. `removenonpositive`): clear each core whose assigned report's hash
     $\mathcal{H}((\rho[c]_g)_r)$ has a bad or wonky verdict. -/
@@ -180,24 +202,26 @@ def clearNonPositive (ρ : AvailAssignments) (verdicts : List (List UInt8 × Out
       a chain of two equivalences), $f \in \mathbf{k}$ and $s \in \edsignaturebase_f\langle \mathsf{X}_v \frown r \rangle$.
     * Every good verdict has a fault for its report.
 
-    $\mathbf{k} = \{i_e \mid i \in \lambda \cup \kappa\} \setminus \psi_O$. A key outside it is reported as already an offender when it is
-    in $\psi_O$, and as an unknown guarantor or auditor otherwise. -/
+    $\mathbf{k}$ is `offenceKeys`. A key outside it is reported as already an offender when it is in
+    $\psi_O$, and as an unknown guarantor or auditor otherwise. -/
 def disputesTransition (params : Params) (crypto : Crypto) (i : DisputesInput) (ψ : DisputesState)
     (ρ : AvailAssignments) (x : Disputes) : Except DisputesError DisputesOutput := do
   if x.verdicts.length > Constants.Cmaxextrinsicverdicts then throw .tooManyVerdicts
   if x.culprits.length > Constants.Cmaxextrinsicoffenses then throw .tooManyCulprits
   if x.faults.length > Constants.Cmaxextrinsicoffenses then throw .tooManyFaults
   unless orderedUniqBy (·.target.toList) x.verdicts do throw .verdictsNotSortedUnique
-  let verdicts ← x.verdicts.mapM (checkVerdict params crypto i ψ)
-  let ψ' := assimilate ψ verdicts
-  let keys := i.previousEd ++ i.activeEd
+  x.verdicts.forM (checkVerdict params crypto i ψ)
+  let some v := verdicts params i x.verdicts | throw .badVoteSplit
+  let ψ' := disputesPosterior ψ v x
+  let k := offenceKeys i ψ
+  let offenceKeyError (f : List UInt8) (e : DisputesError) : DisputesError :=
+    if ψ.offenders.contains f then .offenderAlreadyReported else e
   unless orderedUniqBy (·.key.toList) x.culprits do throw .culpritsNotSortedUnique
   for c in x.culprits do
     let r := c.target.toList
     let f := c.key.toList
     unless ψ'.bad.contains r do throw .culpritsVerdictNotBad
-    if ψ.offenders.contains f then throw .offenderAlreadyReported
-    unless keys.contains f do throw .badGuarantorKey
+    unless k.contains f do throw (offenceKeyError f .badGuarantorKey)
     unless crypto.edVerify f (Xguarantee ++ r) c.signature.toList do throw .badSignature
   unless orderedUniqBy (·.key.toList) x.faults do throw .faultsNotSortedUnique
   for flt in x.faults do
@@ -206,13 +230,10 @@ def disputesTransition (params : Params) (crypto : Crypto) (i : DisputesInput) (
     let inBad := ψ'.bad.contains r
     let notGood := !ψ'.good.contains r
     unless inBad == notGood && notGood == flt.valid do throw .faultVerdictWrong
-    if ψ.offenders.contains f then throw .offenderAlreadyReported
-    unless keys.contains f do throw .badAuditorKey
+    unless k.contains f do throw (offenceKeyError f .badAuditorKey)
     unless crypto.edVerify f (Xvalidif flt.valid ++ r) flt.signature.toList do throw .badSignature
-  for (r, o) in verdicts do
+  for (r, o) in v do
     if o == .good && !x.faults.any (·.target.toList == r) then throw .notEnoughFaults
-  let mark := x.culprits.map (·.key.toList) ++ x.faults.map (·.key.toList)
-  return { state := { ψ' with offenders := mark.foldl (·.insert ·) ψ.offenders },
-           assignments := clearNonPositive ρ verdicts, offendersMark := mark }
+  return { state := ψ', assignments := clearNonPositive ρ v, offendersMark := offendersMark x }
 
 end JAM

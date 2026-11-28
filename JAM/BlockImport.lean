@@ -51,7 +51,8 @@ inductive BlockError where
   | reports (e : ReportsError)
   | preimages (e : PreimageError)
   /-- Accumulation makes the block invalid (GP v0.8.1 §12.2): two services created the same new
-      service index in one round. -/
+      service index in one round, or $\Delta_+$ exceeded the model's bound on its rounds
+      (`AccumulationError.fuelExhausted`, note v0.8.1-A47). -/
   | accumulation (e : AccumulationError)
   deriving BEq, Repr
 

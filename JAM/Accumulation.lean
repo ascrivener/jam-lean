@@ -31,13 +31,33 @@ def editQueue (r : List ReadyEntry) (x : OctetSet) : List ReadyEntry :=
 /-- $P(\mathbf{r})$: the set of package hashes of a set of reports. -/
 def pkgs (r : List WorkReport) : OctetSet := .ofList (r.map (·.pkg))
 
+/-- One round of $Q$ shortens the queue: every report in $\mathbf{g}$ (those with no unmet
+    dependencies) is dropped by $E(\mathbf{r}, P(\mathbf{g}))$, since its own package hash is in
+    $P(\mathbf{g})$. -/
+theorem editQueue_length_lt (r : List ReadyEntry) (g : List WorkReport)
+    (hg : (r.filterMap fun (w, d) => if d.isEmpty then some w else none) = g) (hne : g ≠ []) :
+    (editQueue r (pkgs g)).length < r.length := by
+  unfold editQueue
+  rw [List.length_map, List.length_filter_lt_length_iff_exists]
+  obtain ⟨w, hw⟩ := List.exists_mem_of_ne_nil g hne
+  have hw' := hw
+  rw [← hg, List.mem_filterMap] at hw'
+  obtain ⟨⟨w', d⟩, hmem, hsome⟩ := hw'
+  refine ⟨(w', d), hmem, ?_⟩
+  have : w' = w := by
+    dsimp only at hsome; split at hsome <;> simp_all
+  subst this
+  simp only [pkgs, Std.ExtTreeSet.contains_ofList, Bool.not_eq_true', Bool.not_eq_false]
+  exact List.elem_iff.mpr (List.mem_map_of_mem hw)
+
 /-- $Q(\mathbf{r})$ (GP §12.1): reports whose dependencies are all met, repeatedly. Each round
-    removes at least one entry, so $|\mathbf{r}| + 1$ rounds suffice. -/
-def readyOrder : Nat → List ReadyEntry → List WorkReport
-  | 0, _ => []
-  | fuel + 1, r =>
-    let g := r.filterMap fun (w, d) => if d.isEmpty then some w else none
-    if g.isEmpty then [] else g ++ readyOrder fuel (editQueue r (pkgs g))
+    removes at least one entry (`editQueue_length_lt`), so the recursion ends. -/
+def readyOrder (r : List ReadyEntry) : List WorkReport :=
+  match hg : r.filterMap fun (w, d) => if d.isEmpty then some w else none with
+  | [] => []
+  | w :: ws => (w :: ws) ++ readyOrder (editQueue r (pkgs (w :: ws)))
+termination_by r.length
+decreasing_by exact editQueue_length_lt r _ hg (List.cons_ne_nil w ws)
 
 /-- $D(r) = (r, \{\text{prerequisites}\} \cup \mathcal{K}(\text{segment-root lookup}))$. -/
 def deps (r : WorkReport) : ReadyEntry :=
@@ -117,6 +137,11 @@ inductive AccumulationError where
       contribute the same index for a new service \dots In the unlikely event of a conflict, the
       block must be considered invalid"). -/
   | newServiceConflict (index : Nat)
+  /-- $\Delta_+$ (GP v0.8.1 eq. `accseq`) did not finish within the model's bound on its rounds
+      (`accSeq`'s fuel). The paper's recursion has no such bound (note v0.8.1-A47); no theorem yet
+      shows the bound is never reached, and reaching it makes the block invalid rather than
+      silently stopping accumulation. -/
+  | fuelExhausted
   deriving BEq, Repr
 
 /-- $\mathbf{n} = \bigcup_{s \in \mathbf{s}}((\Delta(s)_\mathbf{e})_\mathbf{d} \setminus \mathcal{K}(\mathbf{d}))$
@@ -207,12 +232,13 @@ def partitionXfers (s : List Nat) (d : Accounts) :
 
 /-- $\Delta_+(g, \mathbf{t}, \mathbf{r}, \mathbf{e}, \mathbf{f})$ (GP v0.8.1 eq. `accseq`):
     accumulate as many reports as fit in the gas, with the transfers `partitionXfers` lets through,
-    then recurse with the deferred ones and those this round produced. `fuel` bounds the rounds. -/
+    then recurse with the deferred ones and those this round produced. `fuel` bounds the rounds;
+    running out of it is the error `AccumulationError.fuelExhausted` (note v0.8.1-A47). -/
 def accSeq : Nat → Int → List DeferredTransfer → List WorkReport → PartialState →
     Std.ExtTreeMap Nat Nat →
     Except AccumulationError
       (Nat × PartialState × List (Nat × List UInt8) × List (Nat × Nat) × List DeferredTransfer)
-  | 0, _, _, _, e, _ => .ok (0, e, [], [], [])
+  | 0, _, _, _, _, _ => .error .fuelExhausted
   | fuel + 1, g, t, r, e, f =>
     let fixedGas : Int := ((t.map (·.gas)).sum + f.values.sum : Nat)
     let prefixGas (k : Nat) : Int := ((r.take k).flatMap fun w => w.digests.map (·.gasLimit)).sum
@@ -240,7 +266,7 @@ def accumulate (params : Params) (pre : AccState) (slot : Nat) (reports : List W
   let rQ := editQueue ((reports.filter fun r => !(r.context.prerequisites.isEmpty ∧ r.segmentRootLookup.isEmpty)).map deps)
     accumulatedAll
   let q := editQueue ((pre.ready.drop m).flatten ++ (pre.ready.take m).flatten ++ rQ) (pkgs rBang)
-  let rStar := rBang ++ readyOrder (q.length + 1) q
+  let rStar := rBang ++ readyOrder q
   let e := pre.pstate
   let g : Nat := max params.blockAccGas (params.reportAccGas * params.coreCount + e.alwaysAcc.values.sum)
   let rounds := rStar.length + g / Constants.CgasT + 2

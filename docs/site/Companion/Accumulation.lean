@@ -119,10 +119,12 @@ package hashes of a set of reports:
 
 {leanSource JAM.pkgs}
 
-$`Q` is recursive on a sequence that need not shrink in form, so the model gives it fuel. Each
-round that continues removes at least the entries in $`\mathbf{g}`, so $`|\mathbf{r}| + 1` rounds
-are enough; {api}`JAM.accumulate` passes that. This argument is in the docstring of
-{api}`JAM.readyOrder` and is not stated as a theorem.
+$`Q` is recursive on a sequence that need not shrink in form. Each round that continues removes
+at least the entries in $`\mathbf{g}`, since each one's own package hash is in $`P(\mathbf{g})`,
+so the queue gets shorter and the recursion ends. The model proves this step
+({api}`JAM.editQueue_length_lt`) and uses it as the termination argument of {api}`JAM.readyOrder`:
+
+{leanSource JAM.editQueue_length_lt}
 
 ## The accumulatable reports R\*
 
@@ -219,7 +221,7 @@ $$`\begin{aligned} \text{where } i &= \max(\mathbb{N}_{|\mathbf{r}|+1}) : \sum_{
 The model computes $`i` as the last $`k \le |\mathbf{r}|` whose prefix fits (the prefix sums only
 grow with $`k`, so this is the paper's maximum). Gas is an integer there so that $`g^*` is computed
 as written. The paper does not say why the recursion ends; the model bounds the number of rounds
-with fuel (see {ref "accumulation-readings"}[the readings]).
+with fuel, and running out of it is an error (see {ref "accumulation-readings"}[the readings]).
 
 ## Δ\*, the parallel accumulation function
 
@@ -273,7 +275,9 @@ The paper adds, after the definitions of $`I` and $`Y`, that different services 
 the same index for a new service to $`\mathbf{n}`, and that a block where this happens must be
 considered invalid. The model collects $`\mathbf{n}` with {api}`JAM.collectNew`, which returns an
 error on such a conflict. {api}`JAM.accPar`, {api}`JAM.accSeq` and {api}`JAM.accumulate` pass the error on,
-and block import rejects the block (`BlockError.accumulation`):
+and block import rejects the block (`BlockError.accumulation`). The same error type carries
+`fuelExhausted`, raised by {api}`JAM.accSeq` if $`\Delta_+` outruns the model's bound on its rounds
+(note v0.8.1-A47):
 
 {leanSource JAM.AccumulationError}
 
@@ -496,12 +500,12 @@ Each is a note in the model's
   $`s \in \mathcal{K}(\mathbf{d})`, but $`\mathbf{s}` can contain a service with no account (a digest or
   transfer for it). The model takes $`s` itself ({api}`JAM.effectiveSupervisor`), so
   $`\Delta(s) = \Delta_1(\ldots, s)`, which for a missing account changes nothing.
-* *Note v0.8.1-A47, termination of $`\Delta_+` and $`Q`.* The paper gives no argument that the recursions end. The model
-  gives each a bound on the number of rounds: $`|\mathbf{q}| + 1` for $`Q`, and
-  $`|\mathbf{R}^*| + \lfloor g / \mathsf{M}_T \rfloor + 2` for $`\Delta_+`, where $`\mathsf{M}_T`
-  is the base gas of the `transfer` host call (Appendix B). If a bound were reached, the model would
-  stop accumulating (and $`Q` would return the reports found so far). No theorem yet shows that
-  these bounds are never reached.
+* *Note v0.8.1-A47, termination of $`\Delta_+`.* The paper gives no argument that the recursion
+  ends. The model bounds its rounds by $`|\mathbf{R}^*| + \lfloor g / \mathsf{M}_T \rfloor + 2`,
+  where $`\mathsf{M}_T` is the base gas of the `transfer` host call (Appendix B). Reaching the
+  bound is an error, {api}`JAM.AccumulationError`'s `fuelExhausted`, which makes the block invalid.
+  No theorem yet shows that the bound is never reached. ($`Q`'s recursion needs no bound: each
+  round removes the reports it returns, {api}`JAM.editQueue_length_lt`.)
 * *Note 25 and v0.8.1-A3, the preimages extrinsic.* The paper names no errors for an invalid
   $`\mathbf{E}_P` and orders none of its conditions. The model checks the two bounds, then the order,
   then $`Y`, with the error names of {api}`JAM.PreimageError` (the test vectors' names where they

@@ -50,7 +50,7 @@ namespace JAM.Guarantee
 /-- An octet sequence as a list (the form `JAM.Segments` and `JAM.Merkle` use). -/
 abbrev Octets := List UInt8
 
-open JAM.Segments (zeroHash cdRoot justify pagedProofs zeroPad verifySegment)
+open JAM.Segments (cdRoot justify pagedProofs zeroPad verifySegment)
 
 /-! ## §14.3: the implied authorizer and item-to-digest -/
 

@@ -26,7 +26,7 @@ Gaps, where the paper leaves behaviour undefined:
 | Note | Section | Finding |
 |---|---|---|
 | 13 | Ψ_H | Ψ_H* need not terminate: a handler that returns more gas than it was given can recurse forever. Termination holds for handlers that do not add gas (`JAM/Theorems/HostGas.lean`). |
-| 2 | 𝔟 | A branch target ı + 𝒵(…) can be negative, where ζ is undefined. |
+| 2 | 𝔟 | A branch target ı + 𝒵(…) can be negative, where ζ is undefined. The model reads ζ at a negative index as 0 (`trap`), so 𝔟 = 1 for such a branch (`PVM/Blob.lean`, `zetaInt`; `PVM/Gas.lean`, `branchCost`). |
 | 17 | Y | **a** ∈ 𝔹_{:𝖹_I}; the paper does not say what happens to a longer argument. |
 | 18 | Ψ_R | The refine dispatcher passes x̄ to `fetch`, but Ψ_R's arguments do not include that data. The account state **d** is also implicit. |
 | 19 | Ψ_R, §14.3 | A looked-up preimage that is not of the form ℰ(↕**m**, **c**). *Resolved in v0.8.1 (#582): the code is the whole preimage and Y fails on it (Ψ_M panics).* |
@@ -70,11 +70,9 @@ Gaps, where the paper leaves behaviour undefined:
 | v0.8.1-A30 | §5, (5.8) | H_T·𝖯 ≤ 𝒯 depends on the wall clock 𝒯, which Υ(σ, B) does not take. The model's Υ does not check it; a caller must check it separately (the model has none) (`JAM/BlockImport.lean`, `importBlock`). |
 | v0.8.1-A31 | §5, (5.2)–(5.3) | **A** and P(H) come from headers outside σ. The model takes the retained headers as an argument (`Chain`); with none retained, the H_P check is skipped (`JAM/BlockImport.lean`, `importBlock`). |
 | v0.8.1-A32 | §4, (4.1) | No errors are named for an invalid block and no order is given between the sections' validity conditions. The model reports the first failing check in the order of `importBlock` (header checks, disputes, Safrole and the markers, seal, assurances, guarantees, accumulation, preimages; `BlockError`). |
-| v0.8.1-A33 | §3.8.1 | ℋ_K is "Keccak 256-bit … proposed by Bertoni et al. and utilized by" the Yellow Paper; the FIPS 202 SHA3-256 padding differs. The model uses the original Keccak padding (domain octet 0x01), as Ethereum does (`JAM/Keccak.lean`, `keccak256`). |
 | v0.8.1-A36 | Ψ_R, eq. (B.5) | w = p_**w**[i] is read without saying what happens when the package has no item i. The model answers (BAD, [], 0), as for a missing service (`JAM/Refine.lean`, `psiR`). |
 | v0.8.1-A50 | §10.2, eq. `verdicts` | When \|**k**\| < 3, ⌊⅓\|**k**\|⌋ = 0, so V(a, **j**)'s cases ⊥ (t = 0) and ∅ (t = ⌊⅓\|**k**\|⌋) both hold at t = 0. The model takes ⊥ (`JAM/Disputes.lean`, `verdictOutcome`). Validator counts are in 𝕍 (eq. `valcount`), so \|**k**\| ≥ 6 and the paper never reaches it. |
 | v0.8.1-A51 | §11.2, eq. `availassignmentspostassurancesdef` | (p_**g**)_**r** ∈ **R** tests whether a work-report is in **R** without saying how reports are compared. The model compares their encodings ℰ(**r**) (`JAM/Assurances.lean`, `assurances`). |
-| v0.8.1-A52 | Appendix F, eq. `suffle` | ℱ types its entropy as **r** ∈ ⟦ℕ⟧_{l:}, so **r**_0 always exists. The model's ℱ is total over any **r** and reads a missing entry as 0 (`JAM/Shuffle.lean`, `shuffle`); the paper's uses never reach this, as (F.3) passes 𝒬_l(h), which has exactly l entries. |
 | v0.8.1-A53 | §11.4, eqs. (11.32), `reportcodesarecorrect` | δ[**d**_s] is undefined when **d**_s ∉ 𝒦(δ), and no condition requires a digest's service to exist. The model rejects such a report with the vectors' `bad_service_id`, before the minimum-gas condition (`JAM/Reports.lean`, `guarantees`). |
 | v0.8.1-A54 | §10.2, eq. `disputesextrinsics` | 𝔼_V ∈ ⟦…⟧_{:𝖭_V} and 𝔼_C, 𝔼_F ∈ ⟦…⟧_{:𝖭_O} bound the parts of the disputes extrinsic (𝖭_V = 𝖭_O = 16), but no error is named for a longer one and no order is given against the other conditions. No v0.8.0 vector exceeds them. The model checks the three bounds first, under its own names `tooManyVerdicts`, `tooManyCulprits` and `tooManyFaults` (`JAM/Disputes.lean`, `disputesTransition`); before 2026-11-27 it did not check them. |
 | v0.8.1-A40 | §9, (9.3); §D.1, (D.1)–(D.2) | **s** and **l** are dictionaries keyed by **k** and (h, z), but §D.1 notes that storage keys cannot be inspected or enumerated and that implementations need not store them. The model keys **s** and **l** by the 27 octets of ℋ that the state keys C(s, ℰ_4(2³²−1) ⌢ **k**) and C(s, ℰ_4(z) ⌢ h) keep, in one dictionary, and so relies on the paper's assumption that C has no collisions on the keys that occur; its accessor theorems carry that as a hypothesis (`JAM/Account.lean`, `ServiceAccount`, `storageGet`, `requestGet`). |
@@ -85,7 +83,7 @@ Gaps, where the paper leaves behaviour undefined:
 | v0.8.1-A45 | §9, (9.7), (9.11); §12, (12.17), (12.19) | I(**l**, t) is given for histories of length 0–3 only, and **d**[s]_e for s ∈ K(**d**) only, yet T and Δ_* apply E to destinations and services that may have no account. The model returns ⊥ from I for longer lists and takes **d**[s]_e = s for s ∉ K(**d**) (`JAM/Account.lean`, `availableAt`, `effectiveSupervisor`). |
 | v0.8.1-A46 | §12.3, (12.26) | θ' ≡ [(s, h) ∈ **b**] turns the set **b** into a sequence without stating the order. The model lists each pair once, ordered by s and then h, the order in which sets are serialized (`JAM/Accumulation.lean`, `accumulate`, `theta`). |
 | v0.8.1-A47 | §12.1, (12.8); §12.2, (12.18) | No argument is given that the recursions of Q and Δ_+ end. The model bounds them by fuel, \|**r**\| + 1 rounds for Q and \|**R**\*\| + ⌊g / 𝖬_T⌋ + 2 for Δ_+ (𝖬_T the base gas of `transfer`); if a bound were reached it would stop early. No theorem yet shows the bounds are never reached (`JAM/Accumulation.lean`, `readyOrder`, `accSeq`, `accumulate`). |
-| v0.8.1-A60 | Appendix C, eqs. (C.11), (C.30) | (C.11) already encodes a dictionary with its length (ℰ(↕[(ℰ(k), ℰ(d[k])) \| k ∈ 𝒦(d) ≀ k])), and (C.30) writes ↕r_l for the work report's segment-root lookup r_l, a dictionary ℍ → ℍ; read literally that gives two length prefixes. The model writes one (`JAM/Work.lean`, `WorkReport.encode`, `varHashDict`), the evident intent. |
+| v0.8.1-A60 | Appendix C, eqs. (C.11), (C.30); Appendix D, eq. (D.2) row C(3) | (C.11) already encodes a dictionary with its length (ℰ(↕[(ℰ(k), ℰ(d[k])) \| k ∈ 𝒦(d) ≀ k])), and (C.30) writes ↕r_l for the work report's segment-root lookup r_l, a dictionary ℍ → ℍ; read literally that gives two length prefixes. (D.2) makes the same slip in row C(3), writing ↕p for each β_H entry's reported-package dictionary p (ℍ → ℍ). The model writes one prefix in both (`JAM/Work.lean`, `WorkReport.encode`; `JAM/State.lean`, `Serialize.recent`; `JAM/StateDecode.lean`; all through `varHashDict`), the evident intent. |
 
 ## Resolved in GP v0.8.1
 
@@ -158,6 +156,14 @@ should cite a later draft.
 | §5, Fiat–Shamir of the ring proof | "Push R to the transcript after instancing." R is not defined in §5 (Pedersen's nonce commitment is R in §4), and no framing is given. | Nothing is pushed after the instance (Ȳ) other than the proof's own columns. Not modelled under either reading (`.prose` omits the step, since the prose leaves it underdetermined). |
 
 ## Not for upstream
+
+Clarifications, where the paper settles the point or the model only extends it (kept so the book's
+citations resolve; not to be filed):
+
+| Note | Section | Finding |
+|---|---|---|
+| v0.8.1-A33 | §3.8.1 | A clarification (2026-11-28), moved from the gaps table: the paper is not silent. ℋ_K is "Keccak 256-bit … proposed by Bertoni et al. and utilized by" the Yellow Paper, which settles the padding: the original Keccak (domain octet 0x01), as Bertoni et al. defined it and the Yellow Paper uses, not FIPS 202 SHA3-256 (0x06). The model uses it (`JAM/Keccak.lean`, `keccak256`). |
+| v0.8.1-A52 | Appendix F, eq. `suffle` | A totality extension (2026-11-28), not a gap in the paper; removed from the gaps table. ℱ types its entropy as **r** ∈ ⟦ℕ⟧_{l:}, so **r**_0 always exists, and (F.3) passes 𝒬_l(h), which has exactly l entries. The model's ℱ is total over any **r** and reads a missing entry as 0 (`JAM/Shuffle.lean`, `shuffle`), a case the paper's domain excludes. |
 
 - **Note v0.8.1-A34, withdrawn (2026-11-27).** Appendix H, eq. (H.1): the note asked whether v/3 in
   𝒟(v) is integer or real division when 3 ∤ v. But 𝒟 is typed on v ∈ 𝕍 = {3c ∣ c ∈ ℕ_{2…𝖢+1}} (eq. (6.8)),

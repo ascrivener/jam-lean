@@ -1,5 +1,5 @@
 import JAM.BlockImport
-import JAM.Sha512
+import JamCrypto.Bandersnatch
 import Tests.TraceState
 import Tests.V080
 
@@ -9,9 +9,9 @@ host call of the deferred-transfer recipients' runs. `lake env lean --run Tests/
 open JAM JAM.TraceState PVM
 
 def oracle (roots : List (List (List UInt8) × List UInt8)) : Crypto :=
-  { edVerify := fun _ _ _ => true, bsVerify := fun _ _ _ _ => true, bsOut := Sha512.vrfOutput
+  { edVerify := fun _ _ _ => true, bsVerify := fun _ _ _ _ => true, bsOut := JamCrypto.Bandersnatch.octetOutput
     bsRingRoot := fun ks => (roots.lookup ks).getD [], bsRingVerify := fun _ _ _ _ => true
-    bsRingOut := Sha512.vrfOutput }
+    bsRingOut := JamCrypto.Bandersnatch.octetOutput }
 
 /-- A step, its block read from the v0.8.0 encoding, with the block's v0.8.0 H_X commitment
     (`Tests.V080`, GP #562). -/
@@ -39,7 +39,7 @@ def showStep (p : Params) (σ : State) (roots : List (List (List UInt8) × List 
   let .ok (_, tr) := importBlock p (oracle roots) chain σ st.block
     | IO.println "  import failed"; return
   let H := st.block.header
-  let entropy := hashL ((σ.eta.getD 0 []) ++ Sha512.vrfOutput H.vrfSig.toList)
+  let entropy := hashL ((σ.eta.getD 0 []) ++ JamCrypto.Bandersnatch.octetOutput H.vrfSig.toList)
   let e := σ.partialState
   IO.println s!"  χ: manager {e.manager} assigners {e.assigners} delegator {e.delegator} registrar {e.registrar}"
   for s in ((tr.available.flatMap fun w => w.digests.map (·.service))).eraseDups do

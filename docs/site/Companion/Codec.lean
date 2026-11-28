@@ -59,11 +59,11 @@ tag := "codec-trivial"
 
 An octet sequence encodes as itself, and a tuple as the concatenation of its parts. In the model a
 tuple's encoding is written out with `++` in each encoder; an octet sequence is
-{api}`JAM.Codec.blob`, and a Boolean is {api}`JAM.encodeBool`:
+{api}`JAM.Codec.blob`, and a Boolean is {api}`JAM.Codec.bool`:
 
 {leanSource JAM.Codec.blob}
 
-{leanSource JAM.encodeBool}
+{leanSource JAM.Codec.bool}
 
 # Natural numbers (§C.1.1, §C.1.7)
 %%%
@@ -151,7 +151,7 @@ Bits are packed eight to an octet, least significant first:
 
 {gpeq "C.10"}
 
-{leanSource JAM.encodeBits}
+{leanSource JAM.Codec.bits}
 
 The model builds the $`\lceil |b| / 8 \rceil` octets directly instead of recursing; a bit past the end of $`b`
 counts as 0, so the high bits of a short last octet are zero, as the sum in eq. {eq}`C.10` leaves them.

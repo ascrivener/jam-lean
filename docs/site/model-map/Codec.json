@@ -2,7 +2,7 @@
   "equations": {
     "C.1": { "kind": "notation", "reason": "an absent term contributes no octets; the model's encoders simply omit such terms (optional fields that are encoded use ¿x, eq. C.9, `JAM.Codec.opt`)" },
     "C.2": { "kind": "def", "name": "JAM.Codec.blob" },
-    "C.3": { "kind": "def", "name": "JAM.encodeBool" },
+    "C.3": { "kind": "def", "name": "JAM.Codec.bool" },
     "C.4": { "kind": "notation", "reason": "a tuple encodes as the concatenation of its components' encodings; every composite encoder in the model (e.g. `JAM.Header.encodeUnsigned`) is written as `++` of its components" },
     "C.5": { "kind": "notation", "reason": "E(a, b, …) is shorthand for E((a, b, …)), eq. C.4" },
     "C.6": { "kind": "def", "name": "PVM.Blob.encodeNat",
@@ -13,7 +13,7 @@
     "C.8": { "kind": "def", "name": "JAM.Codec.var",
              "note": "for an octet sequence; `JAM.Codec.varSeq` for a sequence of terms" },
     "C.9": { "kind": "def", "name": "JAM.Codec.opt" },
-    "C.10": { "kind": "def", "name": "JAM.encodeBits" },
+    "C.10": { "kind": "def", "name": "JAM.Codec.bits" },
     "C.11": { "kind": "def", "name": "JAM.Codec.varHashDict",
               "note": "for dictionaries of octet sequences, the only ones the model encodes generically" },
     "C.12": { "kind": "def", "name": "JAM.Codec.varHashSet",

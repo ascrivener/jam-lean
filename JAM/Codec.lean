@@ -22,6 +22,10 @@ abbrev Blob := ByteArray
 /-- A 32-octet hash $\mathbb{H}$. Kept as an octet sequence; the type does not enforce the length. -/
 abbrev Hash := ByteArray
 
+/-- The zero hash $\zerohash = [0, 0, \dots]$, 32 zero octets (GP §3, notation). The one definition the
+    Merkle node function, the MMR super-peak, the state trie and the segment tree use. -/
+def zeroHash : List UInt8 := List.replicate 32 0
+
 /-- A set of octet sequences, such as a set of hashes $[\![ \mathbb{H} ]\!]$. Extensional: two sets with the same
     members are equal, so no order or multiplicity is observable. Iteration (`toList`) is in
     ascending lexicographic order, the order of set encoding. -/
@@ -39,6 +43,16 @@ def nat (x : Nat) : List UInt8 := PVM.Blob.encodeNat x
 
 /-- $\mathcal{E}_l(x)$: fixed-length little-endian (GP (C) "Fixed-length Integer Encoding"). -/
 def fixed (l x : Nat) : List UInt8 := PVM.Num.encodeLE l x
+
+/-- $\mathcal{E}$ on $\{\bot, \top\}$: $\mathcal{E}(\bot) = [0]$ and $\mathcal{E}(\top) = [1]$ (GP v0.8.1 Appendix C,
+    eq. C.3; v0.8.0 left it implicit). -/
+def bool (b : Bool) : List UInt8 := nat (if b then 1 else 0)
+
+/-- $\mathcal{E}$ of a bit sequence (GP (C) "Bit Sequence Encoding", eq. C.10): $\lceil n/8 \rceil$ octets,
+    packed least significant bit first, the padding bits of the last octet zero. -/
+def bits (bs : List Bool) : List UInt8 :=
+  (List.range ((bs.length + 7) / 8)).map fun k =>
+    UInt8.ofNat ((List.range 8).foldl (fun acc i => acc + (if bs.getD (8 * k + i) false then 2 ^ i else 0)) 0)
 
 /-- $\mathcal{E}(x)$ for an octet sequence: the identity (GP (C) "Trivial Encodings"). -/
 def blob (b : ByteArray) : List UInt8 := b.toList

@@ -186,7 +186,7 @@ def trieExample (case : Nat) : IO Example := do
   let got := Trie.root (Std.ExtTreeMap.ofList entries)
   unless got == expected do throw <| IO.userError s!"examples: trie case {case}: the root differs"
   -- The levels of the recursion of M, from the root down, while both halves are not single leaves.
-  let zero := Trie.zeroHash
+  let zero := JAM.zeroHash
   let name (h : List UInt8) := if h == zero then "$\\mathbb{H}_0$ (empty)" else abbr h
   let leafRow (k v : List UInt8) : Row :=
     let n := Trie.leaf k v

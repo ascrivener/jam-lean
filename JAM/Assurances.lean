@@ -48,7 +48,7 @@ structure AssurancesInput where
 
 /-- The message an assurance signs: $\mathsf{X}_A \frown \mathcal{H}(\mathcal{E}(\mathbf{H}_P, a_f))$ (GP eq. `assurancesig`). -/
 def assuranceMessage (parent : Hash) (bits : List Bool) : List UInt8 :=
-  Xavailable ++ (Blake2b.hash256 ⟨(Codec.blob parent ++ encodeBits bits).toArray⟩).toList
+  Xavailable ++ (Blake2b.hash256 ⟨(Codec.blob parent ++ Codec.bits bits).toArray⟩).toList
 
 /-- One assurance's conditions (GP v0.8.1 §11.2.1): $a_v \in \mathbb{N}_{|\kappa|}$ and above the previous assurer
     `prev` (eq. `xtassurances` and the ordered-unique condition);

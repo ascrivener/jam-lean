@@ -23,9 +23,6 @@ abbrev MMR := List (Option (List UInt8))
 
 namespace MMR
 
-/-- The zero hash $\zerohash$. -/
-def zeroHash : List UInt8 := List.replicate 32 0
-
 /-- $P(\mathbf{r}, l, n, H)$ of the append function (GP eq. `mmrappend`): carry $l$ up from peak $n$.
     $R(\mathbf{s}, i, v)$ is `List.set`. Each recursive call moves $n$ one peak further, so it ends at
     $|\mathbf{r}|$. -/
@@ -40,6 +37,11 @@ decreasing_by simp only [List.length_set]; omega
 
 /-- $\mathcal{A}(\mathbf{r}, l, H) = P(\mathbf{r}, l, 0, H)$ (GP eq. `mmrappend`). -/
 def append (H : ByteArray → ByteArray) (r : MMR) (l : List UInt8) : MMR := place H r l 0
+
+/-- $\mathcal{E}_M(\mathbf{b}) = \mathcal{E}(\updownarrow[\text{¿}x \mid x \orderedin \mathbf{b}])$ (GP eq. E.9, the
+    MMR encoding function): the peaks with a length prefix, each with the optional
+    discriminator. -/
+def encode (b : MMR) : List UInt8 := Codec.varSeq (Codec.opt id) b
 
 /-- The prefix `$peak`. -/
 def peakPrefix : List UInt8 := "peak".toUTF8.toList
@@ -101,7 +103,7 @@ def recentHistory (params : Params) (pre : Recent) (i : HistoryInput) : Recent :
   let dagger := Recent.withParentRoot pre.history i.parentStateRoot
   let belt := MMR.append Keccak.keccak256 pre.belt i.accRoot
   let entry : RecentBlock :=
-    { headerHash := i.headerHash, stateRoot := MMR.zeroHash, accRoot := MMR.superPeak belt,
+    { headerHash := i.headerHash, stateRoot := zeroHash, accRoot := MMR.superPeak belt,
       slot := i.slot, reported := Std.ExtTreeMap.ofList i.reported }
   let h := dagger ++ [entry]
   { history := h.drop (h.length - params.recentHistoryLen), belt }

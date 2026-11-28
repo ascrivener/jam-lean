@@ -200,6 +200,12 @@ tag := "statemerkle-readings"
 * *Storage keys are not kept.* The model uses the freedom the paper gives at the end of §D.1: storage
   and request entries are held under the 27 hash octets of their state keys, not under their keys
   (`ServiceAccount.entries`). A service cannot enumerate its storage keys in the paper either.
+* *The reported packages' length (note v0.8.1-A60).* Row $`C(3)` of {eq}`D.2` writes
+  $`\updownarrow\mathbf{p}` for each $`\beta_H` entry's reported-package dictionary, but {eq}`C.11` already
+  encodes a dictionary with its length, so read literally the dictionary would carry two length
+  prefixes, the same slip as {eq}`C.30`'s $`\updownarrow\mathbf{r}_\mathbf{l}`. The model writes one
+  ({api}`JAM.Serialize.recent` and its decoder, both through {api}`JAM.Codec.varHashDict`). This is recorded in the
+  model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
 * *The fuel of $`M`.* On keys longer than 31 octets that agree in their first 248 bits, the model's
   $`M` returns $`\mathbb{H}_0` for that subtrie. $`T` produces only 31-octet keys, so this does not arise.
 * *The trie vectors' keys.* The trie test vectors give 32-octet keys, while §D.1's state keys are 31

@@ -276,7 +276,7 @@ theorem ietfVerify_eq (key ctx msg sig : List UInt8) :
 def vrfOutput (sig : List UInt8) : List UInt8 :=
   match decodeOnCurve (sig.take 32) with
   | some O => (JAM.Sha512.hash (JamCrypto.Bandersnatch.suiteString ++ [3] ++ encode O ++ [0])).take 32
-  | none => JAM.Sha512.vrfOutput sig
+  | none => JamCrypto.Bandersnatch.octetOutput sig
 
 theorem vrfOutput_eq (sig : List UInt8) : vrfOutput sig = JamCrypto.Bandersnatch.vrfOutput sig := by
   unfold vrfOutput JamCrypto.Bandersnatch.vrfOutput JamCrypto.Bandersnatch.pointToHash

@@ -6,14 +6,21 @@ import PVM.Basic
 
 $\mathbb{M} \equiv (\mathbf{v} \in \mathbb{B}_{2^{32}}, \mathbf{a} \in [\![ \{W, R, \emptyset\} ]\!]_p)$, $p = 2^{32} / \mathsf{Z}_P$, $\mathsf{Z}_P = 2^{12}$.
 
-We represent both components as extensional finite maps (`Std.ExtTreeMap`, so that two
-memories with the same lookups are equal):
+We represent both components as extensional finite maps (`Std.ExtTreeMap`, so that two maps
+with the same lookups are equal):
 
-* `bytes` maps addresses in $\mathbb{N}_{2^{32}}$ to octets; absent addresses hold 0;
+* `bytes` maps addresses in $\mathbb{N}_{2^{32}}$ to octets; absent addresses hold 0. An entry may
+  hold an explicit 0 (`write` inserts whatever it writes), so a 0 octet has two representations;
 * `pages` maps page indices to `Access.read` ($R$) or `Access.write` ($W$); absent pages are
   inaccessible ($\emptyset$).
 
 Subscripts are cyclic ($\mu^\circlearrowleft$, GP §3 notation): the octet at index `i` is $\mathbf{v}[i \bmod 2^{32}]$.
+
+Equality of `Memory` is therefore finer than the paper's equality of $\mu$: two memories with the
+same pages and the same `read` at every index are the same $\mu$ but may differ as `Memory` (an
+explicit 0 against an absent address). Everything the model observes goes through `read`,
+`readable` and `writable`, so the difference is never observable; `Memory.Equiv` is the paper's
+equality, and `read`, `readN`, `readable`, `writable` and `write` respect it.
 -/
 
 namespace PVM
@@ -29,7 +36,8 @@ inductive Access where
 
 /-- PVM RAM $\mu \in \mathbb{M}$. -/
 structure Memory where
-  /-- $\mathbf{v}$: non-zero octets by address in $\mathbb{N}_{2^{32}}$; absent addresses hold 0. -/
+  /-- $\mathbf{v}$: octets by address in $\mathbb{N}_{2^{32}}$; absent addresses hold 0, and an
+      entry may also hold an explicit 0. -/
   bytes : Std.ExtTreeMap Nat UInt8 := ∅
   /-- $\mathbf{a}$: access mode by page index; absent pages are inaccessible. -/
   pages : Std.ExtTreeMap Nat Access := ∅
@@ -86,6 +94,45 @@ theorem read_write (μ : Memory) (i j : Nat) (v : UInt8) :
   · rename_i h
     simp only [read, write, h, Std.ExtTreeMap.getD_insert_self]
   · exact read_write_of_ne μ v ‹_›
+
+/-! ### The paper's equality of RAM -/
+
+/-- $\mu = \mu'$ in the paper's sense: the same access modes and the same octet at every index.
+    Finer than `=` on `Memory` only in how a 0 octet is stored (see the module docstring). -/
+def Equiv (μ ν : Memory) : Prop := μ.pages = ν.pages ∧ ∀ i, μ.read i = ν.read i
+
+theorem Equiv.refl (μ : Memory) : μ.Equiv μ := ⟨rfl, fun _ => rfl⟩
+
+theorem Equiv.symm {μ ν : Memory} (h : μ.Equiv ν) : ν.Equiv μ :=
+  ⟨h.1.symm, fun i => (h.2 i).symm⟩
+
+theorem Equiv.trans {μ ν ρ : Memory} (h₁ : μ.Equiv ν) (h₂ : ν.Equiv ρ) : μ.Equiv ρ :=
+  ⟨h₁.1.trans h₂.1, fun i => (h₁.2 i).trans (h₂.2 i)⟩
+
+theorem Equiv.read_eq {μ ν : Memory} (h : μ.Equiv ν) (i : Nat) : μ.read i = ν.read i := h.2 i
+
+theorem Equiv.readN_eq {μ ν : Memory} (h : μ.Equiv ν) (a n : Nat) : μ.readN a n = ν.readN a n := by
+  simp [readN, h.2]
+
+theorem Equiv.readable_eq {μ ν : Memory} (h : μ.Equiv ν) (i : Nat) : μ.readable i = ν.readable i := by
+  simp [readable, h.1]
+
+theorem Equiv.writable_eq {μ ν : Memory} (h : μ.Equiv ν) (i : Nat) : μ.writable i = ν.writable i := by
+  simp [writable, h.1]
+
+theorem Equiv.write {μ ν : Memory} (h : μ.Equiv ν) (i : Nat) (v : UInt8) :
+    (μ.write i v).Equiv (ν.write i v) := by
+  refine ⟨h.1, fun j => ?_⟩
+  rw [read_write, read_write, h.2 j]
+
+/-- Writing the octet already there gives the same RAM in the paper's sense (though as a `Memory`
+    the write may turn an absent 0 into an explicit one). -/
+theorem write_read_equiv (μ : Memory) (i : Nat) : (μ.write i (μ.read i)).Equiv μ := by
+  refine ⟨rfl, fun j => ?_⟩
+  rw [read_write]
+  split
+  · rename_i h; simp only [read, h]
+  · rfl
 
 @[simp] theorem write_pages (μ : Memory) (i : Nat) (v : UInt8) : (μ.write i v).pages = μ.pages := rfl
 

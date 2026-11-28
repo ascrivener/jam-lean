@@ -153,11 +153,13 @@ def evalCost (P : Program) (i : Nat) (ins : Instr) : CostExpr → Nat
   | .overlapShift a b =>
     -- The paper writes ω_A = ω_D; the gas model has no register values, so we compare the
     -- register indices r_A = r_D (note 1 in docs/upstream-candidates.md#gray-paper-issues).
+    -- Only three-register opcodes have a 𝔓_S cell, so `none` is never reached
+    -- (`regsAD?_of_overlapShift`).
     match ins.regsAD? with
     | some (ra, rd) => if ra = rd then a else b
     | none => b
   | .memory => memoryCost
-  -- Only branches have a 𝔟 cell; the fallback target is never used.
+  -- Only branches have a 𝔟 cell; the fallback target is never used (`branchTarget?_of_branch`).
   | .branch => P.branchCost i ((ins.branchTarget?).getD (-1))
 
 /-- $(\check{c}, \check{d}, \check{x})$ of the instruction at `ı` (GP §A.10), if $\zeta_{\imath} \in U$. -/
@@ -166,6 +168,109 @@ def instrCost? (P : Program) (i : Nat) : Option (Instr × InstrCost) := do
   let row ← costRow? (P.zeta i)
   let e := P.evalCost i ins
   return (ins, ⟨e row.cycles, e row.decodeSlots, ⟨e row.alu, e row.load, e row.store, e row.mul, e row.div⟩⟩)
+
+/-! ### Which instructions the $\mathfrak{P}_S$ and $\mathfrak{b}$ cells meet
+
+`evalCost` has two fallbacks the paper does not: $\mathfrak{P}_S$ for an instruction without
+$(r_A, r_D)$, and $\mathfrak{b}$ for an instruction without a static target. Neither is reached:
+in the table, $\mathfrak{P}_S$ appears only in rows of three-register opcodes (§A.5.13) and
+$\mathfrak{b}$ only in rows of the offset formats §A.5.8 and §A.5.11
+(`costRow_overlapShift_format`, `costRow_branch_format`), so a decoded instruction with such a row
+has the operands the cell reads (`regsAD?_of_overlapShift`, `branchTarget?_of_branch`). -/
+
+/-- The argument format of an instruction. -/
+def _root_.PVM.Instr.format : Instr → ArgFormat
+  | .noArgs .. => .noArgs
+  | .oneImm .. => .oneImm
+  | .regExtImm .. => .regExtImm
+  | .twoImm .. => .twoImm
+  | .oneOffset .. => .oneOffset
+  | .regImm .. => .regImm
+  | .regTwoImm .. => .regTwoImm
+  | .regImmOffset .. => .regImmOffset
+  | .twoReg .. => .twoReg
+  | .twoRegImm .. => .twoRegImm
+  | .twoRegOffset .. => .twoRegOffset
+  | .twoRegTwoImm .. => .twoRegTwoImm
+  | .threeReg .. => .threeReg
+
+/-- A decoded instruction has the format the table gives its opcode $\zeta_{\imath}$. -/
+theorem decode_format {P : Program} {i : Nat} {ins : Instr} (h : P.decode i = some ins) :
+    formatOf? (P.zeta i) = some ins.format := by
+  unfold Program.decode at h
+  dsimp only at h
+  split at h
+  · cases h
+  all_goals
+    rename_i hf
+    simp only [Option.map_eq_some_iff] at h
+    obtain ⟨o, -, rfl⟩ := h
+    exact hf
+
+/-- The seven cells of a cost row. -/
+def _root_.PVM.CostRow.cells (r : CostRow) : List CostExpr :=
+  [r.cycles, r.decodeSlots, r.alu, r.load, r.store, r.mul, r.div]
+
+/-- Whether a cell is $\mathfrak{P}_S$. -/
+def _root_.PVM.CostExpr.isOverlapShift : CostExpr → Bool
+  | .overlapShift .. => true
+  | _ => false
+
+/-- An opcode is below $2^8$. -/
+theorem zeta_lt (P : Program) (i : Nat) : P.zeta i < 256 := by
+  unfold Program.zeta
+  cases P.code[i]? with
+  | none => decide
+  | some b => exact b.toNat_lt
+
+/-- Every opcode whose row has a $\mathfrak{P}_S$ cell is a three-register opcode (checked
+    decidably over all octets). -/
+theorem costRow_overlapShift_format_all : ∀ n, n < 256 →
+    ((costRow? n).all fun r => !(r.cells.any CostExpr.isOverlapShift) || formatOf? n == some .threeReg)
+      = true := by
+  decide +kernel
+
+/-- Every opcode whose row has a $\mathfrak{b}$ cell is in format §A.5.8 or §A.5.11 (checked
+    decidably over all octets). -/
+theorem costRow_branch_format_all : ∀ n, n < 256 →
+    ((costRow? n).all fun r => !(r.cells.contains .branch) ||
+      formatOf? n == some .regImmOffset || formatOf? n == some .twoRegOffset) = true := by
+  decide +kernel
+
+theorem costRow_overlapShift_format {n : Nat} (hn : n < 256) {r : CostRow} (hr : costRow? n = some r)
+    {a b : Nat} (hc : CostExpr.overlapShift a b ∈ r.cells) : formatOf? n = some .threeReg := by
+  have h := costRow_overlapShift_format_all n hn
+  rw [hr] at h
+  have hany : r.cells.any CostExpr.isOverlapShift = true :=
+    List.any_eq_true.2 ⟨_, hc, rfl⟩
+  simpa [Option.all, hany] using h
+
+theorem costRow_branch_format {n : Nat} (hn : n < 256) {r : CostRow} (hr : costRow? n = some r)
+    (hc : CostExpr.branch ∈ r.cells) :
+    formatOf? n = some .regImmOffset ∨ formatOf? n = some .twoRegOffset := by
+  have h := costRow_branch_format_all n hn
+  rw [hr] at h
+  have hcon : r.cells.contains .branch = true := List.contains_iff_mem.2 hc
+  simp only [Option.all, hcon, Bool.not_true, Bool.false_or, Bool.or_eq_true, beq_iff_eq] at h
+  exact h
+
+/-- $\mathfrak{P}_S$ is only evaluated for an instruction with $(r_A, r_D)$: `evalCost`'s `none`
+    fallback is never reached. -/
+theorem regsAD?_of_overlapShift {P : Program} {i : Nat} {ins : Instr} (h : P.decode i = some ins)
+    {r : CostRow} (hr : costRow? (P.zeta i) = some r) {a b : Nat}
+    (hc : CostExpr.overlapShift a b ∈ r.cells) : ins.regsAD?.isSome := by
+  have hf := costRow_overlapShift_format (zeta_lt P i) hr hc
+  rw [decode_format h] at hf
+  cases ins <;> simp_all [Instr.format, Instr.regsAD?]
+
+/-- $\mathfrak{b}$ is only evaluated for an instruction with a static target: `evalCost`'s
+    fallback target is never used. -/
+theorem branchTarget?_of_branch {P : Program} {i : Nat} {ins : Instr} (h : P.decode i = some ins)
+    {r : CostRow} (hr : costRow? (P.zeta i) = some r) (hc : CostExpr.branch ∈ r.cells) :
+    ins.branchTarget?.isSome := by
+  have hf := costRow_branch_format (zeta_lt P i) hr hc
+  rw [decode_format h] at hf
+  cases ins <;> simp_all [Instr.format, Instr.branchTarget?]
 
 end Program
 

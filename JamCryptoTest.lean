@@ -99,8 +99,8 @@ def main (args : List String) : IO UInt32 := do
       check s!"bandersnatch {tag} fast Y" (Fast.Bandersnatch.vrfOutput sig == Bandersnatch.vrfOutput sig) failures
       if ok then
         check s!"bandersnatch {tag} Y" (Bandersnatch.vrfOutput sig == unhex y) failures
-        check s!"bandersnatch {tag} Y = JAM.Sha512.vrfOutput"
-          (Bandersnatch.vrfOutput sig == JAM.Sha512.vrfOutput sig) failures
+        check s!"bandersnatch {tag} Y = octetOutput"
+          (Bandersnatch.vrfOutput sig == Bandersnatch.octetOutput sig) failures
     | _ => if line != "" then check s!"bandersnatch malformed line: {line}" false failures
   -- Signing (signing.txt): our signature must equal ed25519-dalek's / ark-vrf's byte for byte, and
   -- verify with our verifiers.

@@ -164,15 +164,6 @@ structure Disputes where
   culprits : List Culprit
   faults : List Fault
 
-/-- $\mathcal{E}(\bot) = [0]$, $\mathcal{E}(\top) = [1]$ (GP v0.8.1 Appendix C; v0.8.0 left it implicit). -/
-def encodeBool (b : Bool) : List UInt8 := nat (if b then 1 else 0)
-
-/-- $\mathcal{E}$ of a bit sequence (GP (C) "Bit Sequence Encoding"): $\lceil n/8 \rceil$ octets, packed least
-    significant bit first, the padding bits of the last octet zero. -/
-def encodeBits (bs : List Bool) : List UInt8 :=
-  (List.range ((bs.length + 7) / 8)).map fun k =>
-    UInt8.ofNat ((List.range 8).foldl (fun acc i => acc + (if bs.getD (8 * k + i) false then 2 ^ i else 0)) 0)
-
 /-- $\mathcal{E}_T(\mathbf{E}_T) = \mathcal{E}(\updownarrow[(\mathcal{E}_1(r), p) \mid (r, p) \leftarrow \mathbf{E}_T])$
     (GP Appendix C). -/
 def encodeTickets (xs : List TicketProof) : List UInt8 :=
@@ -198,17 +189,17 @@ def encodeGuarantees (xs : List Guarantee) : List UInt8 := varSeq Guarantee.enco
 /-- $\mathcal{E}_A(\mathbf{E}_A) = \mathcal{E}(\updownarrow[(f, \mathcal{E}_2(v), s) \mid (f, v, s) \leftarrow \mathbf{E}_A])$
     (GP v0.8.1 Appendix C). -/
 def encodeAssurances (xs : List Assurance) : List UInt8 :=
-  varSeq (fun a => encodeBits a.bitfield ++ fixed 2 a.assurer ++ blob a.signature) xs
+  varSeq (fun a => Codec.bits a.bitfield ++ fixed 2 a.assurer ++ blob a.signature) xs
 
 /-- A judgment $(v, \mathcal{E}_2(i), s)$ within $\mathcal{E}_D$. -/
-def Judgment.encode (j : Judgment) : List UInt8 := encodeBool j.valid ++ fixed 2 j.index ++ blob j.signature
+def Judgment.encode (j : Judgment) : List UInt8 := Codec.bool j.valid ++ fixed 2 j.index ++ blob j.signature
 
 /-- $\mathcal{E}_D((\mathbf{v}, \mathbf{c}, \mathbf{f})) = \mathcal{E}(\updownarrow[(r, \mathcal{E}_4(a), \updownarrow[(v, \mathcal{E}_2(i), s) \mid \ldots \leftarrow \mathbf{j}]) \mid \ldots \leftarrow \mathbf{v}], \updownarrow\mathbf{c}, \updownarrow\mathbf{f})$
     (GP Appendix C). Each verdict's judgments carry a length prefix. -/
 def Disputes.encode (d : Disputes) : List UInt8 :=
   varSeq (fun v => blob v.target ++ fixed 4 v.age ++ varSeq Judgment.encode v.votes) d.verdicts ++
     varSeq (fun c => blob c.target ++ blob c.key ++ blob c.signature) d.culprits ++
-    varSeq (fun f => blob f.target ++ encodeBool f.valid ++ blob f.key ++ blob f.signature) d.faults
+    varSeq (fun f => blob f.target ++ Codec.bool f.valid ++ blob f.key ++ blob f.signature) d.faults
 
 /-- The extrinsic $\mathbf{E} = (\mathbf{E}_T, \mathbf{E}_P, \mathbf{E}_G, \mathbf{E}_A, \mathbf{E}_D)$
     (GP v0.8.1 eq. `extrinsic`, reordered by #575 to match $\mathcal{E}(\mathbf{B})$; the fields are

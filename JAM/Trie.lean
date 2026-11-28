@@ -15,9 +15,6 @@ values.
 
 namespace JAM.Trie
 
-/-- The zero hash $\zerohash$. -/
-def zeroHash : List UInt8 := List.replicate 32 0
-
 /-- $\mathcal{E}_4$ of a service index, as four octets. -/
 def n4 (s : Nat) : List UInt8 := PVM.Num.encodeLE 4 s
 

@@ -114,15 +114,17 @@ inductive WorkResult where
   | ok (o : Blob)
   | err (e : WorkError)
 
-/-- $O(o)$ (GP Appendix C): $(0, \updownarrow o)$ for a blob, 1–6 for the errors. -/
+/-- $O(o)$ (GP Appendix C, eq. C.38): $(0, \updownarrow o)$ for a blob; 1 for $\infty$, 2 for ☇,
+    3 for $\circledcirc$, 4 for $\circleddash$, 5 for BAD and 6 for BIG, each discriminator
+    encoded with $\mathcal{E}$ (one octet). -/
 def WorkResult.encode : WorkResult → List UInt8
-  | .ok o => 0 :: var o
-  | .err .outOfGas => [1]
-  | .err .panic => [2]
-  | .err .badExports => [3]
-  | .err .oversize => [4]
-  | .err .bad => [5]
-  | .err .big => [6]
+  | .ok o => nat 0 ++ var o
+  | .err .outOfGas => nat 1
+  | .err .panic => nat 2
+  | .err .badExports => nat 3
+  | .err .oversize => nat 4
+  | .err .bad => nat 5
+  | .err .big => nat 6
 
 /-- A work digest $\mathbb{D}$ (GP eq. `workdigest`). -/
 structure WorkDigest where
@@ -238,7 +240,7 @@ structure DeferredTransfer where
     \mathcal{E}_8(a), m, \mathcal{E}_8(g))$ with $x_u$ the destination-supervisor flag (GP v0.8.1
     Appendix C, GP #539). -/
 def DeferredTransfer.encode (x : DeferredTransfer) : List UInt8 :=
-  nat 1 ++ fixed 4 x.source ++ fixed 4 x.dest ++ nat (if x.destSupervisor then 1 else 0) ++
+  nat 1 ++ fixed 4 x.source ++ fixed 4 x.dest ++ Codec.bool x.destSupervisor ++
     fixed 8 x.amount ++ blob x.memo ++ fixed 8 x.gas
 
 /-- An accumulation input: an operand tuple or a deferred transfer (GP §12, the union $\mathbb{U}

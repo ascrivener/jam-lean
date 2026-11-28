@@ -1,5 +1,6 @@
 import JAM.Sha512
 import JAM.Blake2b
+import JamCrypto.Bandersnatch
 
 /-!
 # SHA-512 tests
@@ -8,7 +9,7 @@ import JAM.Blake2b
   the empty message.
 * Against Python's `hashlib.sha512` for messages whose octet `i` is `(7i + 3) mod 256`, at the
   lengths around the 128-octet block and its 112-octet padding boundary.
-* The VRF output Y of one trace block's entropy source, checked against η'_0 = ℋ(η_0 ⌢ Y(H_V)) in
+* The VRF output Y of one trace block's entropy source (`JamCrypto.Bandersnatch.octetOutput`), checked against η'_0 = ℋ(η_0 ⌢ Y(H_V)) in
   that block's post-state (`fallback/00000001`).
 -/
 
@@ -39,6 +40,6 @@ def hv := unhex "62bc9d2311da8db52da45c5785333b39da3f1464b0d0341d12e2ee2987da659
 def eta0 := unhex "15791ce2f9ad023b718ff82e41541cbdb452b39e8eb79204f81989e25717c70f"
 def eta0' := unhex "5b8e9d7c5c737a1d41f8dc4ad0cd7962e4718ee3761146c2ba992f6fbdf172ce"
 
-#guard (Blake2b.hash256 ⟨(eta0 ++ vrfOutput hv).toArray⟩).toList == eta0'
+#guard (Blake2b.hash256 ⟨(eta0 ++ JamCrypto.Bandersnatch.octetOutput hv).toArray⟩).toList == eta0'
 
 end JAM.Tests.Sha512

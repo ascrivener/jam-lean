@@ -3,6 +3,7 @@ import Companion.Source
 import Companion.Paper
 import Companion.Docstring
 import JAM.Accumulation
+import JAM.History
 import JAM.Preimages
 import JAM.Theorems.Confinement
 
@@ -359,8 +360,8 @@ $`\xi`, the oldest entry leaves, and the queue drops what was accumulated and th
 
 {gpeq "12.34"}
 
-All of §12.1–§12.3 is one function in the model, returning the posterior state, the output root and
-the statistics, or the error that makes the block invalid:
+All of §12.1–§12.3 is one function in the model, returning the posterior state, the statistics and
+the outputs $`\theta'`, or the error that makes the block invalid:
 
 {leanSource JAM.AccResult}
 
@@ -377,9 +378,9 @@ How the code maps to the equations:
 * `newAcc` and `accumulated` are {eq}`12.32, 12.33`. In `ready`, entry `idx` is
   $`{\omega'}^{\circlearrowleft}_{m-i}` with $`i = (m - \mathit{idx}) \bmod \mathsf{E}`, and the three branches
   are the cases of {eq}`12.34`.
-* `theta` is $`\theta'`, and `root` is $`\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)`, the Keccak Merkle root over
-  $`\mathbf{s} = [\mathcal{E}_4(s) \frown \mathcal{E}(h) \mid (s, h) \mathrel{\mathrlap{<}{-}} \theta']` that {ref "history"}[§7] appends to the
-  accumulation-output log (eqs. {eq}`7.6, 7.7`); $`\mathcal{E}(h)` of a hash is the hash itself.
+* `theta` is $`\theta'`. Its Keccak Merkle root $`\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)`, which
+  {ref "history"}[§7] appends to the accumulation-output log (eqs. {eq}`7.6, 7.7`), is computed there,
+  by {api}`JAM.accOutRoot`.
 
 Here is {api}`JAM.accumulate` on a block with no reports, where only the always-accumulate service runs:
 

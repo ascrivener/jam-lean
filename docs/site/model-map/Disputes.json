@@ -19,7 +19,7 @@
               "at": "unless orderedUniqBy (·.key.toList) x.culprits do",
               "note": "the faults' order is checked the same way, before the fault loop" },
     "10.10": { "kind": "inline", "name": "JAM.checkVerdict", "at": "if ψ.good.contains r || ψ.bad.contains r" },
-    "10.11": { "kind": "inline", "name": "JAM.checkVerdict", "at": "unless orderedUniqBy (·.index) v.votes do" },
+    "10.11": { "kind": "inline", "name": "JAM.checkVerdict", "at": "unless orderedUniqByNat (·.index) v.votes do" },
     "10.12": { "kind": "def", "name": "JAM.verdicts",
                "note": "V is `JAM.verdictOutcome`; `JAM.checkVerdict` rejects a verdict whose V is undefined" },
     "10.13": { "kind": "inline", "name": "JAM.disputesTransition", "at": "for (r, o) in v do" },

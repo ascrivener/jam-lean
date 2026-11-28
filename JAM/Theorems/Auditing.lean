@@ -391,12 +391,12 @@ theorem formVerdict_sound (V : Nat) (pos neg : VSet) (sig : Nat → Bool → Blo
       · simp at he
 
 private theorem orderedUniqByNat_of_pairwise {α : Type} (key : α → Nat) :
-    ∀ l : List α, (l.map key).Pairwise (· < ·) → orderedUniqBy key l = true
+    ∀ l : List α, (l.map key).Pairwise (· < ·) → orderedUniqByNat key l = true
   | [], _ => rfl
   | [_], _ => rfl
   | a :: b :: rest, h => by
     simp only [List.map_cons, List.pairwise_cons, List.mem_cons, forall_eq_or_imp] at h
-    simp only [orderedUniqBy, Bool.and_eq_true, decide_eq_true_eq]
+    simp only [orderedUniqByNat, Bool.and_eq_true, decide_eq_true_eq]
     refine ⟨h.1.1, orderedUniqByNat_of_pairwise key (b :: rest) ?_⟩
     simp only [List.map_cons, List.pairwise_cons]
     exact h.2

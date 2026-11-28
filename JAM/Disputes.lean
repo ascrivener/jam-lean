@@ -87,13 +87,14 @@ def Xvalidif (v : Bool) : List UInt8 := if v then Xvalid else Xinvalid
 
 /-- A sequence is strictly ascending under a key: $[x \in \mathbf{s}]$-ordered-unique by that key
     (GP §3.7, `sqorderuniqby`). -/
-def orderedUniqBy {α β : Type} [LT β] [DecidableLT β] (key : α → β) : List α → Bool
+def orderedUniqBy {α : Type} (key : α → List UInt8) : List α → Bool
   | a :: b :: rest => decide (key a < key b) && orderedUniqBy key (b :: rest)
   | _ => true
 
-/-- `orderedUniqBy` at natural-number keys: the same definition, kept as a name for its existing
-    users. -/
-abbrev orderedUniqByNat {α : Type} (key : α → Nat) : List α → Bool := orderedUniqBy key
+/-- The same for natural-number keys. -/
+def orderedUniqByNat {α : Type} (key : α → Nat) : List α → Bool
+  | a :: b :: rest => key a < key b && orderedUniqByNat key (b :: rest)
+  | _ => true
 
 /-- A verdict's outcome: good ($\top$), bad ($\bot$) or wonky ($\varnothing$) (GP eq. `verdicts`). -/
 inductive Outcome where
@@ -138,7 +139,7 @@ def checkVerdict (params : Params) (crypto : Crypto) (i : DisputesInput) (ψ : D
     (v : Verdict) : Except DisputesError Unit := do
   let e := i.slot / params.epochLen
   unless v.age = e ∨ v.age + 1 = e do throw .badJudgementAge
-  unless orderedUniqBy (·.index) v.votes do throw .judgementsNotSortedUnique
+  unless orderedUniqByNat (·.index) v.votes do throw .judgementsNotSortedUnique
   let k := judgeKeys params i v.age
   unless v.votes.length = 2 * k.length / 3 + 1 do throw .badVotesCount
   let r := v.target.toList

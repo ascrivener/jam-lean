@@ -13,8 +13,8 @@
     "14.20": { "kind": "def", "name": "JAM.Segments.zeroPad" },
     "E.8": { "kind": "def", "name": "JAM.MMR.append",
              "note": "P is `JAM.MMR.place`" },
-    "E.9": { "kind": "inline", "name": "JAM.Serialize.recent", "at": "varSeq (opt id) r.belt",
-             "note": "the model encodes an MMR only here, the accumulation-output belt in the state" },
+    "E.9": { "kind": "def", "name": "JAM.MMR.encode",
+             "note": "used only by `JAM.Serialize.recent`, for the accumulation-output belt in the state" },
     "E.10": { "kind": "def", "name": "JAM.MMR.superPeak",
               "note": "the recursion is `JAM.MMR.superPeakRev` on the present peaks, last first" }
   }

@@ -184,4 +184,48 @@ theorem psiHStar_eq (p : ByteArray) (i : Nat) (gas : UInt64) (ch : Bool) (ω : R
     all_goals exact (Option.some.inj h0).symm
   all_goals (simp only [hst] at h0 ⊢; exact (Option.some.inj h0).symm)
 
+/-! ## $\mathbb{N}_{a \dots+n} \subseteq \mathbb{V}_\mu$ -/
+
+/-- Indices on the same page are readable alike. -/
+theorem Memory.readable_of_div_eq (μ : Memory) {i j : Nat} (h : i / pageSize = j / pageSize) :
+    μ.readable i = μ.readable j := by
+  simp [Memory.readable, h]
+
+/-- `rangeReadable` is the paper's $\mathbb{N}_{a \dots+n} \subseteq \mathbb{V}_\mu$ (GP §A.8, eq. `psimdef`
+    and the host functions that read a range): every index of the range is below $2^{32}$ and
+    readable. The page-by-page check is only how it is computed. -/
+theorem Memory.rangeReadable_iff (μ : Memory) (a n : Nat) :
+    μ.rangeReadable a n = true ↔
+      ∀ j, a ≤ j → j < a + n → j < 2 ^ 32 ∧ μ.readable j = true := by
+  have hps : 0 < pageSize := by decide
+  unfold Memory.rangeReadable
+  by_cases hn : n = 0
+  · subst hn
+    simp only [beq_self_eq_true, Bool.true_or, true_iff]
+    intro j h1 h2; omega
+  · have hn' : (n == 0) = false := by simpa using hn
+    simp only [hn', Bool.false_or, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true,
+      List.mem_range]
+    constructor
+    · rintro ⟨hle, hall⟩ j h1 h2
+      refine ⟨by omega, ?_⟩
+      have hf : a / pageSize ≤ j / pageSize := Nat.div_le_div_right h1
+      have hl : j / pageSize ≤ (a + n - 1) / pageSize := Nat.div_le_div_right (by omega)
+      have := hall (j / pageSize - a / pageSize) (by omega)
+      rw [show a / pageSize + (j / pageSize - a / pageSize) = j / pageSize by omega] at this
+      rw [μ.readable_of_div_eq (j := j / pageSize * pageSize) (by rw [Nat.mul_div_cancel _ hps])]
+      exact this
+    · intro h
+      refine ⟨by have := (h (a + n - 1) (by omega) (by omega)).1; omega, ?_⟩
+      intro k hk
+      have hlast : (a / pageSize + k) * pageSize ≤ a + n - 1 :=
+        Nat.le_trans (Nat.mul_le_mul_right _ (by omega)) (Nat.div_mul_le_self _ _)
+      by_cases hc : a ≤ (a / pageSize + k) * pageSize
+      · exact (h _ hc (by omega)).2
+      · have hk0 : a / pageSize + k ≤ a / pageSize :=
+          (Nat.le_div_iff_mul_le hps).2 (by omega)
+        rw [show k = 0 by omega, Nat.add_zero,
+          μ.readable_of_div_eq (j := a) (by rw [Nat.mul_div_cancel _ hps])]
+        exact (h a (Nat.le_refl _) (by omega)).2
+
 end PVM

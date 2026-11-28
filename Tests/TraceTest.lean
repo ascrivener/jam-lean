@@ -1,7 +1,7 @@
 import JAM.BlockImport
 import Tests.TraceState
 import Tests.V080
-import JAM.Sha512
+import JamCrypto.Bandersnatch
 
 /-!
 # Block-import trace runner (davxy/jam-test-vectors `traces/`, GP v0.8.0)
@@ -27,8 +27,8 @@ GP #562); each block is read with `Tests.V080.step080`, which drops the anchors.
 The cryptographic primitives (`JAM.Crypto`) are supplied as follows:
 * verification (Ed25519, Bandersnatch VRF signatures, Ring VRF): accepts every signature and proof,
   as the trace blocks are known to be validly signed;
-* the VRF output Y (`bsOut`, `bsRingOut`): `JAM.Sha512.vrfOutput`, the output-point hash of the
-  Bandersnatch VRF specification (`JAM/Sha512.lean`);
+* the VRF output Y (`bsOut`, `bsRingOut`): `JamCrypto.Bandersnatch.octetOutput`, the output-point hash
+  of the Bandersnatch VRF specification over the signature's first 32 octets as given;
 * the ring root O (`bsRingRoot`): the pairs (keys of γ_P, γ_Z) of the states seen so far, since
   every state satisfies γ_Z = O(γ_P); an unknown key sequence yields the empty root.
 -/
@@ -42,10 +42,10 @@ def hexS (l : List UInt8) : String :=
 def oracle (roots : List (List (List UInt8) × List UInt8)) : Crypto :=
   { edVerify := fun _ _ _ => true
     bsVerify := fun _ _ _ _ => true
-    bsOut := Sha512.vrfOutput
+    bsOut := JamCrypto.Bandersnatch.octetOutput
     bsRingRoot := fun ks => (roots.lookup ks).getD []
     bsRingVerify := fun _ _ _ _ => true
-    bsRingOut := Sha512.vrfOutput }
+    bsRingOut := JamCrypto.Bandersnatch.octetOutput }
 
 /-- The names of the state components, by the first octet of C(i). -/
 def componentName (k : List UInt8) : String :=

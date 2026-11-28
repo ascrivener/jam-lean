@@ -225,11 +225,11 @@ $$`\mathcal{M}_R\colon \left\{\begin{aligned} \llbracket\mathbb{H}^?\rrbracket &
 
 $$`\text{where } \mathbf{h} = \left[h \;\middle|\; h \mathrel{<\mkern-7mu-} \mathbf{b}, h \ne \emptyset\right] \qquad \text{(E.10)}`
 
-$`\mathcal{E}_M` is the second half of the $`C(3)` row of the state serialization, `varSeq (opt id) r.belt` in
-{api}`JAM.Serialize.recent` ({ref "statemerkle"}[Appendix D]). $`\mathcal{M}_R` takes the last present peak off at each
-step, so the model works on the present peaks in reverse order:
+$`\mathcal{E}_M` is {api}`JAM.MMR.encode`; the model uses it only in the second half of the $`C(3)` row of the
+state serialization, {api}`JAM.Serialize.recent` ({ref "statemerkle"}[Appendix D]). $`\mathcal{M}_R` takes the last
+present peak off at each step, so the model works on the present peaks in reverse order:
 
-{leanSource JAM.Serialize.recent}
+{leanSource JAM.MMR.encode}
 
 {leanSource JAM.MMR.superPeakRev}
 

@@ -228,7 +228,7 @@ def setImports (k : Nat) (ss : List (List UInt8)) : List ItemData :=
 def v6 : Nat := 6
 
 #guard pieceSize v6 == 6 && pieceSize 1023 == 684
-#guard (segmentsClub blake [] v6) == List.replicate 6 Segments.zeroHash
+#guard (segmentsClub blake [] v6) == List.replicate 6 JAM.zeroHash
 #guard (segmentsClub blake exA v6).length == 6
 #guard (segmentsClub blake exA 9).length == 9
 #guard (bundleClub blake [1, 2, 3] v6).length == 6
@@ -247,7 +247,7 @@ def erasureRootByHand (b : List UInt8) (s : List (List UInt8)) : List UInt8 :=
 #guard erasureRoot blake [1, 2, 3, 4] exA v6 == erasureRootByHand [1, 2, 3, 4] exA
 #guard erasureRoot blake [1, 2, 3, 4] [] v6 ==
   Merkle.root blake ((((Erasure.encode 6 ⟨#[1, 2, 3, 4, 0, 0]⟩).getD []).map
-    (fun c => (blake c).toList)).map (· ++ Segments.zeroHash))
+    (fun c => (blake c).toList)).map (· ++ JAM.zeroHash))
 
 def specA : AvailabilitySpec := availabilitySpec blake ⟨#[7]⟩ [1, 2, 3, 4] exA v6
 #guard specA.packageHash.toList == [7] && specA.bundleLength == 4 && specA.erasureShards == 6

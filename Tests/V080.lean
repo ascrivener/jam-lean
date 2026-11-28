@@ -29,7 +29,7 @@ open Codec Decoder
 /-- ℰ_A of v0.8.0: ℰ(↕[(a, f, ℰ_2(v), s) | (a, f, v, s) ← 𝔼_A]), from the v0.8.1 assurances and
     their anchors. -/
 def encodeAssurances080 (xs : List (Hash × Assurance)) : List UInt8 :=
-  varSeq (fun (h, a) => blob h ++ encodeBits a.bitfield ++ fixed 2 a.assurer ++ blob a.signature) xs
+  varSeq (fun (h, a) => blob h ++ Codec.bits a.bitfield ++ fixed 2 a.assurer ++ blob a.signature) xs
 
 /-- ℰ_A⁻¹ of v0.8.0: each assurance with its anchor. -/
 def decodeAssurances080 (p : Params) : Decoder (List (Hash × Assurance)) :=

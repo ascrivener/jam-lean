@@ -105,11 +105,11 @@ def keys (k : List ValidatorKey) : List UInt8 := varSeq id k
 /-- $\mathcal{E}(\updownarrow[x \mid x \in s])$ of a set of hashes in ascending order. -/
 def hashSet (s : OctetSet) : List UInt8 := varHashSet s
 
-/-- $C(3)$: $\mathcal{E}(\updownarrow[(h, b, s, \mathcal{E}_4(t), \updownarrow \mathbf{p})], \mathcal{E}_M(\beta_B))$; $\mathcal{E}_M$ of a belt is $\updownarrow$ of its optional peaks. -/
+/-- $C(3)$: $\mathcal{E}(\updownarrow[(h, b, s, \mathcal{E}_4(t), \updownarrow \mathbf{p})], \mathcal{E}_M(\beta_B))$, with $\mathcal{E}_M$ the MMR encoding (GP eq. E.9, `MMR.encode`). -/
 def recent (r : Recent) : List UInt8 :=
   varSeq (fun (b : RecentBlock) => b.headerHash ++ b.accRoot ++ b.stateRoot ++ fixed 4 b.slot ++
       varHashDict b.reported) r.history ++
-    varSeq (opt id) r.belt
+    MMR.encode r.belt
 
 /-- $C(4)$: $\mathcal{E}(\updownarrow \gamma_P, \gamma_Z, 0 \text{ or } 1, \gamma_S, \updownarrow \gamma_A)$. -/
 def gamma (s : State) : List UInt8 :=

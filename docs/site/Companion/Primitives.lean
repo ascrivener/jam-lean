@@ -223,10 +223,10 @@ $`\mathsf{G}_A \cdot \mathsf{C} + \sum_{g \in \mathcal{V}(\chi_\mathbf{z})} g`: 
 tag := "primitives-readings"
 %%%
 
-Note v0.8.1-A33 is in the model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
+Note v0.8.1-A33 is a clarification, not a gap: it is listed under "Not for upstream" in the model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#not-for-upstream).
 
 * *Keccak's padding (note v0.8.1-A33).* The paper cites Keccak as "proposed by Bertoni et al." and "utilized by"
-  the Ethereum Yellow Paper. The model reads that as the original Keccak padding (`0x01`), not the
+  the Ethereum Yellow Paper. That settles it: the model uses the original Keccak padding (`0x01`), not the
   FIPS 202 SHA3 padding (`0x06`).
 * *The tiny chain.* The paper says nothing about the smaller chain the test vectors use. The model
   takes it from the vectors' README, with $`\mathsf{L} = 24` taken from the tiny vectors themselves.

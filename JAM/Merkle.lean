@@ -1,5 +1,6 @@
 import JAM.Blake2b
 import JAM.Keccak
+import JAM.Codec
 
 /-!
 # Binary Merkle trees (GP v0.8.1 Appendix E, "Binary Merkle Trees")
@@ -18,9 +19,9 @@ def nodePrefix : List UInt8 := "node".toUTF8.toList
     $p$ = `$node` otherwise. `fuel` bounds the recursion depth; each level shortens $\mathbf{v}$, so
     $|\mathbf{v}|$ suffices (`root` supplies it). -/
 def node (H : ByteArray → ByteArray) : Nat → List (List UInt8) → List UInt8
-  | _, [] => List.replicate 32 0
+  | _, [] => zeroHash
   | _, [v] => v
-  | 0, _ => List.replicate 32 0
+  | 0, _ => zeroHash
   | fuel + 1, v =>
     let h := (v.length + 1) / 2
     (H ⟨(nodePrefix ++ node H fuel (v.take h) ++ node H fuel (v.drop h)).toArray⟩).toList

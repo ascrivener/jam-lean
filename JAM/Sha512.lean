@@ -1,12 +1,11 @@
 /-!
 # SHA-512 (FIPS 180-4 §5.1.2, §5.3.5, §6.4)
 
-Not a primitive the Gray Paper names. GP Appendix G defers the Bandersnatch VRF to its
-specification, in which the VRF output $\mathcal{Y}$ of a signature or ring proof is the first 32 octets of
-SHA-512 over the suite string, 0x03, the encoded output point and 0x00; the output point is the
-first 32 octets of both an IETF signature and a ring proof (`vrfOutput`). The model's
-`JAM.Crypto` stays a parameter: only the block-import trace runner supplies `bsOut` and
-`bsRingOut` with `vrfOutput`. Tested in [`Tests/Sha512Test.lean`](https://github.com/ascrivener/jam-lean/blob/main/Tests/Sha512Test.lean).
+Not a primitive the Gray Paper names, and the model never uses it: `JAM.Crypto` stays a
+parameter. GP Appendix G defers the Bandersnatch VRF to its specification, which hashes with
+SHA-512; `JamCrypto` (the plain-Lean crypto parameter) uses `hash` for the VRF output
+$\mathcal{Y}$ (`JamCrypto.Bandersnatch.octetOutput`, `JamCrypto.Bandersnatch.vrfOutput`) and for
+signing. Tested in [`Tests/Sha512Test.lean`](https://github.com/ascrivener/jam-lean/blob/main/Tests/Sha512Test.lean).
 -/
 
 namespace JAM.Sha512
@@ -77,12 +76,5 @@ def hash (msg : List UInt8) : List UInt8 := Id.run do
   for hi : i in [0:m.size / 128] do
     h := compress h m (128 * i) (by have := hi.upper; simp at this; omega)
   return h.toList.flatMap fun x => (List.range 8).map fun j => (x >>> (8 * (7 - j)).toUInt64).toUInt8
-
-/-- $\mathcal{Y}$ of a Bandersnatch IETF VRF signature or ring proof whose first 32 octets encode
-    the output point:
-    $\text{SHA-512}(\mathtt{Bandersnatch\_SHA\text{-}512\_ELL2} \frown [3] \frown \text{point} \frown [0])$,
-    first 32 octets. -/
-def vrfOutput (sig : List UInt8) : List UInt8 :=
-  (hash ("Bandersnatch_SHA-512_ELL2".toUTF8.toList ++ [3] ++ sig.take 32 ++ [0])).take 32
 
 end JAM.Sha512

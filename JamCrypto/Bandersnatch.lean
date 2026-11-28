@@ -151,6 +151,15 @@ def ietfVerify (key ctx msg sig : List UInt8) : Bool := Id.run do
   if !(E.valid U && E.valid V) then return false
   return challenge [Y, I, O, U, V] msg == c
 
+/-- The output hash of the first 32 octets of a signature or ring proof taken as they are, without
+    decoding them: the first 32 octets of
+    $\text{SHA-512}(\mathtt{Bandersnatch\_SHA\text{-}512\_ELL2} \frown [3] \frown \text{point} \frown [0])$.
+    For a canonical point encoding this is `vrfOutput`; it is what `vrfOutput` falls back to for an
+    encoding that does not decode, and the trace runner's oracle ([`Tests/TraceTest.lean`](https://github.com/ascrivener/jam-lean/blob/main/Tests/TraceTest.lean)) uses it as
+    $\mathcal{Y}$. Moved from `JAM.Sha512.vrfOutput`: the model never uses it. -/
+def octetOutput (sig : List UInt8) : List UInt8 :=
+  (JAM.Sha512.hash (suiteString ++ [3] ++ sig.take 32 ++ [0])).take 32
+
 /-- The output hash of an output point:
     $\text{SHA-512}(\text{suite} \frown 3 \frown \text{point} \frown 0)$ (RFC 9381 §5.2). -/
 def pointToHash (O : Point) : List UInt8 :=
@@ -158,10 +167,10 @@ def pointToHash (O : Point) : List UInt8 :=
 
 /-- $\mathcal{Y}(\mathit{sig})$ (GP Appendix G): the first 32 octets of the output hash of the
     output point $O$, the first 32 octets of the signature. For an encoding that does not decode (no
-    valid signature has one) it hashes the octets as given, like `JAM.Sha512.vrfOutput`. -/
+    valid signature has one) it hashes the octets as given (`octetOutput`). -/
 def vrfOutput (sig : List UInt8) : List UInt8 :=
   match decodeOnCurve (sig.take 32) with
   | some O => (pointToHash O).take 32
-  | none => JAM.Sha512.vrfOutput sig
+  | none => octetOutput sig
 
 end JamCrypto.Bandersnatch

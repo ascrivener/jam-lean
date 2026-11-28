@@ -86,6 +86,10 @@ inputs (author index, ticket count, preimages, assurer indices, posterior keys a
 
 {leanSource JAM.validatorStats}
 
+Here are the validator records of a test vector before and after a block within an epoch:
+
+{example "statistics-validators"}
+
 # Cores and services (§13.2)
 %%%
 tag := "statistics-cores"
@@ -145,6 +149,10 @@ is $`y`. v0.8.1 states the provision sum's filter $`\mathbf{p}_s = s` explicitly
 `active` is $`\mathbf{s}`, and `(acc.lookup s).getD (0, 0, 0)` is $`\mathcal{U}(\mathbf{S}[s], (0, 0, 0))`:
 
 {leanSource JAM.serviceStats}
+
+Here are the core and service records computed from the two guarantees of a reports test vector:
+
+{example "statistics-cores"}
 
 # Theorems
 

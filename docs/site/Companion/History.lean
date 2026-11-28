@@ -146,6 +146,11 @@ availability specification to its segment root. The new state root is $`\mathbb{
 The model's `h.drop (h.length - params.recentHistoryLen)` keeps the last $`\mathsf{H}` entries. Natural-number
 subtraction stops at 0, so a shorter sequence is kept whole.
 
+Here is one block's transition on a test vector: the parent's state root is filled in, the belt's
+three peaks merge into one, and the new entry records the super-peak:
+
+{example "history-append"}
+
 # What is checked
 
 No theorems about §7 are proved yet. The transition is run against the v0.8.0 test vectors

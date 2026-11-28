@@ -101,6 +101,11 @@ And the transition for all cores:
 In {api}`JAM.importBlock` the pairs come from the guarantees extrinsic,
 `(g.report.core, g.report.authorizerHash)`, and the queue is the one accumulation returns.
 
+Here are both cores' pools after one block of a test vector, where one core's authorizer was used
+by a guarantee:
+
+{example "authorization-pools"}
+
 # What is checked
 
 No theorems about §8 are proved yet. The transition is run against the v0.8.0 test vectors

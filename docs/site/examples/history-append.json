@@ -1,0 +1,39 @@
+{"title": "A block appended to recent history",
+ "summary":
+ "The block at slot 7 is added to $\\beta_H$. First the previous entry's state root, recorded as $\\zerohash$, is set to the parent state root $\\mathbf{H}_R$ from the new header. Then the block's accumulation root is appended to the belt $\\beta_B$, and the new entry records the belt's super-peak.",
+ "source":
+ {"url":
+  "https://github.com/davxy/jam-test-vectors/blob/v0.8.0/stf/history/tiny/progress_blocks_history-3.json",
+  "repo": "davxy/jam-test-vectors v0.8.0",
+  "path": "stf/history/tiny/progress_blocks_history-3.json"},
+ "rows":
+ [{"label": "Entries in $\\beta_H$", "cells": ["7", "8"]},
+  {"label": "State root of the slot-6 entry",
+   "cells": ["`0x00000000…` ($\\zerohash$)", "`0x8a812d29…` (= $\\mathbf{H}_R$)"]},
+  {"label": "Belt $\\beta_B$",
+   "cells":
+   ["[`0xf986bfef…`, `0xca29f72b…`, `0xe17766e3…`]",
+    "[$\\varnothing$, $\\varnothing$, $\\varnothing$, `0x658b919f…`]"]},
+  {"label": "New entry: header hash $h$", "cells": ["", "`0x214facca…`"]},
+  {"label": "New entry: state root $s$", "cells": ["", "`0x00000000…` ($\\zerohash$)"]},
+  {"label": "New entry: accumulation super-peak $b$",
+   "cells": ["", "`0x658b919f…` (= $\\mathcal{M}_R(\\beta'_B)$)"]},
+  {"label": "New entry: reported packages $\\mathbf{p}$", "cells": ["", "1 package"]}],
+ "params":
+ "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators), $\\mathsf{H}$ = 8",
+ "nowrapColumns": [],
+ "notes":
+ ["The belt's 3 slots were all filled, so appending carries like adding 1 in binary (eq. E.8): each filled slot is hashed with the value coming up and emptied, and the result lands in a new slot 3. With one peak left, the super-peak $\\mathcal{M}_R$ is that peak itself (eq. E.10)."],
+ "name": "history-append",
+ "model": ["JAM.recentHistory", "JAM.Recent.withParentRoot", "JAM.MMR.append", "JAM.MMR.superPeak"],
+ "inputs":
+ [{"value": "7", "label": "Slot $\\mathbf{H}_T$"},
+  {"value": "`0x214facca…`", "label": "Header hash $\\mathcal{H}(\\mathbf{H})$"},
+  {"value": "`0x8a812d29…`", "label": "Parent state root $\\mathbf{H}_R$"},
+  {"value": "`0x8223d5ea…`",
+   "label": "Accumulation root $\\mathcal{M}_B(\\mathbf{s}, \\mathcal{H}_K)$"},
+  {"value": "1", "label": "Guaranteed packages"}],
+ "equations": ["7.5", "7.6", "7.7", "7.8", "E.8", "E.10"],
+ "columns": ["", "Before ($\\beta$)", "After ($\\beta'$)"],
+ "check":
+ "The model's result equals the vector's expected output, compared as `lake build historytest` compares every vector of the suite; the generator repeats that comparison for this one."}

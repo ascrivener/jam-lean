@@ -1,0 +1,36 @@
+{"title": "Authorizer pools after a block",
+ "summary":
+ "The block at slot 57 has 1 guarantee, on core 1. That core drops the authorizer its guarantee used. Every core then appends its queue's entry for slot 57, and a pool that would exceed $\\mathsf{O}$ = 8 loses its oldest entry.",
+ "source":
+ {"url":
+  "https://github.com/davxy/jam-test-vectors/blob/v0.8.0/stf/authorizations/tiny/progress_authorizations-3.json",
+  "repo": "davxy/jam-test-vectors v0.8.0",
+  "path": "stf/authorizations/tiny/progress_authorizations-3.json"},
+ "rows":
+ [{"label": "Pool size $|\\alpha[c]|$", "cells": ["8", "8"]},
+  {"label": "Used by a guarantee, removed: $F(c)$",
+   "cells": ["none", "`0x678db0ee…` (position 3)"]},
+  {"label": "Appended from the queue $\\phi'[c][\\mathbf{H}_T]^{\\circlearrowleft}$",
+   "cells":
+   ["`0x07609b8c…`, entry 57 = 57 mod 80 (now last)",
+    "`0x2bc6b164…`, entry 57 = 57 mod 80 (now last)"]},
+  {"label": "Dropped to keep the last $\\mathsf{O}$", "cells": ["`0xbaad1dab…`", "nothing"]},
+  {"label": "First in the pool",
+   "cells": ["`0xbaad1dab…` → `0xdbe50edd…`", "`0x80ef7d0d…` → `0x80ef7d0d…`"]},
+  {"label": "Last in the pool",
+   "cells": ["`0x5b83b4f5…` → `0x07609b8c…`", "`0x9c890e5c…` → `0x2bc6b164…`"]}],
+ "params":
+ "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators), $\\mathsf{O}$ = 8, $\\mathsf{Q}$ = 80",
+ "nowrapColumns": [],
+ "notes":
+ ["No accumulation runs in these vectors, so the queue $\\phi'$ is the prior queue $\\phi$."],
+ "name": "authorization-pools",
+ "model": ["JAM.authorizations", "JAM.poolNext", "JAM.poolUsed"],
+ "inputs":
+ [{"value": "57", "label": "Slot $\\mathbf{H}_T$"},
+  {"value": "core 1: `0x678db0ee…`",
+   "label": "Guarantees $((g_\\mathbf{r})_c, (g_\\mathbf{r})_a)$"}],
+ "equations": ["8.2", "8.3"],
+ "columns": ["", "Core 0", "Core 1"],
+ "check":
+ "The model's result equals the vector's expected output, compared as `lake build authtest` compares every vector of the suite; the generator repeats that comparison for this one."}

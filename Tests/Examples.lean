@@ -1,5 +1,6 @@
 import Tests.Examples.Basic
 import Tests.Examples.Pilot
+import Tests.Examples.STF
 
 
 /-!
@@ -32,7 +33,8 @@ namespace JAM.Tests.Examples
 /-- Every example, one list per topic module (`Tests/Examples/*.lean`). A new topic module adds
     its import above and its list here. -/
 def examples : List (IO Example) := List.flatten [
-  pilot]
+  pilot,
+  stf]
 
 end JAM.Tests.Examples
 

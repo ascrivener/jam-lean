@@ -1,0 +1,27 @@
+{"title": "A requested preimage is provided",
+ "summary":
+ "A service has asked for a preimage: its request for the pair (hash, length) is the empty sequence $[]$. The block's preimages extrinsic supplies the data. The data is stored, and the request records the slot it became available, 43.",
+ "source":
+ {"url":
+  "https://github.com/davxy/jam-test-vectors/blob/v0.8.0/stf/preimages/tiny/preimage_needed-2.json",
+  "repo": "davxy/jam-test-vectors v0.8.0",
+  "path": "stf/preimages/tiny/preimage_needed-2.json"},
+ "rows":
+ [{"label": "Service 3: preimages stored $a_\\mathbf{p}$", "cells": ["1", "2"]},
+  {"label": "Service 3: request $a_\\mathbf{l}[(`0x9e0e7d32…`, 46)]$", "cells": ["[]", "[43]"]},
+  {"label": "Service 3: request $a_\\mathbf{l}[(`0xb9de73a1…`, 48)]$",
+   "cells": ["[37, 40]", "[37, 40]"]}],
+ "params":
+ "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators)",
+ "nowrapColumns": [],
+ "notes":
+ ["Only a request whose value is $[]$ can be met. The other request, already provided at slots shown in its value, is left as it was."],
+ "name": "preimages-provided",
+ "model": ["JAM.preimages", "JAM.providable", "JAM.integrateProvisions"],
+ "inputs":
+ [{"value": "43", "label": "Slot $\\tau'$"},
+  {"value": "service 3: 46 octets, hash `0x9e0e7d32…`", "label": "Preimages $\\mathbf{E}_P$"}],
+ "equations": ["12.36", "12.37", "12.38", "12.39"],
+ "columns": ["", "Before ($\\delta$)", "After ($\\delta'$)"],
+ "check":
+ "The model's result equals the vector's expected output, compared as `lake build preimagestest` compares every vector of the suite; the generator repeats that comparison for this one."}

@@ -82,9 +82,11 @@ against the vector. A box whose table has more than sixteen rows starts collapse
 `Companion/Example.lean`.
 
 The numbers are never typed by hand. Each box is `docs/site/examples/<name>.json`, written by
-`Tests/Examples.lean` (the pilot's generators are in `Tests/Examples/Pilot.lean`). It runs the
-model's functions on the vectors through the same harnesses the vector tests use (`Tests/SafroleHarness.lean`, `Tests/AccumulateHarness.lean`,
-`Tests/PvmHarness.lean`), and stops with an error unless the vector's expected output matches.
+`Tests/Examples.lean` (the generators are in topic modules: `Tests/Examples/Pilot.lean`, and
+`Tests/Examples/STF.lean` for §7, §8, §10, §11, §12.4 and §13). It runs the model's functions on
+the vectors through the same harnesses the vector tests use (`Tests/*Harness.lean`: Safrole,
+Accumulate, Pvm, History, Authorizations, Disputes, Assurances, Reports, Preimages, Statistics),
+and stops with an error unless the vector's expected output matches.
 CI's `model` job runs `scripts/check-examples.sh`, which regenerates the files and fails on any
 difference, so a model change that changes an example fails CI until the files are regenerated:
 

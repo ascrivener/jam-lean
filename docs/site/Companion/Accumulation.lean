@@ -414,6 +414,10 @@ are disregarded, by $`I`:
 `prior` is $`\delta` and `postAcc` is $`\delta^\ddagger`. The extrinsic is passed to
 {api}`JAM.integrateProvisions` as a set, which it is by {eq}`12.36`.
 
+Here is the transition on a test vector where a service's outstanding request is met:
+
+{example "preimages-provided"}
+
 # What is checked
 %%%
 tag := "accumulation-checked"

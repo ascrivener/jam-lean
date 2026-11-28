@@ -222,6 +222,11 @@ disputes test vectors. Ed25519 verification is a parameter of the model; in thos
 replaced by an oracle that rejects every signature exactly when a vector expects a bad signature,
 so the vectors check where the model looks for one, not the signatures themselves.
 
+Here is the transition on a test vector with a good and a bad verdict, where the bad report was
+pending on a core:
+
+{example "disputes-verdicts"}
+
 # Readings chosen
 %%%
 tag := "disputes-readings"

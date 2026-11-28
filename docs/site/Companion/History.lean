@@ -4,6 +4,7 @@ import Companion.Paper
 import Companion.Docstring
 import JAM.History
 import JAM.Accumulation
+import JAM.BlockImport
 
 open Verso.Genre Manual
 open Companion

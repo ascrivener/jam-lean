@@ -3,6 +3,7 @@ import Companion.Source
 import Companion.Paper
 import Companion.Docstring
 import JAM.Accumulation
+import JAM.History
 import JAM.Preimages
 import JAM.Theorems.Confinement
 

@@ -75,14 +75,20 @@ structure Recent where
   belt : MMR
   deriving Inhabited
 
+/-- $\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)$ with $\mathbf{s} = [\mathcal{E}_4(s) \frown \mathcal{E}(h) \mid (s, h) \in \theta']$
+    (GP v0.8.1 eq. `accoutbeltdef`): the Keccak Merkle root of the block's accumulation outputs
+    $\theta'$, which is appended to the belt. $\mathcal{E}(h)$ of a hash is the hash itself. -/
+def accOutRoot (theta : List (Nat × List UInt8)) : List UInt8 :=
+  Merkle.root Keccak.keccak256 (theta.map fun (s, h) => Codec.fixed 4 s ++ h)
+
 /-- What the recent-history transition reads from the block and from accumulation. -/
 structure HistoryInput where
   /-- $\mathcal{H}(\mathbf{H})$, the header hash. -/
   headerHash : List UInt8
   /-- $\mathbf{H}_R$, the parent block's state root. -/
   parentStateRoot : List UInt8
-  /-- $\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)$: the root of the block's accumulation outputs (GP eq. `accoutbeltdef`;
-      `JAM.accumulate` returns it as `AccResult.root`). -/
+  /-- $\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)$: the root of the block's accumulation outputs (GP eq.
+      `accoutbeltdef`; `JAM.importBlock` computes it with `JAM.accOutRoot`). -/
   accRoot : List UInt8
   /-- $\mathbf{H}_T$. -/
   slot : Nat
@@ -95,17 +101,25 @@ def Recent.withParentRoot (h : List RecentBlock) (parentStateRoot : List UInt8) 
   | none => h
   | some b => h.dropLast ++ [{ b with stateRoot := parentStateRoot }]
 
-/-- The recent-history transition $\beta \mapsto \beta'$ (GP §7): correct the last state root (eq.
-    `correctlaststateroot`), append the accumulation-output root to the belt with $\mathcal{A}$ and Keccak
-    (eq. `accoutbeltdef`), and append the new block's entry, keeping the last $\mathsf{H}$
-    (eq. `recenthistorydef`). The new entry's state root is $\zerohash$. -/
-def recentHistory (params : Params) (pre : Recent) (i : HistoryInput) : Recent :=
-  let dagger := Recent.withParentRoot pre.history i.parentStateRoot
-  let belt := MMR.append Keccak.keccak256 pre.belt i.accRoot
+/-- $\beta'$ from $\beta_H^\dagger$ and $\beta_B$ (GP v0.8.1 §7): append the accumulation-output root to
+    the belt with $\mathcal{A}$ and Keccak (eq. `accoutbeltdef`), and append the new block's entry to
+    $\beta_H^\dagger$, keeping the last $\mathsf{H}$ (eq. `recenthistorydef`). The new entry's state root
+    is $\zerohash$, and its reported packages are $\mathbf{p}$, given as `i.reported`. `i.parentStateRoot`
+    is not read: it is already in $\beta_H^\dagger$. -/
+def recentHistoryOf (params : Params) (dagger : List RecentBlock) (beltPre : MMR) (i : HistoryInput) :
+    Recent :=
+  let belt := MMR.append Keccak.keccak256 beltPre i.accRoot
   let entry : RecentBlock :=
     { headerHash := i.headerHash, stateRoot := zeroHash, accRoot := MMR.superPeak belt,
       slot := i.slot, reported := Std.ExtTreeMap.ofList i.reported }
   let h := dagger ++ [entry]
   { history := h.drop (h.length - params.recentHistoryLen), belt }
+
+/-- The recent-history transition $\beta \mapsto \beta'$ (GP §7): correct the last state root to form
+    $\beta_H^\dagger$ (eq. `correctlaststateroot`), then `JAM.recentHistoryOf` (eqs. `accoutbeltdef`,
+    `recenthistorydef`). `JAM.importBlock` forms $\beta_H^\dagger$ itself and calls
+    `JAM.recentHistoryOf` directly. -/
+def recentHistory (params : Params) (pre : Recent) (i : HistoryInput) : Recent :=
+  recentHistoryOf params (Recent.withParentRoot pre.history i.parentStateRoot) pre.belt i
 
 end JAM

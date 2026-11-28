@@ -31,7 +31,11 @@
   "The pending reports' timeslots are the vector's set-up (prior $\\tau$ = 0); the disputes step does not check $\\rho$'s timeslots."],
  "name": "disputes-verdicts",
  "model":
- ["JAM.disputesTransition", "JAM.verdictOutcome", "JAM.clearNonPositive", "JAM.assimilate"],
+ ["JAM.disputesTransition",
+  "JAM.verdictOutcome",
+  "JAM.clearNonPositive",
+  "JAM.verdicts",
+  "JAM.disputesPosterior"],
  "inputs":
  [{"value": "0 (epoch 0)", "label": "Prior timeslot $\\tau$"},
   {"value": "2", "label": "Verdicts $\\mathbf{v}$"},

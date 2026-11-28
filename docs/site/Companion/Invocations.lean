@@ -202,7 +202,9 @@ $$`\begin{aligned} \text{where } & \mathfrak{j} = \mathbf{e}_\mathbf{d}[s]_\math
 
 Here $`b` is the balance and $`x` the supervisor balance of an account, and $`r_u` says whether a
 transfer goes to the supervisor balance. In the model, {api}`JAM.psiA` forms $`\mathbf{s}` and
-$`\mathbf{w}`, and {api}`JAM.psiARun` does the rest:
+$`\mathbf{w}`, and {api}`JAM.psiARun` does the rest. $`\Psi_M` takes its gas in $`\mathbb{N}_G`,
+but $`g` can exceed $`2^{64} - 1` (see {ref "accumulation-readings"}[note v0.8.1-A61]); the model
+runs $`\Psi_M` with $`\min(g, 2^{64} - 1)`:
 
 {leanSource JAM.psiA}
 
@@ -675,15 +677,23 @@ These points are recorded in the model's
 * *Note 20, `pages`.* The row defines only $`(\varphi'_7, \mathbf{m}')`, with no $`\varepsilon'`. The
   model uses the default $`\varepsilon' = \blacktriangleright` of {eq}`B.17`: `pages` never panics
   ({api}`JAM.RefineHost.pages`).
-* *Note v0.8.1-A19, `new` and check.* $`\text{check}` {eq}`B.13` tests $`i \notin \mathcal{K}(\mathbf{e}_\mathbf{d})`
-  against the state passed to $`\Psi_A`, but `new` uses it in the middle of an invocation. The model
-  checks against the current accounts $`(\mathbf{x}_\mathbf{e})_\mathbf{d}` ({api}`JAM.AccHost.new`);
-  the two differ only if the sequence meets an identifier created or ejected earlier in the same
-  invocation.
+* *Note v0.8.1-A19, `new` and check: a deviation.* The paper is not ambiguous here:
+  $`\text{check}` {eq}`B.13` tests $`i \notin \mathcal{K}(\mathbf{e}_\mathbf{d})` with $`\mathbf{e}` the
+  base state passed to $`\Psi_A`, and `new` applies it in the middle of an invocation. Read as
+  written, an identifier ejected earlier in the invocation is skipped and one created earlier can
+  be returned again, which is likely unintended. The model deviates: it checks against the current
+  accounts $`(\mathbf{x}_\mathbf{e})_\mathbf{d}` ({api}`JAM.AccHost.new`). The two differ only if
+  the sequence meets an identifier created or ejected earlier in the same invocation.
 * *Note v0.8.1-A20, `new` by the registrar.* With the registrar choosing $`i < \mathsf{S}` equal to
   the funding service $`s`, the paper's $`\mathbf{d}'` sets $`\mathbf{d}'[i']` to the new account and
   also changes $`\mathbf{d}'[s]`'s balance, which conflict. The model tests $`\mathtt{CASH}` on $`s`'s
   own balances, then answers $`\mathtt{FULL}`.
+
+* *Note v0.8.1-A63, an empty export.* With $`\varphi_8 = 0`, `export`'s segment is $`\mathcal{P}_{\mathsf{W}_G}([])`, and
+  {eq}`14.20` pads the empty sequence to itself, so read literally the exported segment is empty, not a member of
+  $`\mathbb{J}`. The model appends $`\mathsf{W}_G` zero octets ({api}`JAM.RefineHost.exportSeg`).
+* *Note v0.8.1-A64, a missing authorizer host.* $`\mathbf{p}_\mathbf{u} = \Lambda(\delta[p_h], \ldots)` is undefined when $`p_h` is not a
+  service. The model gives BAD, as for a missing preimage ({api}`JAM.WorkPackage.authCode`, {api}`JAM.psiI`).
 
 * *Note v0.8.1-A36, a missing work item.* $`\Psi_R` reads $`w = p_\mathbf{w}[i]` without saying what happens when the
   package has no item $`i`. The model answers $`(\texttt{BAD}, [], 0)`, as for a missing service.

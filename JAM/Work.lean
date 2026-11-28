@@ -190,6 +190,9 @@ structure WorkReport where
   /-- $\mathbf{d}$, the work digests -/
   digests : List WorkDigest
 
+-- Equality of work reports, field by field (used by $e_n$, GP §17.3 eq. 17.16: $\mathbf{r} = \Xi(\ldots)$).
+deriving instance DecidableEq for RefineContext, WorkResult, WorkDigest, AvailabilitySpec, WorkReport
+
 /-- $\mathcal{E}(r \in \workreport)$ (GP Appendix C). -/
 def WorkReport.encode (r : WorkReport) : List UInt8 :=
   r.spec.encode ++ r.context.encode ++ nat r.core ++ blob r.authorizerHash ++ nat r.authGasUsed ++

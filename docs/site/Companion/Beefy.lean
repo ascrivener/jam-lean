@@ -51,7 +51,7 @@ tag := "beefy-map"
 * *The signed material, $`\text{last}(\recenthistory)_{\rh¬accoutlogsuperpeak}`.* Accumulation's output root, the Keccak Merkle root of
   the encoded $`\theta'`, is appended to the Accumulation Output Log $`\recent_B` by the Merkle mountain range
   append $`\mathcal{A}` (eqs. {eq}`7.6`, {eq}`7.7`); the new recent-history entry records its super-peak, $`b = \mathcal{M}_R(\recent'_B)` (eq. {eq}`7.8`). This is
-  {api}`JAM.recentHistory`, in the {ref "history-belt"}[§7 chapter], with the mountain-range functions
+  {api}`JAM.accOutRoot` and {api}`JAM.recentHistoryOf`, in the {ref "history-belt"}[§7 chapter], with the mountain-range functions
   {api}`JAM.MMR.append` and {api}`JAM.MMR.superPeak` of {ref "merkle-mmr"}[Appendix E.2]; the field is `accRoot`
   of {api}`JAM.RecentBlock`. Keccak-256, $`\fnkeccak`, is in plain Lean ({ref "primitives-hashing"}[§3.8.1]).
 * *The key, $`k_\vk¬bls`.* A validator key is 336 octets, and its BLS component is

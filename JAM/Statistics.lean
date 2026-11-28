@@ -96,40 +96,63 @@ def validatorStats (params : Params) (curr last : List ValidatorRecord) (i : Val
       guarantees := r.guarantees + if i.reporters.contains (i.activeEd.getD v []) then 1 else 0 }
   (curr', last')
 
+/-- The componentwise sum over a set of work digests of
+    $(1, \mathbf{d}_u, \mathbf{d}_i, \mathbf{d}_x, \mathbf{d}_z, \mathbf{d}_e)$: the tuple summed by $R(c)$ and $R(s)$ in GP §13.2
+    ($R(c)$ has no count). -/
+structure DigestTotals where
+  n : Nat
+  gasUsed : Nat
+  imports : Nat
+  xtCount : Nat
+  xtSize : Nat
+  exports : Nat
+
+/-- $\sum_{\mathbf{d} \in ds} (1, \mathbf{d}_u, \mathbf{d}_i, \mathbf{d}_x, \mathbf{d}_z, \mathbf{d}_e)$. -/
+def digestTotals (ds : List WorkDigest) : DigestTotals where
+  n := ds.length
+  gasUsed := (ds.map (·.gasUsed)).sum
+  imports := (ds.map (·.importCount)).sum
+  xtCount := (ds.map (·.extrinsicCount)).sum
+  xtSize := (ds.map (·.extrinsicSize)).sum
+  exports := (ds.map (·.exportCount)).sum
+
 /-- $\pi'_C$ (GP §13.2) from the incoming reports $\mathbf{I}$ (eq. `incomingworkreports`), the
     newly available reports $\mathbf{R}$ (eq. `availableworkreports`) and the assurances' bitfields
-    $a_f$. -/
+    $a_f$. $R(c)$, $L(c)$ and $D(c)$ are the paper's. -/
 def coreStats (params : Params) (incoming available : List WorkReport) (bitfields : List (List Bool)) :
     List CoreRecord :=
+  -- R(c) = ∑_{d ∈ r_d, r ∈ 𝐈, r_c = c} (d_i, d_x, d_z, d_e, d_u)
+  let R (c : Nat) : DigestTotals := digestTotals ((incoming.filter (·.core == c)).flatMap (·.digests))
+  -- L(c) = ∑_{r ∈ 𝐈, r_c = c} (r_s)_l
+  let L (c : Nat) : Nat := ((incoming.filter (·.core == c)).map (·.spec.bundleLength)).sum
+  -- D(c) = ∑_{r ∈ 𝐑, r_c = c} (r_s)_l + 𝖶_G ⌈(r_s)_n · 65/64⌉
+  let D (c : Nat) : Nat := ((available.filter (·.core == c)).map fun r =>
+    r.spec.bundleLength + Constants.Csegmentsize * ((r.spec.segmentCount * 65 + 63) / 64)).sum
   (List.range params.coreCount).map fun c =>
-    let ds := (incoming.filter (·.core == c)).flatMap (·.digests)
-    { imports := (ds.map (·.importCount)).sum, xtCount := (ds.map (·.extrinsicCount)).sum,
-      xtSize := (ds.map (·.extrinsicSize)).sum, exports := (ds.map (·.exportCount)).sum,
-      gasUsed := (ds.map (·.gasUsed)).sum,
-      -- L(c)
-      bundleLen := ((incoming.filter (·.core == c)).map (·.spec.bundleLength)).sum,
-      -- D(c): l + 𝖶_G ⌈n · 65/64⌉
-      daLoad := ((available.filter (·.core == c)).map fun r =>
-        r.spec.bundleLength + Constants.Csegmentsize * ((r.spec.segmentCount * 65 + 63) / 64)).sum,
+    { imports := (R c).imports, xtCount := (R c).xtCount, xtSize := (R c).xtSize,
+      exports := (R c).exports, gasUsed := (R c).gasUsed,
+      bundleLen := L c,
+      daLoad := D c,
       popularity := (bitfields.map fun f => if f.getD c false then 1 else 0).sum }
 
 /-- $\pi'_S$ (GP v0.8.1 §13.2) for $\mathbf{s} = \mathbf{s}^R \cup \mathbf{s}^P \cup \mathcal{K}(\mathbf{S})$,
     from the incoming reports $\mathbf{I}$, the preimages extrinsic $\mathbf{E}_P$ and the
     accumulation statistics $\mathbf{S}$. Services outside $\mathbf{s}$ have no record. The
     provision is $\sum_{\mathbf{p} \in \mathbf{E}_P, \mathbf{p}_s = s} (1, |\mathbf{p}_d|)$ (v0.8.1
-    states the filter on $s$, which v0.8.0 left implicit). -/
+    states the filter on $s$, which v0.8.0 left implicit). $R(s)$ is the paper's. -/
 def serviceStats (incoming : List WorkReport) (preimages : List (Nat × List UInt8))
     (acc : List (Nat × AccStat)) : Std.ExtTreeMap Nat ServiceRecord :=
   let digests := incoming.flatMap (·.digests)
   let active := (digests.map (·.service) ++ preimages.map (·.1) ++ acc.map (·.1)).eraseDups
+  -- R(s) = ∑_{d ∈ r_d, r ∈ 𝐈, d_s = s} (1, d_u, d_i, d_x, d_z, d_e)
+  let R (s : Nat) : DigestTotals := digestTotals (digests.filter (·.service == s))
   Std.ExtTreeMap.ofList <| active.map fun s =>
-    let ds := digests.filter (·.service == s)
     let ps := preimages.filter (·.1 == s)
     let r : ServiceRecord :=
       { provided := (ps.length, (ps.map fun p => p.2.length).sum),
-        refinement := (ds.length, (ds.map (·.gasUsed)).sum),
-        imports := (ds.map (·.importCount)).sum, xtCount := (ds.map (·.extrinsicCount)).sum,
-        xtSize := (ds.map (·.extrinsicSize)).sum, exports := (ds.map (·.exportCount)).sum,
+        refinement := ((R s).n, (R s).gasUsed),
+        imports := (R s).imports, xtCount := (R s).xtCount,
+        xtSize := (R s).xtSize, exports := (R s).exports,
         accumulation := (acc.lookup s).getD (0, 0, 0) }
     (s, r)
 

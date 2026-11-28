@@ -92,10 +92,6 @@ def readMem (μ : Memory) (o n : Nat) : Option (List UInt8) :=
 def chunks (k : Nat) (xs : List UInt8) (n : Nat) : List (List UInt8) :=
   (List.range n).map fun i => (xs.drop (k * i)).take k
 
-/-- Charge $g$ and run the body on the regular dimension $x$ (the common rules). -/
-def charge (g gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx)
-    (body : HostOut AccCtx → HostOut AccCtx) : HostOut AccCtx := charged g gas ω μ c body
-
 def r7 (out : HostOut AccCtx) (v : Nat) : HostOut AccCtx := { out with regs := setR7 out.regs v }
 def panic (out : HostOut AccCtx) : HostOut AccCtx := { out with status := .panic }
 def updX (out : HostOut AccCtx) (x : Implications) : HostOut AccCtx := { out with ctx := (x, out.ctx.2) }
@@ -130,7 +126,7 @@ def write (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let kO := reg ω 8; let kZ := reg ω 9; let vO := reg ω 10; let vZ := reg ω 11
   let g := Constants.CgasWconst + memGas Constants.CgasWkeylinear kZ +
     memGas Constants.CgasWvallinear vZ
-  charge g gas ω μ c fun out =>
+  charged g gas ω μ c fun out =>
     let x := c.1
     let d := tgt (reg ω 7) x.id
     match readMem μ kO kZ, readMem μ vO vZ with
@@ -158,7 +154,7 @@ def bless (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : Ho
   let m := reg ω 7; let a := reg ω 8; let v := reg ω 9; let r := reg ω 10; let o := reg ω 11
   let n := reg ω 12
   let C := env.params.coreCount
-  charge (Constants.CgasBconst + n * Constants.CgasBlinear) gas ω μ c fun out =>
+  charged (Constants.CgasBconst + n * Constants.CgasBlinear) gas ω μ c fun out =>
     let x := c.1
     let p := x.state
     let D (w y : Nat) : Nat := if w = 2 ^ 64 - 1 then y else w
@@ -192,7 +188,7 @@ def bless (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : Ho
 def assign (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let core := reg ω 7; let o := reg ω 8; let a := reg ω 9
   let Q := env.params.authQueueSize
-  charge Constants.CgasA gas ω μ c fun out =>
+  charged Constants.CgasA gas ω μ c fun out =>
     let x := c.1
     match readMem μ o (32 * Q) with
     | none => panic out
@@ -211,7 +207,7 @@ def validKeyCount (C z : Nat) : Bool := z % 3 == 0 && 2 ≤ z / 3 && z / 3 ≤ C
 /-- $\Omega_D$, `designate` = 18 (GP v0.8.1; unchanged apart from its number). -/
 def designate (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 7; let z := reg ω 8
-  charge (Constants.CgasDconst + z * Constants.CgasDlinear) gas ω μ c fun out =>
+  charged (Constants.CgasDconst + z * Constants.CgasDlinear) gas ω μ c fun out =>
     let x := c.1
     match readMem μ o (336 * z) with
     | none => panic out
@@ -221,7 +217,7 @@ def designate (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) 
 
 /-- $\Omega_C$, `checkpoint` = 19: $y' \equiv x$, $\varphi'_7 \equiv \varrho^{\ast}$. -/
 def checkpoint (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
-  charge Constants.CgasC gas ω μ c fun out =>
+  charged Constants.CgasC gas ω μ c fun out =>
     { out with ctx := (c.1, c.1), regs := setR7 ω out.gas }
 
 /-- $\Omega_N$, `new` = 20 (GP v0.8.1, junior services GP #539). Service $s = \varphi_7$ ($x_s$ for
@@ -234,7 +230,7 @@ def checkpoint (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccC
 def new (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let i := reg ω 8; let mode := reg ω 9; let o := reg ω 10
   let S := Constants.Cminpublicindex
-  charge Constants.CgasN gas ω μ c fun out =>
+  charged Constants.CgasN gas ω μ c fun out =>
     let x := c.1
     let s := tgt (reg ω 7) x.id
     let p := x.state
@@ -280,7 +276,7 @@ def new (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : Host
     $u = \varphi_8$ (each $x_s$ for $2^{64} - 1$), recorded with $u$'s creation slot. WHO unless both
     are services; HUH unless $x_s = E(\mathbf{d}, d)$. -/
 def supervisor (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
-  charge Constants.CgasV gas ω μ c fun out =>
+  charged Constants.CgasV gas ω μ c fun out =>
     let x := c.1
     let dd := tgt (reg ω 7) x.id
     let u := tgt (reg ω 8) x.id
@@ -296,7 +292,7 @@ def supervisor (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccC
     $x_s \in \{d, E(\mathbf{d}, d)\}$. -/
 def upgrade (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 8; let g := reg ω 9; let m := reg ω 10
-  charge Constants.CgasU gas ω μ c fun out =>
+  charged Constants.CgasU gas ω μ c fun out =>
     let x := c.1
     let d := tgt (reg ω 7) x.id
     match readMem μ o 32 with
@@ -309,13 +305,19 @@ def upgrade (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx 
         else r7 (updX out (putAcct x d { a with codeHash := h, minAccGas := g, minMemoGas := m })) OK
 
 /-- $\Omega_T$'s debit (GP v0.8.1): mode $x \in \{0, 2\}$ takes `amount` from src's balance,
-    $\{1, 3\}$ from its supervisor balance. -/
-def transferDebit (d : Accounts) (src mode amount : Nat) : Accounts :=
+    $\{1, 3\}$ from its supervisor balance. The paper's $\mathbf{d}'$ may hold a negative balance,
+    which CASH then rejects; the model's balances are naturals, so a debit larger than the balance
+    gives `none`. -/
+def transferDebit (d : Accounts) (src mode amount : Nat) : Option Accounts :=
   match d.get? src with
-  | some sa => d.insert src
-      (if mode = 0 ∨ mode = 2 then { sa with balance := sa.balance - amount }
-       else { sa with supervisorBalance := sa.supervisorBalance - amount })
-  | none => d
+  | some sa =>
+    if mode = 0 ∨ mode = 2 then
+      if amount ≤ sa.balance then some (d.insert src { sa with balance := sa.balance - amount })
+      else none
+    else if amount ≤ sa.supervisorBalance then
+      some (d.insert src { sa with supervisorBalance := sa.supervisorBalance - amount })
+    else none
+  | none => some d
 
 /-- $\Omega_T$'s immediate credit for $o = 0$ (GP v0.8.1): mode $x \in \{0, 1\}$ adds `amount` to
     dst's balance, $\{2, 3\}$ to its supervisor balance. With $o \neq 0$ the accounts are unchanged. -/
@@ -337,32 +339,20 @@ def transferPs (x : Implications) (src mode : Nat) : Bool :=
 def transferPd (x : Implications) (src dst mode o : Nat) : Bool :=
   o ≠ 0 || (mayModify x dst && ((mode = 1 ∨ mode = 2) || src ≠ dst))
 
-/-- The result code $c$ of $\Omega_T$ (GP v0.8.1) once the memo is readable: WHO, HUH, LOW, CASH or OK.
-
-    CASH tests $\mathbf{d}'[s]$ (GP v0.8.1 pvm_invocations.tex:1001–1006 and 1021), and
-    $\mathbf{d}'$ applies the debit and, for $o = 0$, the credit together. So for an immediate
-    transfer to the same service ($s = d$, $x \in \{1, 2\}$, the only modes $p_d$ allows then) the
-    credit counts: moving funds between one's own balance and supervisor balance never lowers
-    $b + b'$. -/
-def transferCode (x : Implications) (src dst mode amount l o : Nat) : Nat :=
+/-- $\Omega_T$'s outcome (GP v0.8.1) once the memo is readable: the result code WHO, HUH, LOW or
+    CASH, or for OK the accounts $\mathbf{d}'$ it commits. CASH tests $\mathbf{d}'[s]$, the debit
+    and, for $o = 0$, the credit applied together (`none` from `transferDebit` is a negative
+    balance). -/
+def transferCode (x : Implications) (src dst mode amount l o : Nat) : Except Nat Accounts :=
   let d := x.state.accounts
-  -- **d'**[s]'s balances, as integers: the debit, plus the immediate credit when d = s
-  let (sb, ssb, smin) : Int × Int × Nat := match d.get? src with
-    | some sa =>
-      let cr : Int := if o = 0 ∧ dst = src then amount else 0
-      let toSup : Bool := mode == 2 || mode == 3
-      if mode = 0 ∨ mode = 2 then
-        ((sa.balance : Int) - amount + (if toSup then 0 else cr),
-         (sa.supervisorBalance : Int) + (if toSup then cr else 0), sa.minBalance)
-      else
-        ((sa.balance : Int) + (if toSup then 0 else cr),
-         (sa.supervisorBalance : Int) - amount + (if toSup then cr else 0), sa.minBalance)
-    | none => (0, 0, 0)
-  if !d.contains src || !d.contains dst then WHO
-  else if mode > 3 || !transferPs x src mode || !transferPd x src dst mode o then HUH
-  else if o ≠ 0 && l < (d.getD dst default).minMemoGas then LOW
-  else if sb < 0 ∨ ssb < 0 ∨ sb + ssb < smin then CASH
-  else OK
+  if !d.contains src || !d.contains dst then .error WHO
+  else if mode > 3 || !transferPs x src mode || !transferPd x src dst mode o then .error HUH
+  else if o ≠ 0 && l < (d.getD dst default).minMemoGas then .error LOW
+  else match (transferDebit d src mode amount).map (transferCredit · dst mode amount o) with
+    | none => .error CASH
+    | some d' =>
+      let sa := d'.getD src default
+      if sa.balance + sa.supervisorBalance < sa.minBalance then .error CASH else .ok d'
 
 /-- $\Omega_T$, `transfer` = 22 (GP v0.8.1, GP #539), with $g = \mathsf{M}_T + t$ where $t = l$ for a
     deferred transfer that succeeds and 0 otherwise. Source $s = \varphi_7$ and destination
@@ -381,27 +371,27 @@ def transfer (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) :
     else (readMem μ o env.params.memoSize).map fun memo =>
       [({ source := src, dest := dst, destSupervisor := mode = 2 ∨ mode = 3, amount,
           memo := ⟨memo.toArray⟩, gas := l } : DeferredTransfer)]
-  let code : Option Nat := t.map fun _ => transferCode x src dst mode amount l o
-  let tg : Nat := if code = some OK ∧ o ≠ 0 then l else 0
-  charge (Constants.CgasT + tg) gas ω μ c fun out =>
-    match code, t with
-    | none, _ => panic out
-    | some c', some t =>
-      if c' ≠ OK then r7 out c'
-      else
-        let w : List Nat := if o = 0 then [src, dst] else [src]
-        let d2 := transferCredit (transferDebit x.state.accounts src mode amount) dst mode amount o
-        let x' := { x with state := { x.state with accounts := d2 }, xfers := x.xfers ++ t,
-                           modified := w.foldl (fun s i => s.insert i) x.modified }
-        r7 (updX out x') OK
-    | some c', none => r7 out c'
+  let res : Option (Except Nat Accounts × List DeferredTransfer) :=
+    t.map fun t => (transferCode x src dst mode amount l o, t)
+  let tg : Nat := match res with
+    | some (.ok _, _) => if o = 0 then 0 else l
+    | _ => 0
+  charged (Constants.CgasT + tg) gas ω μ c fun out =>
+    match res with
+    | none => panic out
+    | some (.error c', _) => r7 out c'
+    | some (.ok d', t) =>
+      let w : List Nat := if o = 0 then [src, dst] else [src]
+      let x' := { x with state := { x.state with accounts := d' }, xfers := x.xfers ++ t,
+                         modified := w.foldl (fun s i => s.insert i) x.modified }
+      r7 (updX out x') OK
 
 /-- $\Omega_J$, `eject` = 23 (GP v0.8.1): remove service $d = \varphi_7$ and credit its balance and
     supervisor balance to $x_s$. WHO if $d$ is not a service; HUH if $d = x_s$,
     $x_s \neq E(\mathbf{d}, d)$, $d$ was created in this slot, or $d$ still has items. -/
 def eject (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let dId := reg ω 7
-  charge Constants.CgasJ gas ω μ c fun out =>
+  charged Constants.CgasJ gas ω μ c fun out =>
     let x := c.1
     let accts := x.state.accounts
     match accts.get? dId with
@@ -420,7 +410,7 @@ def eject (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : Ho
     $\varphi_7$ names no service. -/
 def query (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 8; let z := reg ω 9
-  charge Constants.CgasQ gas ω μ c fun out =>
+  charged Constants.CgasQ gas ω μ c fun out =>
     let set78 (a b : Nat) : HostOut AccCtx :=
       { out with regs := (out.regs.set 7 (UInt64.ofNat a)).set 8 (UInt64.ofNat b) }
     if z ≥ ServiceAccount.requestLenBound then r7 out HUH
@@ -444,7 +434,7 @@ def query (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
     (re-)solicited; FULL if the result is `overFull` (GP #581). -/
 def solicit (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 8; let z := reg ω 9
-  charge Constants.CgasS gas ω μ c fun out =>
+  charged Constants.CgasS gas ω μ c fun out =>
     let x := c.1
     let d := tgt (reg ω 7) x.id
     if z ≥ ServiceAccount.requestLenBound then r7 out HUH
@@ -472,7 +462,7 @@ def solicit (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : 
     now. -/
 def forget (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 8; let z := reg ω 9
-  charge Constants.CgasF gas ω μ c fun out =>
+  charged Constants.CgasF gas ω μ c fun out =>
     let x := c.1
     let d := tgt (reg ω 7) x.id
     let old (y : Nat) : Bool := (y : Int) < (env.slot : Int) - env.params.expungePeriod
@@ -497,7 +487,7 @@ def forget (env : AccEnv) (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : H
 
 /-- $\Omega_{\text{♉}}$, `yield` = 27. -/
 def yield (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
-  charge Constants.CgasTaurus gas ω μ c fun out =>
+  charged Constants.CgasTaurus gas ω μ c fun out =>
     match readMem μ (reg ω 7) 32 with
     | none => panic out
     | some h => r7 (updX out { c.1 with yield := some h }) OK
@@ -505,7 +495,7 @@ def yield (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
 /-- $\Omega_{\text{♈}}$, `provide` = 28 (GP v0.8.1): HUH first if $z \notin \preimagelen$. -/
 def provide (gas : Nat) (ω : Regs) (μ : Memory) (c : AccCtx) : HostOut AccCtx :=
   let o := reg ω 8; let z := reg ω 9
-  charge (Constants.CgasAriesconst + memGas Constants.CgasArieslinear z) gas ω μ c fun out =>
+  charged (Constants.CgasAriesconst + memGas Constants.CgasArieslinear z) gas ω μ c fun out =>
     let x := c.1
     let s := tgt (reg ω 7) x.id
     if z ≥ ServiceAccount.requestLenBound then r7 out HUH
@@ -588,7 +578,15 @@ def initImplications (e : PartialState) (s slot : Nat) (entropy : List UInt8)
 
 /-- $\Psi_A$ from the state $\mathbf{e}'$ with the incoming transfers already credited and the
     modified set $\mathbf{m}$: look up $s$'s code and run it (GP v0.8.1 eq. `accinvocation`, the
-    cases after $\mathbf{e}'$ is formed). -/
+    cases after $\mathbf{e}'$ is formed).
+
+    $\Psi_M$ takes its gas in $\mathbb{N}_G$ ($< 2^{64}$), but $\Delta_1$'s
+    $g = \mathbf{f}[s] + \sum \mathbf{t}_g + \sum \mathbf{d}_g$ (eq. `accone`) is unbounded: the
+    manager may bless $\mathbf{z} = \{s \mapsto 2^{64} - 1\}$ and $s$ still receive transfer or
+    digest gas. The model saturates, running $\Psi_M$ with $\min(g, 2^{64} - 1)$ rather than letting
+    the gas wrap modulo $2^{64}$. A project decision; the paper gap is
+    [`docs/upstream-candidates.md`](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues)
+    v0.8.1-A61. -/
 def psiARun (params : Params) (entropy : List UInt8) (st : PartialState) (t s g : Nat)
     (inputs : List AccumulateInput) (m : Std.ExtTreeSet Nat := ∅) : AccOut :=
   let code := (st.accounts.get? s).bind (·.code)
@@ -600,7 +598,7 @@ def psiARun (params : Params) (entropy : List UInt8) (st : PartialState) (t s g 
       let env : AccEnv := { params, slot := t, entropy, inputs, code := c }
       let x := initImplications st s t entropy m
       let args : ByteArray := ⟨(Codec.nat t ++ Codec.nat s ++ Codec.nat inputs.length).toArray⟩
-      let (u, o, (x, y)) := psiM c 5 (UInt64.ofNat g) args (accHostFn env) (x, x)
+      let (u, o, (x, y)) := psiM c 5 (UInt64.ofNat (min g (2 ^ 64 - 1))) args (accHostFn env) (x, x)
       match o with
       | .oog | .panic => ⟨y.state, y.modified, y.xfers, y.yield, u, y.provisions⟩
       | .ok out =>

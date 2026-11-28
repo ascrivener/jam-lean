@@ -171,7 +171,7 @@ def accAlways : IO Example := do
       { label := s!"Service {s}: balance $a_b$", cells := [toString a.balance, toString a'.balance] },
       { label := s!"Service {s}: storage items $a_i$, octets $a_o$", cells := [s!"{a.items}, {a.octets}", s!"{a'.items}, {a'.octets}"] },
       { label := s!"Statistics for service {s}", cells := ["", statS] },
-      { label := "Accumulation outputs $\\theta'$", cells := ["", s!"{count res.outputs.length "output" "outputs"}; root {abbr res.root}"] }],
+      { label := "Accumulation outputs $\\theta'$", cells := ["", s!"{count res.outputs.length "output" "outputs"}; root {abbr (accOutRoot res.outputs)}"] }],
     notes := [s!"$N$ counts the work digests it accumulated (none here), $X$ the transfers it received, and $G$ \
       the gas it used, out of the {gas} that $\\chi_Z$ grants it. A service with statistics gets $a'_a = \\tau'$."],
     model := ["JAM.accumulate", "JAM.accSeq"],

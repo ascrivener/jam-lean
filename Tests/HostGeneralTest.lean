@@ -371,7 +371,7 @@ def accPre (e : PartialState) : AccState :=
 def accAt (e : PartialState) : AccResult :=
   match accumulate .tiny (accPre e) 10 [] with
   | .ok r => r
-  | .error _ => { state := accPre e, root := [], stats := [] }
+  | .error _ => { state := accPre e, stats := [] }
 
 /-- The accumulation STF succeeds on this state. -/
 def accOk (e : PartialState) : Bool :=
@@ -395,7 +395,7 @@ def hArgs (k : Nat) : List UInt8 := [10, 20, k.toUInt8] ++ List.replicate 29 0
 def thetaRes := accAt (psOf [(20, svc (some argYield))] [20])
 #guard accOk (psOf [(20, svc (some argYield))] [20])
 #guard thetaRes.outputs == [(20, hArgs 0), (20, hArgs 1), (20, hArgs 2)]
-#guard thetaRes.root ==
+#guard accOutRoot thetaRes.outputs ==
   Merkle.root Keccak.keccak256 ([0, 1, 2].map fun k => Codec.fixed 4 20 ++ hArgs k)
 -- three rounds' transfers: two from round 1, one from round 2
 #guard thetaRes.stats == [(20, (0, 3, (thetaRes.stats.lookup 20).elim 0 (·.2.2)))]

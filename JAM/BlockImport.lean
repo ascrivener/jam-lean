@@ -173,9 +173,12 @@ def importBlock (params : Params) (c : Crypto) (chain : Chain) (σ : State) (B :
   let acc ← (accumulate params accPre slot avail).mapError .accumulation
   let ps := acc.state.pstate
   -- §7: recent history.
-  let recent' := recentHistory params { σ.recent with history := σ.recent.history }
-    { headerHash := H.hash, parentStateRoot := H.priorStateRoot.toList, accRoot := acc.root,
-      slot, reported := gOut.reported.toList }
+  -- p = {((g_r)_s)_p ↦ ((g_r)_s)_e | g ∈ E_G} (eq. `recenthistorydef`).
+  let accRoot := accOutRoot acc.outputs
+  let recent' := recentHistoryOf params recentDagger σ.recent.belt
+    { headerHash := H.hash, parentStateRoot := H.priorStateRoot.toList, accRoot, slot,
+      reported := X.guarantees.map fun g =>
+        (g.report.spec.packageHash.toList, g.report.spec.segmentRoot.toList) }
   -- §12.4: preimages.
   let xp := X.preimages.map fun p => (p.requester, p.blob.toList)
   let accounts' ← (preimages σ.accounts ps.accounts xp slot).mapError .preimages
@@ -199,6 +202,6 @@ def importBlock (params : Params) (c : Crypto) (chain : Chain) (σ : State) (B :
       coreStats := coreStats params incoming avail (X.assurances.map (·.bitfield)),
       serviceStats := serviceStats incoming xp acc.stats,
       ready := acc.state.ready, accumulated := acc.state.accumulated }
-  return (σ', { available := avail, accRoot := acc.root })
+  return (σ', { available := avail, accRoot })
 
 end JAM

@@ -99,9 +99,13 @@ the log:
 
 {gpeq "7.7"}
 
-In the model, accumulation computes the root $`\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)` (it is `AccResult.root`, returned by
-{api}`JAM.accumulate`) and passes it to {api}`JAM.recentHistory` as `HistoryInput.accRoot`. Everything
-the transition reads from the block and from accumulation is in {api}`JAM.HistoryInput`:
+In the model, {api}`JAM.accOutRoot` computes the root $`\mathcal{M}_B(\mathbf{s}, \mathcal{H}_K)` from
+$`\theta'` (`AccResult.outputs`, returned by {api}`JAM.accumulate`). {api}`JAM.importBlock` passes it to
+{api}`JAM.recentHistoryOf` as `HistoryInput.accRoot`:
+
+{leanSource JAM.accOutRoot}
+
+Everything the transition reads from the block and from accumulation is in {api}`JAM.HistoryInput`:
 
 {leanSource JAM.HistoryInput}
 
@@ -140,6 +144,13 @@ The posterior $`\beta_H` appends an entry for the new block and keeps the last $
 $`\overleftarrow{\mathbf{s}}^n` is the last $`n` elements of $`\mathbf{s}` (§3.7), and $`\mathbf{p}` maps the package hash of each guaranteed report's
 availability specification to its segment root. The new state root is $`\mathbb{H}_0`. The paper notes that this is
 "inaccurate but safe": $`\beta'` is only used to form the next block's $`\beta^\dagger`, which corrects it by {eq}`7.5`.
+
+{leanSource JAM.recentHistoryOf}
+
+{api}`JAM.recentHistoryOf` takes $`\beta^\dagger_H` as its argument `dagger`, as eq. {eq}`7.8` does:
+{api}`JAM.importBlock` forms $`\beta^\dagger_H` once (it also gives it to the guarantees step) and
+builds `reported`, the map $`\mathbf{p}`, from $`\mathbf{E}_G`. The whole transition of §7, as the
+history test vectors exercise it, forms $`\beta^\dagger_H` first:
 
 {leanSource JAM.recentHistory}
 

@@ -1,7 +1,7 @@
 {
   "equations": {
     "18.1": { "kind": "notModelled",
-              "reason": "the signed commitment is node behaviour outside the state transition, and the crypto parameter has no BLS operations; the signed super-peak itself is computed by `JAM.recentHistory` (eq. 7.8)" },
+              "reason": "the signed commitment is node behaviour outside the state transition, and the crypto parameter has no BLS operations; the signed super-peak itself is computed by `JAM.recentHistoryOf` (eq. 7.8)" },
     "18.2": { "kind": "notModelled",
               "reason": "the context string is used only by the commitment of eq. 18.1, which is not modelled" }
   }

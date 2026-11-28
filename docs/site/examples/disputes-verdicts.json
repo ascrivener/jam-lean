@@ -1,0 +1,44 @@
+{"title": "Two verdicts: a bad report's core is cleared",
+ "summary":
+ "The extrinsic brings one verdict that a report is good and one that another is bad. The bad report is pending availability on a core, so that core is cleared and the report will not be accumulated. The guarantors of the bad report (culprits) and a validator who judged the good report invalid (a fault) become offenders.",
+ "source":
+ {"url":
+  "https://github.com/davxy/jam-test-vectors/blob/v0.8.0/stf/disputes/tiny/progress_invalidates_avail_assignments-1.json",
+  "repo": "davxy/jam-test-vectors v0.8.0",
+  "path": "stf/disputes/tiny/progress_invalidates_avail_assignments-1.json"},
+ "rows":
+ [{"label": "Verdict on report `0xa78b526a…`",
+   "cells": ["", "good: all 5 judgments valid (5 of the 6 validators judge)"]},
+  {"label": "Verdict on report `0xf9076864…`",
+   "cells": ["", "bad: all 5 judgments invalid (5 of the 6 validators judge)"]},
+  {"label": "Core 0: pending report $\\rho[0]$",
+   "cells": ["report `0xf9076864…` (bad), since slot 42", "empty"]},
+  {"label": "Core 1: pending report $\\rho[1]$",
+   "cells":
+   ["report `0xa78b526a…` (good), since slot 42", "report `0xa78b526a…` (good), since slot 42"]},
+  {"label": "Good reports $\\psi_G$", "cells": ["empty", "`0xa78b526a…`"]},
+  {"label": "Bad reports $\\psi_B$", "cells": ["empty", "`0xf9076864…`"]},
+  {"label": "Wonky reports $\\psi_W$", "cells": ["empty", "empty"]},
+  {"label": "Offenders $\\psi_O$",
+   "cells": ["empty", "`0x4418fb8c…`, `0xad93247b…`, `0xf30aa544…`"]},
+  {"label": "Offenders marker $\\mathbf{H}_O$",
+   "cells": ["", "`0x4418fb8c…`, `0xad93247b…`, `0xf30aa544…`"]}],
+ "params":
+ "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators)",
+ "nowrapColumns": [],
+ "notes":
+ ["A verdict needs $\\lfloor 2/3 \\cdot 6 \\rfloor + 1$ = 5 judgments. All valid makes it good, none valid bad. The report of a pending core is matched by the hash of its encoding.",
+  "The pending reports' timeslots are the vector's set-up (prior $\\tau$ = 0); the disputes step does not check $\\rho$'s timeslots."],
+ "name": "disputes-verdicts",
+ "model":
+ ["JAM.disputesTransition", "JAM.verdictOutcome", "JAM.clearNonPositive", "JAM.assimilate"],
+ "inputs":
+ [{"value": "0 (epoch 0)", "label": "Prior timeslot $\\tau$"},
+  {"value": "2", "label": "Verdicts $\\mathbf{v}$"},
+  {"value": "2", "label": "Culprits $\\mathbf{c}$"},
+  {"value": "key `0xf30aa544…` says report `0xa78b526a…` (good) is invalid",
+   "label": "Faults $\\mathbf{f}$"}],
+ "equations": ["10.12", "10.13", "10.14", "10.15", "10.16", "10.17", "10.18", "10.19"],
+ "columns": ["", "Before", "After"],
+ "check":
+ "The model's result equals the vector's expected output, compared as `lake build disputestest` compares every vector of the suite; the generator repeats that comparison for this one. Signatures are checked by the suite's oracle, which accepts them all for this vector."}

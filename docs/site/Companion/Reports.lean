@@ -149,6 +149,11 @@ $`3 \cdot \text{count} > 2|\kappa|`, and `ρ'` is $`\rho^\ddagger`:
 
 {leanSource JAM.assurances}
 
+Here are the assurances of a test vector: one core's report gets enough of them to become
+available, and the other's does not:
+
+{example "assurances-available"}
+
 # Guarantor assignments (§11.3)
 %%%
 tag := "reports-assignments"
@@ -299,6 +304,10 @@ This is the `ρ'` binding at the end of {api}`JAM.guarantees`, which also carrie
 of §11.4, in the order given in its docstring:
 
 {leanSource JAM.guarantees}
+
+Here is {api}`JAM.guarantees` on a test vector with one guarantee for each core, both accepted:
+
+{example "reports-guarantees"}
 
 # Theorems
 

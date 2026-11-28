@@ -1,0 +1,31 @@
+{"title": "Assurances make a report available",
+ "summary":
+ "Both cores have a report pending availability. 6 validators send assurances, each setting a bit for every core whose chunk it holds. A report becomes available when more than two thirds of the 6 validators set its bit; its core is then cleared.",
+ "source":
+ {"url":
+  "https://github.com/davxy/jam-test-vectors/blob/v0.8.0/stf/assurances/tiny/some_assurances-1.json",
+  "repo": "davxy/jam-test-vectors v0.8.0",
+  "path": "stf/assurances/tiny/some_assurances-1.json"},
+ "rows":
+ [{"label": "Pending report $\\rho^\\dagger[c]$",
+   "cells": ["package `0x63c03371…`, since slot 11", "package `0xc7e675b7…`, since slot 11"]},
+  {"label": "Assurances setting the bit", "cells": ["5 of 6", "4 of 6"]},
+  {"label": "Available: in $\\mathbf{R}$", "cells": ["yes", "no"]},
+  {"label": "After: $\\rho^\\ddagger[c]$",
+   "cells": ["empty", "package `0xc7e675b7…`, since slot 11"]}],
+ "params":
+ "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators), $\\mathsf{U}$ = 5",
+ "nowrapColumns": [],
+ "notes":
+ ["More than two thirds of 6 means at least 5. A report that is not yet available stays until it is, or until it times out at slot $t + \\mathsf{U}$."],
+ "name": "assurances-available",
+ "model": ["JAM.assurances", "JAM.checkAssurance"],
+ "inputs":
+ [{"value": "12", "label": "Slot $\\mathbf{H}_T$"},
+  {"value":
+   "validator 0: core 1; validator 1: core 0; validator 2: core 0 and 1; validator 3: core 0 and 1; validator 4: core 0 and 1; validator 5: core 0",
+   "label": "Assurances $\\mathbf{E}_A$"}],
+ "equations": ["11.16", "11.17"],
+ "columns": ["", "Core 0", "Core 1"],
+ "check":
+ "The model's result equals the vector's expected output, compared as `lake build assurancestest` compares every vector of the suite; the generator repeats that comparison for this one. Signatures are checked by the suite's oracle, which accepts them all for this vector."}

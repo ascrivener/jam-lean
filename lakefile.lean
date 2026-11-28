@@ -57,6 +57,9 @@ lean_lib Tests where
     .one `Tests.V080, .one `Tests.AuditingTest, .one `Tests.SegmentsTest,
     .one `Tests.GuaranteeTest, .one `Tests.BestChainTest,
     .one `Tests.SafroleHarness, .one `Tests.AccumulateHarness, .one `Tests.PvmHarness,
+    .one `Tests.HistoryHarness, .one `Tests.AuthorizationsHarness, .one `Tests.StatisticsHarness,
+    .one `Tests.PreimagesHarness, .one `Tests.DisputesHarness, .one `Tests.AssurancesHarness,
+    .one `Tests.ReportsHarness,
     .submodules `Tests.Examples]
 
 lean_exe «pvmtest-exe» where

@@ -1,0 +1,32 @@
+{"title": "Two guarantees accepted onto their cores",
+ "summary":
+ "The block carries 2 guarantees, one for each core. Each report passes the checks of §11.4, among them: its guarantors are assigned to its core, its authorizer is in the core's pool, and its anchor is a recent block. Each core then holds its report, stamped with the block's timeslot, until it becomes available or times out.",
+ "source":
+ {"url":
+  "https://github.com/davxy/jam-test-vectors/blob/5e8d2a2423256d6138a3f265a251429a4c63f66f/stf/reports/tiny/multiple_reports-1.json",
+  "repo": "davxy/jam-test-vectors master 5e8d2a2 (the v0.8.0 vectors with corrected anchor slots)",
+  "path": "stf/reports/tiny/multiple_reports-1.json"},
+ "rows":
+ [{"label": "Report's package $(r_\\mathbf{s})_p$", "cells": ["`0x63c03371…`", "`0xc7e675b7…`"]},
+  {"label": "Work digests and their services",
+   "cells": ["1 digest, service 42", "1 digest, service 42"]},
+  {"label": "Signed by validators", "cells": ["1, 4, 5", "0, 2"]},
+  {"label": "Before: $\\rho^\\ddagger[c]$", "cells": ["empty", "empty"]},
+  {"label": "After: $\\rho'[c]$",
+   "cells": ["package `0x63c03371…`, since slot 14", "package `0xc7e675b7…`, since slot 14"]},
+  {"label": "Reported packages (for recent history)", "cells": ["2 packages", ""]},
+  {"label": "Reporters $\\mathbf{G}$", "cells": ["5 Ed25519 keys", ""]}],
+ "params":
+ "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators), $\\mathsf{R}$ = 4",
+ "nowrapColumns": [],
+ "notes":
+ ["The reporters are the Ed25519 keys of every guarantee's signers; the validator statistics of §13 credit each with a guarantee."],
+ "name": "reports-guarantees",
+ "model": ["JAM.guarantees", "JAM.checkGuarantee"],
+ "inputs":
+ [{"value": "14", "label": "Slot $\\mathbf{H}_T$"},
+  {"value": "2", "label": "Guarantees $\\mathbf{E}_G$"}],
+ "equations": ["11.23", "11.24", "11.25", "11.26", "11.27", "11.46"],
+ "columns": ["", "Core 0", "Core 1"],
+ "check":
+ "The model's result equals the vector's expected output, compared as `lake build reportstest` compares every vector of the suite; the generator repeats that comparison for this one. Signatures are checked by the suite's oracle, which accepts them all for this vector."}

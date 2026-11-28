@@ -1,5 +1,6 @@
 import Tests.Examples.Basic
 import Tests.Examples.Pilot
+import Tests.Examples.STF
 import Tests.Examples.Appendices
 
 
@@ -34,6 +35,7 @@ namespace JAM.Tests.Examples
     its import above and its list here. -/
 def examples : List (IO Example) := List.flatten [
   pilot,
+  stf,
   appendixExamples]
 
 end JAM.Tests.Examples

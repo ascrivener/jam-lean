@@ -1,0 +1,41 @@
+{"title": "Validator statistics: one block's counters",
+ "summary":
+ "The block at slot 123457 stays in the epoch of slot 123456, so $\\pi_V$ keeps accumulating. The author is credited the block, its tickets and its preimages; each assurer an assurance; each validator whose key signed a guarantee a guarantee. Each cell shows the counter before → after.",
+ "source":
+ {"url":
+  "https://github.com/davxy/jam-test-vectors/blob/v0.8.0/stf/statistics/tiny/stats_with_some_extrinsic-1.json",
+  "repo": "davxy/jam-test-vectors v0.8.0",
+  "path": "stf/statistics/tiny/stats_with_some_extrinsic-1.json"},
+ "rows":
+ [{"label": "0", "cells": ["18093", "11785", "27", "575", "1363 → 1364", "1359 → 1360"]},
+  {"label": "1 (author)",
+   "cells":
+   ["15610 → 15611", "17650 → 17652", "39 → 42", "731 → 782", "1319 → 1320", "1379 → 1380"]},
+  {"label": "2", "cells": ["13127", "8155", "34", "442", "1882 → 1883", "1586"]},
+  {"label": "3", "cells": ["15860", "14436", "121", "965", "1457 → 1458", "1749"]},
+  {"label": "4", "cells": ["13377", "20301", "6", "270", "1310", "1734"]},
+  {"label": "5", "cells": ["10894", "10806", "1", "941", "1441", "1541"]}],
+ "params":
+ "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators)",
+ "nowrapColumns": [1, 2, 3, 4, 5, 6],
+ "notes": ["No epoch change: the previous epoch's record $\\pi_L$ is unchanged."],
+ "name": "statistics-validators",
+ "model": ["JAM.validatorStats"],
+ "inputs":
+ [{"value": "123457 (123456)", "label": "Slot $\\mathbf{H}_T$ (prior $\\tau$)"},
+  {"value": "1", "label": "Author $\\mathbf{H}_I$"},
+  {"value": "2", "label": "Tickets $\\mathbf{E}_T$"},
+  {"value": "3, 51 octets", "label": "Preimages $\\mathbf{E}_P$"},
+  {"value": "0, 1", "label": "Assurers"},
+  {"value": "validators 0, 1, 2, 3", "label": "Reporters $\\mathbf{G}$"}],
+ "equations": ["13.4", "13.5", "13.6"],
+ "columns":
+ ["Validator",
+  "Blocks $b$",
+  "Tickets $t$",
+  "Preimages $p$",
+  "Preimage octets $d$",
+  "Guarantees $g$",
+  "Assurances $a$"],
+ "check":
+ "The model's result equals the vector's expected output, compared as `lake build statstest` compares every vector of the suite; the generator repeats that comparison for this one."}

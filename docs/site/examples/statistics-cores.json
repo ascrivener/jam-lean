@@ -1,0 +1,32 @@
+{"title": "Core and service statistics of two guaranteed reports",
+ "summary":
+ "The core and service records count only the current block. Here the block guarantees one report on each core, both for the same service. Each core sums its report's work digests; the service sums the digests of both reports. No report became available and no assurances were made, so the availability load $d$ and popularity $p$ are 0.",
+ "source":
+ {"url":
+  "https://github.com/davxy/jam-test-vectors/blob/5e8d2a2423256d6138a3f265a251429a4c63f66f/stf/reports/tiny/multiple_reports-1.json",
+  "repo": "davxy/jam-test-vectors master 5e8d2a2 (the v0.8.0 vectors with corrected anchor slots)",
+  "path": "stf/reports/tiny/multiple_reports-1.json"},
+ "rows":
+ [{"label": "Imports $i$", "cells": ["8", "1", "9"]},
+  {"label": "Extrinsics $x$", "cells": ["8", "3", "11"]},
+  {"label": "Extrinsic octets $z$", "cells": ["1526", "1926", "3452"]},
+  {"label": "Exports $e$", "cells": ["17", "18", "35"]},
+  {"label": "Refinement gas $u$", "cells": ["821", "697", "1518"]},
+  {"label": "Digests refined $n$", "cells": ["—", "—", "2"]},
+  {"label": "Bundle length $l$", "cells": ["17180", "12487", "—"]},
+  {"label": "Availability load $d$", "cells": ["0", "0", "—"]},
+  {"label": "Popularity $p$", "cells": ["0", "0", "—"]}],
+ "params":
+ "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators)",
+ "nowrapColumns": [],
+ "notes": [],
+ "name": "statistics-cores",
+ "model": ["JAM.coreStats", "JAM.serviceStats"],
+ "inputs":
+ [{"value": "core 0: 1 digest, core 1: 1 digest", "label": "Incoming reports $\\mathbf{I}$"},
+  {"value": "none", "label": "Available reports $\\mathbf{R}$"},
+  {"value": "none", "label": "Assurances $\\mathbf{E}_A$"}],
+ "equations": ["13.9", "13.10", "13.11", "13.12", "13.13", "13.14"],
+ "columns": ["", "Core 0 $\\pi'_C$", "Core 1 $\\pi'_C$", "Service 42 $\\pi'_S$"],
+ "check":
+ "The model's result equals the vector's expected output, compared as `lake build reportstest` compares every vector of the suite; the generator repeats that comparison for this one. That suite compares $\\pi'_C$ and $\\pi'_S$ from the incoming reports."}

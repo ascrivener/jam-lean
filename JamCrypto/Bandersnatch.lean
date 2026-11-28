@@ -155,7 +155,7 @@ def ietfVerify (key ctx msg sig : List UInt8) : Bool := Id.run do
     decoding them: the first 32 octets of
     $\text{SHA-512}(\mathtt{Bandersnatch\_SHA\text{-}512\_ELL2} \frown [3] \frown \text{point} \frown [0])$.
     For a canonical point encoding this is `vrfOutput`; it is what `vrfOutput` falls back to for an
-    encoding that does not decode, and the trace runner's oracle (`Tests/TraceTest.lean`) uses it as
+    encoding that does not decode, and the trace runner's oracle ([`Tests/TraceTest.lean`](https://github.com/ascrivener/jam-lean/blob/main/Tests/TraceTest.lean)) uses it as
     $\mathcal{Y}$. Moved from `JAM.Sha512.vrfOutput`: the model never uses it. -/
 def octetOutput (sig : List UInt8) : List UInt8 :=
   (JAM.Sha512.hash (suiteString ++ [3] ++ sig.take 32 ++ [0])).take 32

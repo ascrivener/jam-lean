@@ -114,8 +114,8 @@ verdict may be about a report already judged:
 
 In the model, $`K` is {api}`JAM.judgeKeys`, with $`\kappa` and $`\lambda` entering only through their Ed25519
 keys. The type $`\lfloor \tau/\mathsf{E} \rfloor - \mathbb{N}_2` of $`a` becomes the condition $`a = e \vee a + 1 = e`. The other conditions of
-{eq}`10.4`, {eq}`10.10` and {eq}`10.11` for one verdict are {api}`JAM.checkVerdict`, which also returns the
-verdict's outcome:
+{eq}`10.4`, {eq}`10.10` and {eq}`10.11` for one verdict are {api}`JAM.checkVerdict`. It only validates;
+the verdict's entry of $`\mathbf{v}` is computed by {api}`JAM.verdicts` ({ref "disputes-verdicts"}[below]):
 
 {leanSource JAM.judgeKeys}
 
@@ -142,6 +142,11 @@ $`V` is {api}`JAM.verdictOutcome`. It returns `none` where the paper's $`V` is u
 
 {leanSource JAM.verdictOutcome}
 
+$`\mathbf{v}` is {api}`JAM.verdicts`. It is `none` when some $`V` is undefined, which cannot happen once
+every verdict has passed {api}`JAM.checkVerdict`:
+
+{leanSource JAM.verdicts}
+
 The good-verdict count is the supermajority that {ref "auditing"}[§17]'s auditing uses: of `V` validators, `t` positive
 judgments are more than two thirds ($`3t > 2V`) exactly when there are at least $`\lfloor 2V/3 \rfloor + 1` of them.
 In the theorem `V` is the validator count and `t` the number of positive judgments; `V` is not the
@@ -162,6 +167,11 @@ contradicts the verdict. Neither may name a key already punished:
 {gpeq "10.7"}
 
 $$`\text{where } \mathbf{k} = \{ i_e \mid i \in \lambda \cup \kappa \} \setminus \psi_O`
+
+$`\mathbf{k}` is {api}`JAM.offenceKeys`. The paper names no error for a key outside it; the model
+reports one in $`\psi_O` as already an offender, and any other as an unknown guarantor or auditor key:
+
+{leanSource JAM.offenceKeys}
 
 {gpeq "10.9"}
 
@@ -194,11 +204,12 @@ tag := "disputes-posterior"
 
 {gpeq "10.15, 10.16, 10.17, 10.18"}
 
-The first three are {api}`JAM.assimilate`:
+They are {api}`JAM.disputesPosterior`, each a union, as in the paper. {api}`JAM.judgedAs` gives the report
+hashes of the verdicts with one outcome:
 
-{leanSource JAM.assimilate}
+{leanSource JAM.judgedAs}
 
-$`\psi'_O` is built at the end of {api}`JAM.disputesTransition`, from the same keys as the marker below.
+{leanSource JAM.disputesPosterior}
 
 # The offenders marker (§10.3)
 %%%
@@ -207,8 +218,9 @@ tag := "disputes-header"
 
 {gpeq "10.19"}
 
-This is `mark` in {api}`JAM.disputesTransition`, returned as `offendersMark`
-({api}`JAM.DisputesOutput`).
+This is {api}`JAM.offendersMark`, returned as the `offendersMark` field of {api}`JAM.DisputesOutput`:
+
+{leanSource JAM.offendersMark}
 
 # The transition
 %%%
@@ -235,9 +247,11 @@ tag := "disputes-readings"
 The first two points are note 29, and the others the notes they name, in the model's
 [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues):
 
-* *The fault condition.* $`r \in \psi'_B \Leftrightarrow r \notin \psi'_G \Leftrightarrow v` can be read as a chain of two
-  equivalences or as $`((r \in \psi'_B \Leftrightarrow r \notin \psi'_G) \Leftrightarrow v)`. The second reading would accept a fault
-  with $`v = \top` on a report with a good verdict. The model reads a chain.
+* *The fault condition.* The prose settles $`r \in \psi'_B \Leftrightarrow r \notin \psi'_G \Leftrightarrow v`: §10.2 defines a fault
+  as a judgment "found to be in contradiction to a work-report's validity", and chained
+  $`\Leftrightarrow` reads, as usual, as a chain of two equivalences. The other parse,
+  $`((r \in \psi'_B \Leftrightarrow r \notin \psi'_G) \Leftrightarrow v)`, would accept a fault with $`v = \top` on a report with a
+  good verdict. The model reads a chain.
 * *Errors and their order.* The paper names no errors for an invalid disputes extrinsic and gives
   no order between its conditions. The model uses the test vectors' error names where they
   exist ({api}`JAM.DisputesError`). It checks the length bounds of {eq}`10.2` first, then each part's order

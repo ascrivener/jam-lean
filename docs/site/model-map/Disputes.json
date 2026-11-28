@@ -10,7 +10,7 @@
     "10.5": { "kind": "def", "name": "JAM.Xvalid",
               "note": "and `JAM.Xinvalid`; the `$` is dropped (note v0.8.1-A7, `JAM.contextString`)" },
     "10.6": { "kind": "inline", "name": "JAM.disputesTransition", "at": "for c in x.culprits do",
-              "note": "𝐤 is `keys` less ψ_O, checked as `ψ.offenders`" },
+              "note": "𝐤 is `JAM.offenceKeys`" },
     "10.7": { "kind": "inline", "name": "JAM.disputesTransition", "at": "for flt in x.faults do",
               "note": "the first condition is read as a chain of two equivalences (note 29)" },
     "10.8": { "kind": "inline", "name": "JAM.disputesTransition",
@@ -20,14 +20,15 @@
               "note": "the faults' order is checked the same way, before the fault loop" },
     "10.10": { "kind": "inline", "name": "JAM.checkVerdict", "at": "if ψ.good.contains r || ψ.bad.contains r" },
     "10.11": { "kind": "inline", "name": "JAM.checkVerdict", "at": "unless orderedUniqByNat (·.index) v.votes do" },
-    "10.12": { "kind": "def", "name": "JAM.verdictOutcome",
-               "note": "V; 𝐯 is `verdicts` in `JAM.disputesTransition`, the pairs returned by `JAM.checkVerdict`, which rejects a verdict whose V is undefined" },
-    "10.13": { "kind": "inline", "name": "JAM.disputesTransition", "at": "for (r, o) in verdicts do" },
+    "10.12": { "kind": "def", "name": "JAM.verdicts",
+               "note": "V is `JAM.verdictOutcome`; `JAM.checkVerdict` rejects a verdict whose V is undefined" },
+    "10.13": { "kind": "inline", "name": "JAM.disputesTransition", "at": "for (r, o) in v do" },
     "10.14": { "kind": "def", "name": "JAM.clearNonPositive" },
-    "10.15": { "kind": "def", "name": "JAM.assimilate" },
-    "10.16": { "kind": "def", "name": "JAM.assimilate" },
-    "10.17": { "kind": "def", "name": "JAM.assimilate" },
-    "10.18": { "kind": "inline", "name": "JAM.disputesTransition", "at": "offenders := mark.foldl" },
-    "10.19": { "kind": "inline", "name": "JAM.disputesTransition", "at": "let mark :=" }
+    "10.15": { "kind": "inline", "name": "JAM.disputesPosterior", "at": "good :=",
+               "note": "with `JAM.judgedAs`" },
+    "10.16": { "kind": "inline", "name": "JAM.disputesPosterior", "at": "bad :=" },
+    "10.17": { "kind": "inline", "name": "JAM.disputesPosterior", "at": "wonky :=" },
+    "10.18": { "kind": "inline", "name": "JAM.disputesPosterior", "at": "offenders :=" },
+    "10.19": { "kind": "def", "name": "JAM.offendersMark" }
   }
 }

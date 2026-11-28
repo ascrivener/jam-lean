@@ -253,7 +253,7 @@ def outcomeOf : Option (Outcome × List Judgment) → Option Outcome
     [(0, true), (1, true), (2, true), (3, false), (4, false), (5, false), (6, false)]
 
 -- End to end: the votes `formVerdict` builds from auditing judgments pass §10's verdict check
--- (`JAM.checkVerdict`) under the oracle, with key [i, i, …, i] (32 octets) for validator i.
+-- (`JAM.checkVerdict`, outcome from `JAM.verdicts`) under the oracle, with key [i, i, …, i] (32 octets) for validator i.
 def edKeys9 : List (List UInt8) := (List.range 9).map fun i => List.replicate 32 (UInt8.ofNat i)
 def disputesIn : DisputesInput := { slot := 0, activeEd := edKeys9, previousEd := edKeys9 }
 
@@ -264,7 +264,7 @@ def verdictFor (w : WorkReport) (pos neg : List Nat) : Option Verdict :=
 def checks (w : WorkReport) (pos neg : List Nat) : Option Outcome :=
   match verdictFor w pos neg with
   | some v => match checkVerdict Params.tiny oracle disputesIn {} v with
-    | .ok (_, o) => some o
+    | .ok () => (verdicts Params.tiny disputesIn [v]).bind fun vs => vs.head?.map (·.2)
     | .error _ => none
   | none => none
 

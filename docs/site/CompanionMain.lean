@@ -9,11 +9,13 @@ open Verso.Genre Manual
     search box (which Verso places over the header): the title wrapper reserves the search bar's
     width, the search bar is narrower below 1200 px, and the title wraps and shrinks on narrow
     screens. The sidebar lists sections only: the entry Verso adds for each quoted declaration
-    (`{mathdoc}`, `{docstring}`) is hidden. -/
+    (`{mathdoc}`, `{docstring}`) is hidden. The worked-example boxes (`{example}`,
+    `Companion/Example.lean`) are styled here too; their tables scroll inside the box. -/
 def narrowCss : Verso.Genre.Manual.CSS := ⟨"
 :root { --jl-bg: #fff; --jl-bg-clear: rgba(255,255,255,0); --jl-edge-shadow: rgba(0,0,0,.22);
   --jl-scroll: #b0b0b0; --jl-button-bg: #f6f6f6; --jl-button-border: #b0b0b0; --jl-pressed-bg: #dde7f3;
-  --jl-pressed-border: #5a7fa8; --jl-focus: #2a6ebb; --jl-muted: #666; }
+  --jl-pressed-border: #5a7fa8; --jl-focus: #2a6ebb; --jl-muted: #666;
+  --jl-example-bg: #f7f9fc; --jl-example-border: #c9d4e3; --jl-example-accent: #3b6ea8; --jl-example-rule: #dde3ec; }
 .semantics, pre, code.hl.lean.block { max-width: 100%; overflow-x: auto; white-space: pre;
   scrollbar-width: thin; scrollbar-color: var(--jl-scroll) transparent; }
 main table { display: block; max-width: 100%; width: max-content; overflow-x: auto;
@@ -83,6 +85,40 @@ body.lean-hidden button.show-code { display: none; }
 .model-line details > :not(summary) { margin-top: 0.4em; font-size: 1.15em; }
 .model-line a.model-quoted[href] { cursor: pointer; }
 body.lean-hidden .model-line .model-show, body.lean-hidden .model-line details > :not(summary) { display: none; }
+/* Worked examples ({example}, Companion/Example.lean): a box with a table that scrolls inside itself. */
+details.worked-example { margin: 1.2em 0 1.6em; border: 1px solid var(--jl-example-border);
+  border-left: 4px solid var(--jl-example-accent); border-radius: 4px; background: var(--jl-example-bg);
+  font-family: system-ui, sans-serif; font-size: 0.9em; line-height: 1.45; max-width: 100%; }
+details.worked-example > summary { cursor: pointer; padding: 0.55em 0.8em; font-weight: 600; }
+details.worked-example > summary:focus-visible { outline: 2px solid var(--jl-focus); outline-offset: 2px; }
+details.worked-example .we-tag { display: inline-block; margin-right: 0.6em; padding: 0 0.45em; border-radius: 3px;
+  background: var(--jl-example-accent); color: var(--jl-bg); font-size: 0.8em; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em; vertical-align: 0.1em; }
+details.worked-example .we-body { padding: 0 0.8em 0.6em; overflow-wrap: break-word; }
+details.worked-example .we-body > p { margin: 0.45em 0; }
+details.worked-example .we-table-wrap { position: relative; max-width: 100%; overflow-x: auto; margin: 0.6em 0;
+  scrollbar-width: thin; scrollbar-color: var(--jl-scroll) transparent;
+  background:
+    linear-gradient(to right, var(--jl-example-bg) 30%, transparent) left / 2em 100% no-repeat local,
+    linear-gradient(to left, var(--jl-example-bg) 30%, transparent) right / 2em 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, var(--jl-edge-shadow), transparent) left / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--jl-edge-shadow), transparent) right / 12px 100% no-repeat scroll; }
+details.worked-example .we-table-wrap::-webkit-scrollbar { height: 8px; }
+details.worked-example .we-table-wrap::-webkit-scrollbar-thumb { background: var(--jl-scroll); border-radius: 4px; }
+main details.worked-example table.we-table { display: table; width: 100%; max-width: none; overflow: visible;
+  background: none; border-collapse: collapse; font-size: 0.95em; }
+details.worked-example table.we-table th, details.worked-example table.we-table td { text-align: left;
+  vertical-align: top; padding: 0.3em 0.55em; border-bottom: 1px solid var(--jl-example-rule);
+  min-width: 3em; max-width: 22em; overflow-wrap: break-word; }
+details.worked-example table.we-table thead th { border-bottom: 2px solid var(--jl-example-border); white-space: nowrap; }
+details.worked-example table.we-table tbody th { font-weight: 500; }
+details.worked-example table.we-table td.we-nowrap { white-space: nowrap; max-width: none; }
+details.worked-example table.we-table p { margin: 0; }
+details.worked-example code { font-size: 0.92em; }
+@media (max-width: 600px) {
+  details.worked-example .we-body { padding: 0 0.5em 0.5em; }
+  details.worked-example table.we-table th, details.worked-example table.we-table td { padding: 0.25em 0.35em; max-width: 14em; }
+}
 "⟩
 
 /-- Dark mode: the book follows the reader's system setting (`prefers-color-scheme`), and the
@@ -111,7 +147,8 @@ def darkRules (root : String) : String := s!"
   --verso-burger-toc-visible-color: #e2e4e8; --verso-burger-toc-hidden-color: #e2e4e8;
   --jl-bg: #16181d; --jl-bg-clear: rgba(22,24,29,0); --jl-edge-shadow: rgba(0,0,0,.6);
   --jl-scroll: #5a616c; --jl-button-bg: #262a31; --jl-button-border: #5a616c; --jl-pressed-bg: #2b3d57;
-  --jl-pressed-border: #7ea6d8; --jl-focus: #8ab4f8; --jl-muted: #a3a9b3; }
+  --jl-pressed-border: #7ea6d8; --jl-focus: #8ab4f8; --jl-muted: #a3a9b3;
+  --jl-example-bg: #1c2027; --jl-example-border: #3d4a5c; --jl-example-accent: #8ab4f8; --jl-example-rule: #343b46; }
 {root} body \{ background: #16181d; color: #e2e4e8; }
 {root} header \{ background: #1b1e24; box-shadow: 0 0 6px #000; }
 {root} .header-title, {root} .prev-next-buttons > *, {root} #toc a:hover \{ color: #e2e4e8; }

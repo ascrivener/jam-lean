@@ -1,0 +1,57 @@
+{"title": "A Safrole epoch change that switches to tickets",
+ "summary":
+ "The block at slot 12 opens epoch 1. The ticket accumulator filled up during epoch 0, so the new epoch's sealers are tickets rather than fallback keys; the entropy and the validator key sets rotate.",
+ "source":
+ {"url":
+  "https://github.com/davxy/jam-test-vectors/blob/v0.8.0/stf/safrole/tiny/publish-tickets-with-mark-5.json",
+  "repo": "davxy/jam-test-vectors v0.8.0",
+  "path": "stf/safrole/tiny/publish-tickets-with-mark-5.json"},
+ "rows":
+ [{"label": "Timeslot $\\tau$", "cells": ["11 (epoch 0, slot 11)", "12 (epoch 1, slot 0)"]},
+  {"label": "Entropy accumulator $\\eta_0$", "cells": ["`0xfc1fddb5…`", "`0xe6f64bbc…`"]},
+  {"label": "Earlier entropy $\\eta_1$",
+   "cells": ["`0xee155ace…`", "`0xfc1fddb5…` (= $\\eta_0$ before)"]},
+  {"label": "Earlier entropy $\\eta_2$",
+   "cells": ["`0xbb30a42c…`", "`0xee155ace…` (= $\\eta_1$ before)"]},
+  {"label": "Earlier entropy $\\eta_3$",
+   "cells": ["`0xe88bd757…`", "`0xbb30a42c…` (= $\\eta_2$ before)"]},
+  {"label": "Ticket accumulator $\\gamma_A$", "cells": ["12 tickets", "0 tickets"]},
+  {"label": "Sealer sequence $\\gamma_S$",
+   "cells":
+   ["fallback: 12 Bandersnatch keys",
+    "tickets: 12 tickets, in outside-in order $Z(\\gamma_A)$ of the accumulator before: first, last, second, second-to-last, …"]},
+  {"label": "First sealers",
+   "cells":
+   ["`0x21056509…`, `0xff71c6c0…`, `0x0746846d…`, …",
+    "$\\gamma_A[0]$, $\\gamma_A[11]$, $\\gamma_A[1]$, $\\gamma_A[10]$, $\\gamma_A[2]$, $\\gamma_A[9]$, …"]},
+  {"label": "Pending keys $\\gamma_P$",
+   "cells":
+   ["6 keys, the first `0xff71c6c0…`", "6 keys, the first `0x9326edb2…` (= $\\iota$ before)"]},
+  {"label": "Active keys $\\kappa$",
+   "cells":
+   ["6 keys, the first `0x21056509…`", "6 keys, the first `0xff71c6c0…` (= $\\gamma_P$ before)"]},
+  {"label": "Previous keys $\\lambda$",
+   "cells":
+   ["6 keys, the first `0xff71c6c0…`", "6 keys, the first `0x21056509…` (= $\\kappa$ before)"]},
+  {"label": "Ring root $\\gamma_Z$", "cells": ["`0xaf39b7de…`", "`0xa778826f…`"]},
+  {"label": "Epoch marker $\\mathbf{H}_E$",
+   "cells":
+   ["",
+    "entropy `0xfc1fddb5…` (= $\\eta_0$ before), tickets entropy `0xee155ace…` (= $\\eta_1$ before), 6 validators (the new $\\gamma_P$)"]},
+  {"label": "Tickets marker $\\mathbf{H}_W$", "cells": ["", "none"]}],
+ "params":
+ "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators)",
+ "nowrapColumns": [],
+ "notes":
+ ["Each rotated value is the one named in parentheses: $\\eta'_1 = \\eta_0$, $\\kappa' = \\gamma_P$, $\\lambda' = \\kappa$, and $\\gamma'_P = \\Phi(\\iota)$, which is $\\iota$ itself because there are no offenders."],
+ "name": "safrole-epoch-change",
+ "model": ["JAM.safrole", "JAM.outsideIn"],
+ "inputs":
+ [{"value": "12 (epoch 1, slot 0)", "label": "Slot $\\mathbf{H}_T$"},
+  {"value": "`0xc26cf4f6…`", "label": "VRF output $\\mathcal{Y}(\\mathbf{H}_V)$"},
+  {"value": "0", "label": "Ticket proofs $\\mathbf{E}_T$"},
+  {"value": "0", "label": "Offenders $\\psi'_O$"}],
+ "equations": ["6.15", "6.24", "6.25", "6.26", "6.29", "6.36"],
+ "columns": ["", "Before ($\\tau$ = 11)", "After ($\\tau'$ = 12)"],
+ "check":
+ "The model's posterior state and markers equal the vector's expected output: `lake build safroletest` makes this comparison on every Safrole vector, and the generator repeats it for this one. Bandersnatch is the test's oracle, read from the vectors, so the ring root and ticket identifiers are the vectors' own."}

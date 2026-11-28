@@ -1,0 +1,33 @@
+{"title": "Reports that must wait: the ready queue",
+ "summary":
+ "Two new work reports arrive, each naming a prerequisite package that has not been accumulated yet. Neither is accumulatable, so both join the ready queue with their unmet dependencies. One depends on a report already in the queue, so this forms a chain that unlocks in order once its first link accumulates.",
+ "source":
+ {"url":
+  "https://github.com/davxy/jam-test-vectors/blob/v0.8.0/stf/accumulate/tiny/enqueue_and_unlock_chain-2.json",
+  "repo": "davxy/jam-test-vectors v0.8.0",
+  "path": "stf/accumulate/tiny/enqueue_and_unlock_chain-2.json"},
+ "rows":
+ [{"label": "Report for package `0x6af0ea4c…`",
+   "cells":
+   ["`0x774935b6…` (already queued)",
+    "1 of 1",
+    "queued in $\\omega'_8$, waiting on `0x774935b6…` (already queued)"]},
+  {"label": "Report for package `0xf5983aaa…`",
+   "cells": ["`0xa7a66c16…`", "1 of 1", "queued in $\\omega'_8$, waiting on `0xa7a66c16…`"]},
+  {"label": "Ready queue $\\omega$, all slots", "cells": ["", "", "2 → 4 reports"]},
+  {"label": "Accumulated this block $\\xi'_{\\mathsf{E}-1}$", "cells": ["", "", "0 packages"]}],
+ "params":
+ "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators)",
+ "nowrapColumns": [],
+ "notes":
+ ["A report with no prerequisites and no segment-root lookups is accumulatable at once ($\\mathbf{R}^!$); the others go to the queue with their dependencies minus what is already accumulated, and leave it when the last dependency is accumulated."],
+ "name": "accumulate-queue",
+ "model": ["JAM.accumulate", "JAM.editQueue"],
+ "inputs":
+ [{"value": "44 (slot 8 of the epoch)", "label": "Slot $\\mathbf{H}_T$"},
+  {"value": "2", "label": "New reports $\\mathbf{R}$"},
+  {"value": "2", "label": "Reports already queued"}],
+ "equations": ["12.4", "12.5", "12.6", "12.7", "12.10", "12.11"],
+ "columns": ["", "Prerequisites", "Unmet", "Outcome"],
+ "check":
+ "The model's posterior state, statistics and output root equal the vector's expected output (the comparison `acctest` makes). The accumulate suite as a whole is suspended until v0.8.1 vectors exist, because most of its services are v0.8.0 programs; this vector is one of those that pass."}

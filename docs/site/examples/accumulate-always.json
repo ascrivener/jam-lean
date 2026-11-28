@@ -1,0 +1,31 @@
+{"title": "Accumulation with no reports: an always-accumulate service",
+ "summary":
+ "The block brings no work reports, but service 1729 is in the always-accumulate list $\\chi_Z$ with 100000 gas. Its accumulation code runs anyway (the model executes the service's real PVM code), uses some of that gas, and the service's last-accumulation slot moves to the new timeslot.",
+ "source":
+ {"url":
+  "https://github.com/davxy/jam-test-vectors/blob/v0.8.0/stf/accumulate/tiny/always_accumulate-1.json",
+  "repo": "davxy/jam-test-vectors v0.8.0",
+  "path": "stf/accumulate/tiny/always_accumulate-1.json"},
+ "rows":
+ [{"label": "Ready queue $\\omega$ (reports waiting)", "cells": ["0", "0"]},
+  {"label": "Accumulated this block $\\xi'_{\\mathsf{E}-1}$", "cells": ["", "0 packages"]},
+  {"label": "Service 1729: last accumulation $a_a$", "cells": ["0", "43"]},
+  {"label": "Service 1729: balance $a_b$", "cells": ["119250", "119250"]},
+  {"label": "Service 1729: storage items $a_i$, octets $a_o$", "cells": ["2, 19130", "2, 19130"]},
+  {"label": "Statistics for service 1729", "cells": ["", "$N$ = 0, $X$ = 0, $G$ = 16417"]},
+  {"label": "Accumulation outputs $\\theta'$", "cells": ["", "0 outputs; root `0x00000000…`"]}],
+ "params":
+ "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators)",
+ "nowrapColumns": [],
+ "notes":
+ ["$N$ counts the work digests it accumulated (none here), $X$ the transfers it received, and $G$ the gas it used, out of the 100000 that $\\chi_Z$ grants it. A service with statistics gets $a'_a = \\tau'$."],
+ "name": "accumulate-always",
+ "model": ["JAM.accumulate", "JAM.accSeq"],
+ "inputs":
+ [{"value": "43", "label": "Slot $\\mathbf{H}_T$"},
+  {"value": "0", "label": "New reports $\\mathbf{R}$"},
+  {"value": "service 1729 ↦ 100000 gas", "label": "Always-accumulate $\\chi_Z$"}],
+ "equations": ["12.25", "12.29", "12.30", "12.31"],
+ "columns": ["", "Before ($\\tau$ = 42)", "After ($\\tau'$ = 43)"],
+ "check":
+ "The model's posterior state, statistics and output root equal the vector's expected output (the comparison `acctest` makes). The accumulate suite as a whole is suspended until v0.8.1 vectors exist, because most of its services are v0.8.0 programs; this vector is one of those that pass."}

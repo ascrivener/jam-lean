@@ -197,3 +197,10 @@ For reference, here is the whole transition. Each block of it is marked with the
 implements:
 
 {leanSource JAM.safrole}
+
+Here is the transition on two epoch changes from the test vectors. In the first the ticket accumulator
+is full, so tickets seal the new epoch; in the second no tickets were submitted, so the fallback keys do:
+
+{example "safrole-epoch-change"}
+
+{example "safrole-epoch-change-fallback"}

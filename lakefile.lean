@@ -55,7 +55,9 @@ lean_lib Tests where
     .one `Tests.KeccakTest, .one `Tests.RefineTest, .one `Tests.BlockJson,
     .one `Tests.StfRunner, .one `Tests.ReportsJson, .one `Tests.TraceState, .one `Tests.Sha512Test,
     .one `Tests.V080, .one `Tests.AuditingTest, .one `Tests.SegmentsTest,
-    .one `Tests.GuaranteeTest, .one `Tests.BestChainTest]
+    .one `Tests.GuaranteeTest, .one `Tests.BestChainTest,
+    .one `Tests.SafroleHarness, .one `Tests.AccumulateHarness, .one `Tests.PvmHarness,
+    .submodules `Tests.Examples]
 
 lean_exe «pvmtest-exe» where
   root := `Tests.PvmTest
@@ -68,6 +70,12 @@ lean_exe «codectest-exe» where
 lean_exe «acctest-exe» where
   root := `Tests.AccumulateTest
   exeName := "acctest"
+
+/-- The companion book's worked examples: runs model functions on chosen vectors and writes
+    `docs/site/examples/*.json` (`Tests/Examples.lean`; checked in CI by `scripts/check-examples.sh`). -/
+lean_exe «examples-exe» where
+  root := `Tests.Examples
+  exeName := "examples"
 
 lean_exe «gascheck-exe» where
   root := `Tests.GasCheck

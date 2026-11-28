@@ -250,10 +250,11 @@ def resultSize : WorkResult → Nat
 /-- $[I(p, j) \mid j \leftarrow \mathbb{N}_{|p_w|}]$ (GP v0.8.1 eq. `computereport`), in order, given `refine j ℓ`, the
     output of $\Psi_R(c, j, p, t, S_l^\#(p_w), \ell)$. The fold carries $\ell = \sum_{k<j} p_w[k]_e$, the export
     offset, and $z = |t| + \sum_{k<j, (r \in \mathbb{B}, \dots) = I(p, k)} |r|$, which counts the results of $I$, so an
-    output replaced by $\circleddash$ or $\circledcirc$ adds nothing (upstream candidate v0.8.1-A17). `t` is $|t|$. -/
-def refineItems (wR : Nat) (refine : Nat → Nat → RefineOut) (items : List WorkItem) (t : Nat) :
+    output replaced by $\circleddash$ or $\circledcirc$ adds nothing, as the formula says (upstream candidate
+    v0.8.1-A17; `refineItems_getElem`). `tLen` is $|t|$. -/
+def refineItems (wR : Nat) (refine : Nat → Nat → RefineOut) (items : List WorkItem) (tLen : Nat) :
     List ItemOut :=
-  go 0 0 t items
+  go 0 0 tLen items
 where
   /-- Items from index $j$ on, with export offset $\ell$ and size so far $z$. -/
   go (j ℓ z : Nat) : List WorkItem → List ItemOut
@@ -434,6 +435,33 @@ theorem refineItems_exports (wR : Nat) (refine : Nat → Nat → RefineOut) (ite
     (t : Nat) :
     (refineItems wR refine items t).map (·.exports.length) = items.map (·.exportCount) :=
   refineItems_go_exports wR refine items 0 0 t
+
+theorem refineItems_go_getElem (wR : Nat) (refine : Nat → Nat → RefineOut) :
+    ∀ (items : List WorkItem) (j0 ℓ z j : Nat) (hj : j < (refineItems.go wR refine j0 ℓ z items).length),
+      (refineItems.go wR refine j0 ℓ z items)[j] =
+        itemResult wR (items[j]'(by simpa [length_refineItems_go] using hj))
+          (z + (((refineItems.go wR refine j0 ℓ z items).take j).map (resultSize ·.result)).sum)
+          (refine (j0 + j) (ℓ + ((items.take j).map (·.exportCount)).sum))
+  | [], _, _, _, _, hj => by simp [refineItems.go] at hj
+  | m :: ms, j0, ℓ, z, 0, _ => by simp [refineItems.go]
+  | m :: ms, j0, ℓ, z, j + 1, hj => by
+    simp only [refineItems.go, List.getElem_cons_succ, List.take_succ_cons, List.map_cons,
+      List.sum_cons, List.getElem_cons_succ]
+    rw [refineItems_go_getElem wR refine ms]
+    simp only [Nat.add_assoc, Nat.add_left_comm, Nat.add_comm j 1]
+
+/-- The $j$-th output of `refineItems` is $I(p, j)$ (GP v0.8.1 eq. `computereport`): `itemResult` on item
+    $p_w[j]$, with $z = |t| + \sum_{k<j} |I(p, k)_r|$ (counting only results in $\mathbb{B}$, `resultSize`) and
+    $\Psi_R$'s output at export offset $\ell = \sum_{k<j} p_w[k]_e$. -/
+theorem refineItems_getElem (wR : Nat) (refine : Nat → Nat → RefineOut) (items : List WorkItem)
+    (tLen j : Nat) (hj : j < (refineItems wR refine items tLen).length) :
+    (refineItems wR refine items tLen)[j] =
+      itemResult wR (items[j]'(by simpa [length_refineItems] using hj))
+        (tLen + (((refineItems wR refine items tLen).take j).map (resultSize ·.result)).sum)
+        (refine j ((items.take j).map (·.exportCount)).sum) := by
+  have := refineItems_go_getElem wR refine items 0 0 tLen j hj
+  simp only [Nat.zero_add] at this
+  exact this
 
 /-- The total number of exported segments is $\sum_j p_w[j]_e$. -/
 theorem length_flatMap_exports (wR : Nat) (refine : Nat → Nat → RefineOut)

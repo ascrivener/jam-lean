@@ -71,7 +71,9 @@ def historicalLookup {X : Type} (gas : Nat) (ω : Regs) (μ : Memory) (s : Nat) 
 /-! ## $\Omega_E$, `export` = 8 -/
 
 /-- $\Omega_E(\varrho, \varphi, \mu, (\mathbf{m}, \mathbf{c}, \mathbf{e}), \varsigma)$, $g = \mathsf{M}_E$: append the octets at $\varphi_7$ (length $\min(\varphi_8, \mathsf{W}_G)$), zero-padded
-    to $\mathsf{W}_G$, to the exports; $\varphi'_7$ is the new segment's index $\varsigma + |\mathbf{e}|$. -/
+    to $\mathsf{W}_G$, to the exports; $\varphi'_7$ is the new segment's index $\varsigma + |\mathbf{e}|$.
+    With $\varphi_8 = 0$ the paper's $\mathcal{P}_{\mathsf{W}_G}([])$ is $[]$, an empty segment; the model appends
+    $\mathsf{W}_G$ zero octets, as $\mathbf{e} \in [\![\mathbb{J}]\!]$ requires (upstream candidate v0.8.1-A63). -/
 def exportSeg (gas : Nat) (ω : Regs) (μ : Memory) (off : Nat) (c : RefineCtx) : HostOut RefineCtx :=
   charged Constants.CgasE gas ω μ c fun out =>
     let p := reg ω 7
@@ -390,14 +392,16 @@ def psiR (params : Params) (d : Accounts) (c i : Nat) (p : WorkPackage) (r : Lis
           | o => ⟨o.toWorkResult, [], u⟩
 
 /-- $\mathbf{p}_\mathbf{u} \equiv \Lambda(\delta[p_h], (p_c)_t, p_u)$, the authorization code, the whole preimage (GP v0.8.1
-    eq. 14.12, §14.3, GP #582). -/
+    eq. 14.12, §14.3, GP #582). `none` when the preimage is missing, and also when $p_h \notin \mathcal{K}(\delta)$,
+    where $\delta[p_h]$ and so $\Lambda$ are undefined (upstream candidate v0.8.1-A64). -/
 def WorkPackage.authCode (d : Accounts) (p : WorkPackage) : Option ByteArray := do
   let a ← d.get? p.authCodeHost
   let l ← a.historicalLookup p.context.lookupAnchorSlot p.authCodeHash.toList
   some ⟨l.toArray⟩
 
 /-- $\Psi_I(p, c)$ (GP eq. `isauthinvocation`), over accounts $\mathbf{d}$: the authorizer trace or an error,
-    and the gas used. -/
+    and the gas used. BAD when there is no authorization code (`WorkPackage.authCode` is `none`), including
+    when $p_h \notin \mathcal{K}(\delta)$ (upstream candidate v0.8.1-A64). -/
 def psiI (params : Params) (d : Accounts) (p : WorkPackage) (c : Nat) : WorkResult × Nat :=
   match p.authCode d with
   | none => (.err .bad, 0)

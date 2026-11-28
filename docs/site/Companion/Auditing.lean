@@ -320,9 +320,10 @@ model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/do
   $`n` is current", and the model reads $`n` as ranging over the tranches up to the current one
   ({api}`JAM.Auditing.audited`). Even so, a tranche up to the current one in which nobody announced for
   $`\mathbf{r}` still satisfies the clause ({api}`JAM.Auditing.audited_of_empty_tranche`).
-* *How $`n` is appended (note v0.8.1-A9).* $`\mathsf{X}_I \mathbin{+\!\!+} n` and $`\mathcal{H}(\mathbf{r}) \mathbin{+\!\!+} n` append a natural number to an octet
-  sequence without saying how it is encoded. The model uses the general natural encoding $`\mathcal{E}(n)`,
-  one octet for $`n < 128`.
+* *Tranches from 256 on (note v0.8.1-A9).* $`\mathsf{X}_I \mathbin{+\!\!+} n` and $`\mathcal{H}(\mathbf{r}) \mathbin{+\!\!+} n` append $`n` as one element,
+  $`x \mathbin{+\!\!+} i \equiv x \frown [i]` (§3), with naturals and octets coerced implicitly, so the model appends the single
+  octet $`n`. The coercion is undefined for $`n \ge 256`; there the model appends $`\mathcal{E}_1(n \bmod 2^8)`, as it does for
+  Safrole's ticket context.
 * *The order of $`\mathbf{x}_n` (note v0.8.1-A9).* The encoding of a set lists its elements in order. The elements of
   $`\mathbf{x}_n` are octet strings $`\mathcal{E}_2(\mathbf{r}_c) \frown \mathcal{H}(\mathbf{r})`, and the model orders them lexicographically. Since $`\mathcal{E}_2` is
   little-endian, this is not core order.

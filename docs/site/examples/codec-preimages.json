@@ -1,0 +1,49 @@
+{"title": "Encoding a short sequence: the preimages extrinsic",
+ "summary":
+ "The preimages extrinsic $\\mathbf{E}_P$ is a sequence of pairs (service, data). Its encoding $\\mathcal{E}(\\updownarrow[(\\mathcal{E}_4(s), \\updownarrow\\mathbf{p})])$ starts with the number of pairs; each pair is the service as four octets, then the data's length, then the data. This vector's 3 preimages encode to 64 octets.",
+ "source":
+ {"url":
+  "https://github.com/davxy/jam-test-vectors/blob/v0.8.0/codec/tiny/preimages_extrinsic.json",
+  "repo": "davxy/jam-test-vectors v0.8.0",
+  "path": "codec/tiny/preimages_extrinsic.json"},
+ "rows":
+ [{"label": "Number of preimages", "cells": ["3", "0", "`03`", "$\\mathcal{E}$ (C.6)"]},
+  {"label": "Preimage 1: requester $s$",
+   "cells": ["16909060", "1–4", "`04 03 02 01`", "$\\mathcal{E}_4$ (C.13)"]},
+  {"label": "Preimage 1: length of $\\mathbf{p}$",
+   "cells": ["16", "5", "`10`", "$\\mathcal{E}$ (C.6)"]},
+  {"label": "Preimage 1: data $\\mathbf{p}$",
+   "cells": ["16 octets", "6–21", "`81 09 5e 61 … c8 33`", "itself (C.1)"]},
+  {"label": "Preimage 2: requester $s$",
+   "cells": ["16909061", "22–25", "`05 03 02 01`", "$\\mathcal{E}_4$ (C.13)"]},
+  {"label": "Preimage 2: length of $\\mathbf{p}$",
+   "cells": ["16", "26", "`10`", "$\\mathcal{E}$ (C.6)"]},
+  {"label": "Preimage 2: data $\\mathbf{p}$",
+   "cells": ["16 octets", "27–42", "`d2 57 bc 7d … a3 42`", "itself (C.1)"]},
+  {"label": "Preimage 3: requester $s$",
+   "cells": ["16909062", "43–46", "`06 03 02 01`", "$\\mathcal{E}_4$ (C.13)"]},
+  {"label": "Preimage 3: length of $\\mathbf{p}$",
+   "cells": ["16", "47", "`10`", "$\\mathcal{E}$ (C.6)"]},
+  {"label": "Preimage 3: data $\\mathbf{p}$",
+   "cells": ["16 octets", "48–63", "`38 db 05 6c … 73 85`", "itself (C.1)"]}],
+ "params": "no chain parameters: the codec alone",
+ "nowrapColumns": [2, 3],
+ "notes":
+ ["Every number below 128 is a single octet under $\\mathcal{E}$ (the case $x < 2^7$ of eq. C.6), so the count 3 and the length 16 are the octets `03` and `10`. Larger numbers take two to nine octets: the leading 1-bits of the first octet say how many follow.",
+  "$\\mathcal{E}_4$ writes the least significant octet first: 16909060 is `0x01020304`, written `04 03 02 01`.",
+  "A long run shows its first four and last two octets; \"Octets at\" gives its place in the encoding."],
+ "name": "codec-preimages",
+ "model":
+ ["JAM.encodePreimages",
+  "JAM.Codec.varSeq",
+  "JAM.Codec.var",
+  "JAM.Codec.nat",
+  "JAM.Codec.fixed",
+  "JAM.Codec.blob"],
+ "inputs":
+ [{"value": "3", "label": "Preimages $\\mathbf{E}_P$"},
+  {"value": "64 octets", "label": "Encoded size"}],
+ "equations": ["C.1", "C.6", "C.7", "C.8", "C.13", "C.19"],
+ "columns": ["", "Value", "Octets at", "Encoding", "Rule"],
+ "check":
+ "The pieces above, joined in order, are the model's encoding, and it equals the vector's `preimages_extrinsic.bin` octet for octet. The model's decoder also reads the `.bin` back to a term that encodes to the same octets. `lake build codectest` makes both comparisons on every codec vector."}

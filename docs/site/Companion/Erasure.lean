@@ -105,6 +105,12 @@ The model has one path for both cases. When the indices are exactly $`0, \dots, 
 source point, the interpolation weights are rows of the identity, and the result is the chunks in
 index order, as the first case says.
 
+Here are both directions on the smallest erasure vector: three octets coded for six validators by
+{api}`JAM.Erasure.encode` (eq. {eq}`H.5`), and recovered by {api}`JAM.Erasure.recover` (eq. {eq}`H.6`) from two
+different sets of three chunks:
+
+{example "erasure-tiny"}
+
 # Words as field elements (§H.2)
 %%%
 tag := "erasure-field"

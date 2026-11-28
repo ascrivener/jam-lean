@@ -136,6 +136,12 @@ prefixed by 0 or 1. Each encoder takes the encoder of the elements as an argumen
 
 `opt` writes the discriminator as the octet 0 or 1, which is $`\mathcal{E}(0)` and $`\mathcal{E}(1)` under eq. {eq}`C.6`.
 
+Here is a short sequence from the codec vectors taken apart octet by octet: the preimages extrinsic,
+whose encoding $`\mathcal{E}_P` (eq. {eq}`C.19`, {api}`JAM.encodePreimages`, quoted {ref "codec-block"}[below]) uses
+$`\updownarrow`, $`\mathcal{E}_4` and $`\mathcal{E}` on numbers below 128:
+
+{example "codec-preimages"}
+
 # Bit sequences (§C.1.4)
 %%%
 tag := "codec-bits"
@@ -324,6 +330,11 @@ The other equations of §C.2 are implemented field by field, in the paper's orde
 The work item, eq. {eq}`C.34`:
 
 {leanSource JAM.WorkItem.encode}
+
+Run on the work item of the codec vectors, the encoder gives these pieces, in the order of
+eq. {eq}`C.34`, with each import encoded by $`I` of eq. {eq}`C.39`:
+
+{example "codec-work-item"}
 
 The block and the work-package family also have decoders ({api}`JAM.Block.decode`,
 {api}`JAM.WorkPackage.decode`, {api}`JAM.WorkReport.decode`, …), built from the primitive decoders

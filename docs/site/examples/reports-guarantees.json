@@ -1,6 +1,6 @@
 {"title": "Two guarantees accepted onto their cores",
  "summary":
- "The block carries 2 guarantees, one for each core. Each report passes the checks of §11.4: its guarantors are assigned to its core, its authorizer is in the core's pool, and its anchor is a recent block. Each core then holds its report, stamped with the block's timeslot, until it becomes available or times out.",
+ "The block carries 2 guarantees, one for each core. Each report passes the checks of §11.4, among them: its guarantors are assigned to its core, its authorizer is in the core's pool, and its anchor is a recent block. Each core then holds its report, stamped with the block's timeslot, until it becomes available or times out.",
  "source":
  {"url":
   "https://github.com/davxy/jam-test-vectors/blob/5e8d2a2423256d6138a3f265a251429a4c63f66f/stf/reports/tiny/multiple_reports-1.json",

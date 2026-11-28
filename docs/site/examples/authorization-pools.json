@@ -7,7 +7,7 @@
   "repo": "davxy/jam-test-vectors v0.8.0",
   "path": "stf/authorizations/tiny/progress_authorizations-3.json"},
  "rows":
- [{"label": "Pool size $|\\alpha[c]|$", "cells": ["8", "8"]},
+ [{"label": "Pool size $|\\alpha[c]|$", "cells": ["8 → 8", "8 → 8"]},
   {"label": "Used by a guarantee, removed: $F(c)$",
    "cells": ["none", "`0x678db0ee…` (position 3)"]},
   {"label": "Appended from the queue $\\phi'[c][\\mathbf{H}_T]^{\\circlearrowleft}$",

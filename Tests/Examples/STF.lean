@@ -158,7 +158,7 @@ def authExample : IO Example := do
         value := if used.isEmpty then "none" else ", ".intercalate (used.map fun (c, a) => s!"core {c}: {abbr a}") }],
     columns := [""] ++ cores.map (s!"Core {·}"),
     rows := [
-      { label := "Pool size $|\\alpha[c]|$", cells := cell fun c => arrow (pool c).length (pool' c).length },
+      { label := "Pool size $|\\alpha[c]|$", cells := cell fun c => s!"{(pool c).length} → {(pool' c).length}" },
       { label := "Used by a guarantee, removed: $F(c)$", cells := cell usedCell },
       { label := "Appended from the queue $\\phi'[c][\\mathbf{H}_T]^{\\circlearrowleft}$", cells := cell nextCell },
       { label := s!"Dropped to keep the last $\\mathsf\{O}$", cells := cell droppedCell },
@@ -198,7 +198,11 @@ def disputesExample : IO Example := do
     { label := s!"Verdict on report {abbr v.target.toList}",
       cells := ["", (match verdictOutcome k v.votes with
                      | some oc => outcomeName oc
-                     | none => "undefined") ++ s!": {yes} of {v.votes.length} judgments say valid ({k} judges)"] }
+                     | none => "undefined") ++ ": " ++
+                   (if yes == v.votes.length then s!"all {yes} judgments valid"
+                    else if yes == 0 then s!"all {v.votes.length} judgments invalid"
+                    else s!"{yes} of {v.votes.length} judgments valid") ++
+                   s!" ({v.votes.length} of the {k} validators judge)"] }
   let set (s : OctetSet) : String :=
     if s.isEmpty then "empty" else ", ".intercalate (s.toList.map abbr)
   let reportHash (a : AvailAssignment) : List UInt8 :=
@@ -233,7 +237,9 @@ def disputesExample : IO Example := do
       { label := "Offenders marker $\\mathbf{H}_O$", cells := ["", ", ".intercalate (o.offendersMark.map abbr)] }],
     notes := [s!"A verdict needs $\\lfloor 2/3 \\cdot {(judgeKeys params i 0).length} \\rfloor + 1$ = \
       {2 * (judgeKeys params i 0).length / 3 + 1} judgments. All valid makes it good, none valid bad. \
-      The report of a pending core is matched by the hash of its encoding."],
+      The report of a pending core is matched by the hash of its encoding.",
+      s!"The pending reports' timeslots are the vector's set-up (prior $\\tau$ = {i.slot}); the disputes step \
+      does not check $\\rho$'s timeslots."],
     model := ["JAM.disputesTransition", "JAM.verdictOutcome", "JAM.clearNonPositive", "JAM.assimilate"],
     equations := ["10.12", "10.13", "10.14", "10.15", "10.16", "10.17", "10.18", "10.19"],
     check := stfCheck "disputestest" ++ " Signatures are checked by the suite's oracle, which accepts \
@@ -336,7 +342,7 @@ def reportsExample : IO Example := do
     source := reportsSource s!"stf/reports/tiny/{file}",
     params := tinyParams params ++ s!", $\\mathsf\{R}$ = {params.rotationPeriod}",
     summary := s!"The block carries {xs.length} guarantees, one for each core. Each report passes the checks of \
-      §11.4: its guarantors are assigned to its core, its authorizer is in the core's pool, and its \
+      §11.4, among them: its guarantors are assigned to its core, its authorizer is in the core's pool, and its \
       anchor is a recent block. Each core then holds its report, stamped with the block's timeslot, until \
       it becomes available or times out.",
     inputs := [
@@ -400,8 +406,13 @@ def preimagesExample : IO Example := do
       [{ label := s!"Service {s}: preimages stored $a_\\mathbf\{p}$", cells := [toString (npre d s), toString (npre d' s)] : Row }] ++
       (keys.filter (·.1 == s)).map (fun (_, h, z) =>
         { label := s!"Service {s}: request $a_\\mathbf\{l}[({abbr h}, {z})]$", cells := [req d s h z, req d' s h z] : Row })),
-    notes := ["Only a request whose value is $[]$ can be met. The other request, already provided at slots \
-      shown in its value, is left as it was."],
+    notes := keys.filterMap (fun (s, h, z) =>
+      match (d.get? s).bind (·.requestGet h z) with
+      | some [x, y] => some s!"The request for ({abbr h}, {z}) is [{x}, {y}]: provided at slot {x} and made unavailable \
+          at slot {y}. A request is providable only while its value is $[]$, so it is left as it was."
+      | some [x] => some s!"The request for ({abbr h}, {z}) is [{x}]: provided at slot {x}. A request is providable \
+          only while its value is $[]$, so it is left as it was."
+      | _ => none),
     model := ["JAM.preimages", "JAM.providable", "JAM.integrateProvisions"],
     equations := ["12.36", "12.37", "12.38", "12.39"],
     check := stfCheck "preimagestest" }
@@ -448,6 +459,7 @@ def statsExample : IO Example := do
       { label := "Preimages $\\mathbf{E}_P$", value := s!"{input.preimages.length}, {(input.preimages.map (·.2.length)).sum} octets" },
       { label := "Assurers", value := ", ".intercalate (input.assurers.map toString) },
       { label := "Reporters $\\mathbf{G}$", value := "validators " ++ ", ".intercalate (gIdx.map toString) }],
+    nowrapColumns := [1, 2, 3, 4, 5, 6],
     columns := ["Validator", "Blocks $b$", "Tickets $t$", "Preimages $p$", "Preimage octets $d$", "Guarantees $g$", "Assurances $a$"],
     rows := (List.range curr'.length).map row,
     notes := [if sameEpoch && last' == last then "No epoch change: the previous epoch's record $\\pi_L$ is unchanged."

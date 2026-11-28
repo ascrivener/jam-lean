@@ -15,7 +15,7 @@
  "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators)",
  "nowrapColumns": [],
  "notes":
- ["Only a request whose value is $[]$ can be met. The other request, already provided at slots shown in its value, is left as it was."],
+ ["The request for (`0xb9de73a1…`, 48) is [37, 40]: provided at slot 37 and made unavailable at slot 40. A request is providable only while its value is $[]$, so it is left as it was."],
  "name": "preimages-provided",
  "model": ["JAM.preimages", "JAM.providable", "JAM.integrateProvisions"],
  "inputs":

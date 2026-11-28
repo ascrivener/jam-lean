@@ -17,7 +17,7 @@
   {"label": "5", "cells": ["10894", "10806", "1", "941", "1441", "1541"]}],
  "params":
  "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators)",
- "nowrapColumns": [],
+ "nowrapColumns": [1, 2, 3, 4, 5, 6],
  "notes": ["No epoch change: the previous epoch's record $\\pi_L$ is unchanged."],
  "name": "statistics-validators",
  "model": ["JAM.validatorStats"],

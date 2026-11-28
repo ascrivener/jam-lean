@@ -8,9 +8,9 @@
   "path": "stf/disputes/tiny/progress_invalidates_avail_assignments-1.json"},
  "rows":
  [{"label": "Verdict on report `0xa78b526a…`",
-   "cells": ["", "good: 5 of 5 judgments say valid (6 judges)"]},
+   "cells": ["", "good: all 5 judgments valid (5 of the 6 validators judge)"]},
   {"label": "Verdict on report `0xf9076864…`",
-   "cells": ["", "bad: 0 of 5 judgments say valid (6 judges)"]},
+   "cells": ["", "bad: all 5 judgments invalid (5 of the 6 validators judge)"]},
   {"label": "Core 0: pending report $\\rho[0]$",
    "cells": ["report `0xf9076864…` (bad), since slot 42", "empty"]},
   {"label": "Core 1: pending report $\\rho[1]$",
@@ -27,7 +27,8 @@
  "the tiny chain the v0.8.0 vectors were made with ($\\mathsf{E}$ = 12 slots per epoch, $\\mathsf{Y}$ = 10, $\\mathsf{C}$ = 2 cores, 6 validators)",
  "nowrapColumns": [],
  "notes":
- ["A verdict needs $\\lfloor 2/3 \\cdot 6 \\rfloor + 1$ = 5 judgments. All valid makes it good, none valid bad. The report of a pending core is matched by the hash of its encoding."],
+ ["A verdict needs $\\lfloor 2/3 \\cdot 6 \\rfloor + 1$ = 5 judgments. All valid makes it good, none valid bad. The report of a pending core is matched by the hash of its encoding.",
+  "The pending reports' timeslots are the vector's set-up (prior $\\tau$ = 0); the disputes step does not check $\\rho$'s timeslots."],
  "name": "disputes-verdicts",
  "model":
  ["JAM.disputesTransition", "JAM.verdictOutcome", "JAM.clearNonPositive", "JAM.assimilate"],

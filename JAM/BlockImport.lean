@@ -107,8 +107,10 @@ structure ImportTrace where
   /-- The accumulation output root. -/
   accRoot : List UInt8
 
-/-- $\Upsilon(\sigma, B)$ (GP eq. `transitionfunctioncomposition`), with the block's validity conditions. -/
-def importBlock (params : Params) (c : Crypto) (chain : Chain) (σ : State) (B : Block) :
+/-- $\Upsilon(\sigma, B)$ (GP eq. `transitionfunctioncomposition`), with the block's validity
+    conditions, for any crypto `c`: the parametric core that proofs are stated over. The closed
+    model, with JamCrypto's GP v0.8.1 crypto fixed, is `JAM.importBlock` (`JAM/Model.lean`). -/
+def importBlockWith (params : Params) (c : Crypto) (chain : Chain) (σ : State) (B : Block) :
     Except BlockError (State × ImportTrace) := do
   let H := B.header
   let X := B.extrinsic

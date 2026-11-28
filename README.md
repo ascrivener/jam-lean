@@ -105,10 +105,21 @@ A fourth library, **`JamCrypto`**, implements the crypto parameter (`JAM.Crypto`
 Ed25519, the Bandersnatch IETF, Thin and Pedersen VRFs, and the ring root and ring VRF over
 BLS12-381. It carries both a v0.8.0 and a v0.8.1 path, selected by `JamCrypto.GpVersion`. On the
 v0.8.1 path the cited spec draft's prose is the default reading (`JamCrypto.Reading.prose`), and its
-vectors are an explicit switch (`.vectors`). The model never imports it. Its reference code
+vectors are an explicit switch (`.vectors`). Only one model module imports it, `JAM/Model.lean`
+(below); the paper-shaped modules never do. Its reference code
 computes on `Nat`; `JamCrypto/Fast/` computes the same functions on fixed-limb fields, each proved
 equal to its reference (see [Fast paths](#fast-paths)). See
 [`docs/jamcrypto.md`](docs/jamcrypto.md).
+
+**The closed model and the parametric core.** `JAM.importBlock srs` (`JAM/Model.lean`) is Υ with
+the crypto fixed to `JAM.crypto srs`: the full GP v0.8.1 crypto in plain Lean (Ed25519 under
+ZIP 215, the Bandersnatch Thin VRF, and the Draft 35 ring root and ring VRF in the reading of that
+draft's test vectors, `JamCrypto.Reading.vectors`). It is the function a conformance proof targets.
+The only input it leaves besides the chain's data is `srs`, the ring VRF's fixed public KZG setup
+(`JamCryptoTest/data/`). `JAM.importBlockWith params c` (`JAM/BlockImport.lean`) is the same Υ for
+any crypto `c`, the parametric core that proofs are stated over; `JAM.importBlock_eq` states that
+the closed model is the core at `JAM.crypto srs`. `JAM/Model.lean` is the only model module that
+imports `JamCrypto`.
 
 Test-vector conventions (`map`/`write`/`set-reg` steps, how runs resume, the exit index the vectors
 call `pc`) live in `Tests/`, not in the model.
@@ -1048,7 +1059,7 @@ resolved, or that describes a check now suspended, is marked as such.
     the T(σ) round trip of every raw trace state, after the test-only conversion
     `Tests.TraceState.upgradeRaw`. The bullets from "The trace runner" on describe the v0.8.0 model
     (tag `gp-v0.8.0`) and its results.*
-    * *Composition.* `JAM.importBlock` (`JAM/BlockImport.lean`) composes the section transitions
+    * *Composition.* `JAM.importBlockWith` (`JAM/BlockImport.lean`) composes the section transitions
       along GP eq. `transitionfunctioncomposition`: disputes, Safrole (with ψ'_O), assurances,
       guarantees (with κ', λ', η', ψ'_O and β_H^†), accumulation of **R**, recent history with θ',
       preimages (checked against the prior δ, integrated into δ^‡), authorizations from φ', and

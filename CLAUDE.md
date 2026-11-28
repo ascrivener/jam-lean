@@ -98,9 +98,12 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
   - finally, read both repositories' front pages as a visitor would.
 - **Contributions** (2026-11-28): licensed Apache-2.0; PRs are accepted from anyone, and
   contributors on a JAM implementation team disclose it in the PR (`CONTRIBUTING.md`, PR template).
-- **Crypto** stays a parameter. SHA-512 is in plain Lean.
+- **Crypto** (Adam, 2026-11-28): `JAM.importBlock` is the closed model with JamCrypto's v0.8.1
+  crypto fixed (`JAM/Model.lean`, the only model module that imports JamCrypto);
+  `JAM.importBlockWith c` is the parametric core that proofs are stated over. Paper-shaped modules
+  never import JamCrypto. SHA-512 is in plain Lean.
 - **JamCrypto** (moved from jam-lean-target, 2026-11-25) implements the crypto parameter in plain
-  Lean. The model never imports it.
+  Lean.
 - **jam-lean-target stays a separate repository** (2026-11-25) and pins this repo to one commit.
   **Pin-bump rule:** after a merge here that touches `JAM/`, `PVM/` or `JamCrypto/`, open a PR in
   jam-lean-target the same day that bumps the pin (its merge publishes the fuzzer image). Merges

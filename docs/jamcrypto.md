@@ -1,9 +1,22 @@
 # JamCrypto: the crypto parameter in plain Lean
 
-The JAM model takes its cryptography as a parameter (`JAM.Crypto`; standing decision "Crypto stays a
-parameter"). `JamCrypto` implements that parameter in plain Lean, with core and Std only. It was moved
+The JAM model's parametric core (`JAM.importBlockWith`) takes its cryptography as a parameter
+(`JAM.Crypto`). `JamCrypto` implements that parameter in plain Lean, with core and Std only. It was moved
 here from jam-lean-target (main 431a9b6) on 2026-11-25, with Adam's approval. The JAM model never
-imports it.
+imports it, with one exception (Adam, 2026-11-28): `JAM/Model.lean` fixes the crypto to define the
+closed model.
+
+## The closed model (`JAM/Model.lean`)
+
+`JAM.crypto srs` is the full GP v0.8.1 crypto: Ed25519 under ZIP 215, the Thin VRF, and the Draft 35
+ring root and ring VRF, in `Reading.vectors`. Every field is computed by JamCrypto; the base record
+`JAM.cryptoBase` is fully overridden. `JAM.importBlock srs params chain σ B` is
+`JAM.importBlockWith params (JAM.crypto srs) chain σ B`, the target of a conformance proof.
+`JAM.crypto_eq_compose` (rfl) shows `JAM.crypto srs` is the composition
+`withSignatures (Ring.crypto srs V c)` on the v0.8.1 path for any `V` and `c`, and
+`JAM.importBlock_eq` (rfl) that the closed model is the parametric core at it. `JAM/Model.lean` is
+the only model module that imports JamCrypto; the paper-shaped modules never do. `tracetest` runs
+the closed model once on a trace block and checks it against the core (`closedAgrees`).
 
 ## Layout
 

@@ -8,12 +8,12 @@
              "note": "θ′ as accumulation returns it; the state keeps θ as the field `lastAccOut` of `JAM.State`" },
     "7.5": { "kind": "def", "name": "JAM.Recent.withParentRoot" },
     "7.6": { "kind": "def", "name": "JAM.accOutRoot",
-             "note": "`JAM.importBlock` applies it to θ′ (`AccResult.outputs`) and passes the root to §7 as `HistoryInput.accRoot`" },
+             "note": "`JAM.importBlockWith` applies it to θ′ (`AccResult.outputs`) and passes the root to §7 as `HistoryInput.accRoot`" },
     "7.7": { "kind": "inline", "name": "JAM.recentHistoryOf", "at": "let belt := MMR.append Keccak.keccak256",
              "note": "`i.accRoot` is 𝓜_B(s, 𝓗_K), computed by `JAM.accOutRoot`" },
     "E.8": { "kind": "def", "name": "JAM.MMR.append", "note": "P is `JAM.MMR.place`" },
     "E.10": { "kind": "def", "name": "JAM.MMR.superPeak", "note": "the recursion is `JAM.MMR.superPeakRev`, on the present peaks last-first" },
     "7.8": { "kind": "def", "name": "JAM.recentHistoryOf",
-             "note": "the new entry is `entry`; β_H^† is the argument `dagger`, which `JAM.importBlock` forms once with `JAM.Recent.withParentRoot` (`JAM.recentHistory` does the same for the history vectors); 𝐩 arrives as `HistoryInput.reported`, which `JAM.importBlock` builds from 𝐄_G" }
+             "note": "the new entry is `entry`; β_H^† is the argument `dagger`, which `JAM.importBlockWith` forms once with `JAM.Recent.withParentRoot` (`JAM.recentHistory` does the same for the history vectors); 𝐩 arrives as `HistoryInput.reported`, which `JAM.importBlockWith` builds from 𝐄_G" }
   }
 }

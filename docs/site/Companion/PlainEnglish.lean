@@ -3,6 +3,7 @@ import Companion.Source
 import Companion.Paper
 import Companion.Reader
 import JAM.BlockImport
+import JAM.Model
 
 open Verso.Genre Manual
 open Companion

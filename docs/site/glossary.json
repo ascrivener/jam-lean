@@ -241,7 +241,7 @@
       "entries": [
         { "id": "upsilon", "tex": "\\transitionstate", "name": "block transition",
           "meaning": "The state transition: given the state and a block, the next state (or the block is invalid).",
-          "model": ["JAM.importBlock"], "place": "overview" },
+          "model": ["JAM.importBlock", "JAM.importBlockWith"], "place": "overview" },
         { "id": "merkle-state", "tex": "\\fnmerklizestate", "name": "state Merklization",
           "meaning": "The Merkle root of the whole state; the next block's header carries it as $\\H_\\¬priorstateroot$.",
           "model": ["JAM.State.root"], "place": "statemerkle" },

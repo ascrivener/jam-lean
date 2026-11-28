@@ -39,7 +39,7 @@ Each chain is then run a second time with JamCrypto's ring VRF (`JamCrypto.Ring.
 v0.8.0 path the vectors were made with, ring domain sized by the chain's V): O, 𝔹̄° and Y are
 computed rather than looked up, so this run also checks the Bandersnatch ring arithmetic, that
 every accepted proof verifies, that the rejected ones do not, and that each ticket's identifier is
-the proof's Y. The model itself never imports JamCrypto; only this test does.
+the proof's Y. The paper-shaped model modules never import JamCrypto (only `JAM.Model` does, for the closed Υ).
 
 ## Vector edit dictated by GP v0.8.1 (#543)
 

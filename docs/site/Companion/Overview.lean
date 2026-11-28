@@ -5,6 +5,7 @@ import Companion.Docstring
 import JAM.State
 import JAM.Block
 import JAM.BlockImport
+import JAM.Model
 
 open Verso.Genre Manual
 open Companion
@@ -43,7 +44,7 @@ This chapter is the book's map. GP v0.8.1 §4 defines a blockchain by its state 
 one function, the block-level state transition $`\Upsilon`. It splits $`\sigma` into components and $`\Upsilon` into
 section-level transitions, and orders them in a dependency graph. §5 defines the header and the
 conditions a valid header meets. This chapter sets out those definitions, the model's
-`JAM.State`, `JAM.Block` and `JAM.importBlock` that implement them, and where each component is
+`JAM.State`, `JAM.Block`, `JAM.importBlock` and `JAM.importBlockWith` that implement them, and where each component is
 covered in this book.
 
 # The block transition
@@ -54,7 +55,13 @@ tag := "overview-upsilon"
 {gpeq "4.1"}
 
 The paper defines JAM by $`\Upsilon` together with a genesis state $`\sigma^0`. In the model, $`\Upsilon` is
-{api}`JAM.importBlock`. It returns the posterior state together with an {api}`JAM.ImportTrace` (the newly
+{api}`JAM.importBlock`, the closed model: the parametric core {api}`JAM.importBlockWith` with the
+cryptography fixed to JamCrypto's GP v0.8.1 primitives ({ref "bandersnatch-closed"}[Appendix G]).
+It is the function a conformance proof targets; proofs are stated over the core.
+
+{leanSource JAM.importBlock}
+
+{api}`JAM.importBlockWith` returns the posterior state together with an {api}`JAM.ImportTrace` (the newly
 available reports and the accumulation root), or the reason the block is invalid; its source is
 quoted {ref "overview-graph"}[below].
 
@@ -62,7 +69,9 @@ Besides $`\sigma` and $`\mathbf{B}`, it takes three arguments the paper leaves i
 
 * the chain's constants, a {api}`JAM.Params` (see {ref "primitives-constants"}[§3, constants]);
 * the cryptography, a {api}`JAM.Crypto`: signature and VRF verification, and the ring root. The
-  model keeps these as a parameter and never implements them itself;
+  core keeps these as a parameter; the paper-shaped modules never implement them. `JamCrypto`
+  implements them, and {api}`JAM.importBlock` fixes them (only `JAM/Model.lean` imports `JamCrypto`),
+  leaving the ring VRF's public setup as its one cryptographic input;
 * the ancestor headers the importer has kept, a {api}`JAM.Chain`. The paper's ancestor set
   $`\mathbf{A}` (eq. {eq}`5.3`) is not part of $`\sigma`, and guarantees ({ref "reports"}[§11]) need it.
 
@@ -109,7 +118,7 @@ fields. Each component, with the section that covers it, and its fields:
 
 {leanSource JAM.State}
 
-Timeslots are naturals below $`2^{32}` (eq. {eq}`4.28`, $`\mathbb{N}_T \equiv \mathbb{N}_{2^{32}}`). The model stores them as `Nat`. {api}`JAM.importBlock` does not check
+Timeslots are naturals below $`2^{32}` (eq. {eq}`4.28`, $`\mathbb{N}_T \equiv \mathbb{N}_{2^{32}}`). The model stores them as `Nat`. {api}`JAM.importBlockWith` does not check
 $`\mathbf{H}_T < 2^{32}`, and the four-octet encoding $`\mathcal{E}_4` the model uses (`Codec.fixed 4`) keeps only the low 32 bits
 of a larger value.
 
@@ -128,7 +137,7 @@ corrected, $`\rho^\dagger` and $`\rho^\ddagger` are the availability assignments
 the reports that have just become available, $`\delta^\ddagger` the accounts after accumulation, and $`\mathbf{S}` the
 accumulation statistics.
 
-{api}`JAM.importBlock` computes the parts in an order consistent with this graph. Each step is
+{api}`JAM.importBlockWith` computes the parts in an order consistent with this graph. Each step is
 marked in its source with the section (and sometimes the equation) it implements. Each step's
 binding or function, what it computes, and the equations and section:
 
@@ -161,7 +170,7 @@ their line of the graph lists:
 * *The timeslot.* The model sets $`\tau' = \mathbf{H}_T` directly. The check that $`\mathbf{H}_T` is after $`\tau` is made by
   {api}`JAM.safrole` (its `badSlot` error).
 
-{leanSource JAM.importBlock}
+{leanSource JAM.importBlockWith}
 
 # The header (§5)
 %%%
@@ -204,7 +213,7 @@ $`P(\mathbf{H})` is the parent header and $`\mathcal{T}` the wall clock. A heade
 
 {leanSource JAM.Header.hash}
 
-{api}`JAM.importBlock` checks these conditions as follows:
+{api}`JAM.importBlockWith` checks these conditions as follows:
 
 * {eq}`5.2`: $`\mathbf{H}_P` is the hash of the last header in the {api}`JAM.Chain` it is given.
 * {eq}`5.3`: the ancestor set is the chain's headers together with $`\mathbf{H}` itself. It is used only by the
@@ -245,10 +254,10 @@ tag := "overview-readings"
 
 The notes named below are in the model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues).
 
-* *No clock (note v0.8.1-A30).* The paper's $`\Upsilon` assumes a universally known clock $`\mathcal{T}`. The model's {api}`JAM.importBlock` has none, so
+* *No clock (note v0.8.1-A30).* The paper's $`\Upsilon` assumes a universally known clock $`\mathcal{T}`. The model's {api}`JAM.importBlockWith` has none, so
   it does not check $`\mathbf{H}_T \cdot \mathsf{P} \leq \mathcal{T}`; a caller must check it separately (the model has no such caller).
 * *The ancestors (note v0.8.1-A31).* $`\mathbf{A}` is defined from $`\mathbf{H}` by following parents back to genesis; the paper only requires
   nodes to keep the headers of the last $`\mathsf{L}` = 24 hours. The model takes the kept headers as an argument
   ({api}`JAM.Chain`). When the list is empty (no parent header kept), the $`\mathbf{H}_P` check is skipped.
 * *Errors (note v0.8.1-A32).* The paper names no errors for an invalid block. The model reports the first section
-  whose check fails, in the order of {api}`JAM.importBlock` ({api}`JAM.BlockError`).
+  whose check fails, in the order of {api}`JAM.importBlockWith` ({api}`JAM.BlockError`).

@@ -9,6 +9,7 @@ import JamCrypto.ThinVrf
 import JamCrypto.Reading
 import JamCrypto.Fast.Crypto
 import JamCrypto.Fast.Ring
+import JAM.Model
 
 open Verso.Genre Manual
 open Companion
@@ -111,7 +112,8 @@ tag := "bandersnatch-jamcrypto"
 `JamCrypto` implements the parameter in Lean, with Lean's core library and Std only. Each part is
 written from its specification: RFC 8032 and ZIP 215 for Ed25519; the Bandersnatch VRF
 specification for the Thin VRF, the IETF VRF and the Pedersen VRF; the ring proof of eprint 2023/002,
-over BLS12-381 with a KZG setup; and RFC 9380 for hashing to the curve. The model never imports it.
+over BLS12-381 with a KZG setup; and RFC 9380 for hashing to the curve. The paper-shaped model
+modules never import it; only `JAM/Model.lean` does, to define the closed model.
 
 It carries the primitives of both GP v0.8.0 and GP v0.8.1, selected by {api}`JamCrypto.GpVersion`.
 The default is v0.8.0, because the model is tested against the published v0.8.0 test vectors until
@@ -149,63 +151,22 @@ consistency (signing then verifying, and the properties of the derived points). 
 `.prose` is not exercised by any accepted proof: `JamCrypto` has no ring prover, and the tests only
 check that the draft's own ring proofs fail under `.prose`.
 
-# Fast implementations, proved equal to the reference
+# The closed state-transition function
 %%%
-tag := "bandersnatch-fast"
-%%%
-
-`JamCrypto`'s reference code computes on arbitrary-precision naturals and follows the
-specifications closely, which is slow. The modules under `JamCrypto/Fast/` compute the same functions
-on fixed-size limbs (Montgomery arithmetic in the fields of Ed25519, Bandersnatch and BLS12-381),
-and each fast function is proved equal to its reference function. The compiler is then told to run the fast code in place of the reference code
-(`@[csimp]`); since `@[csimp]` takes a proved equality, the compiled program computes exactly the
-reference functions. The equalities are kernel-checked proofs, not tests.
-
-At the level of the parameter, the fast signature fields are the reference ones, for every version,
-Ed25519 rule set and reading:
-
-{mathdoc JamCrypto.Fast.withSignatures_eq}
-
-The ring fields are handled differently. `JamCrypto.Ring.Fast.crypto` restates the text of
-`JamCrypto.Ring.crypto` so that its compiled code calls the fast operations, and
-{api}`JamCrypto.Ring.Fast.crypto_eq` proves the two equal essentially by `rfl`:
-
-{leanSource JamCrypto.Ring.Fast.crypto_eq}
-
-The substantive equalities are the `@[csimp]` proofs of the operations underneath: decoding,
-scalar multiplication and hashing on the Bandersnatch curve, scalar and multi-scalar multiplication
-and decompression in BLS12-381's group G1, and the pairing check.
-
-These theorems say that the fast code computes the same functions as the reference code. They say
-nothing about whether the reference code is a correct or secure implementation of the
-specifications: that rests on the tests against the specifications' vectors.
-
-# Readings chosen
-%%%
-tag := "bandersnatch-readings"
+tag := "bandersnatch-closed"
 %%%
 
-The first three are recorded in the model's
-[notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/docs/upstream-candidates.md#gray-paper-issues);
-the fourth is in the same file's section on Draft 35 of the VRF specification:
+{api}`JAM.crypto` fixes every choice above: the v0.8.1 path, Ed25519 under ZIP 215, the
+Thin VRF, and the Draft 35 ring root and ring VRF over the 2048 domain, in the `.vectors` reading
+(the one the published vectors and the fuzzer's blocks follow; not JamCrypto's default `.prose`).
+Every field of the result is computed by `JamCrypto`; the only input left is the ring VRF's public
+KZG setup, the SRS published with the VRF specification:
 
-* *Note v0.8.1-A6, the 96-octet signature.* The paper gives Thin VRF signatures as 96 octets and reads
-  $`\mathcal{Y}` from the signature, but Draft 35 encodes only the proof $`(R, s)`, 64 octets. `JamCrypto` reads a
-  signature as the output point $`O`, then $`R`, then $`s`
-  ({api}`JamCrypto.Bandersnatch.Thin.thinDecode`). This was raised with the paper as
-  gavofyork/graypaper#593, and the VRF specification's author confirmed the order $`O \frown R \frown s`
-  and opened davxy/bandersnatch-vrf-spec#30.
-* *Note v0.8.1-A5, the ring's size.* $`\mathcal{O}(\mathbf{k})` does not fix the ring size, on which the ring proof's
-  domain depends. On the v0.8.1 path `JamCrypto` uses the fixed domain of 2048 that §5 of Draft 35
-  states, for every number of validators; on the v0.8.0 path it sizes the ring by the number of
-  validators, as the v0.8.0 vectors require.
-* *Note v0.8.1-A7, context strings.* The paper's wording leaves open whether the `$` of
-  $`\texttt{\$jam\_ticket\_seal}` is an octet of the context. Every signature of the GP v0.8.0 test vectors verifies only without it,
-  and the model drops it ({api}`JAM.contextString`).
-* *Draft 35's prose and vectors.* Where they disagree, the v0.8.1 path follows the prose by default
-  and the vectors on request ({api}`JamCrypto.Reading`), as described above, except for the transcript
-  step that neither follows.
+{leanSource JAM.crypto}
 
-{api}`JamCrypto.Bandersnatch.Thin.thinDecode`, which note v0.8.1-A6 above refers to:
-
-{leanSource JamCrypto.Bandersnatch.Thin.thinDecode}
+{api}`JAM.importBlock`, the closed model, is $`\Upsilon` ({api}`JAM.importBlockWith`) with that
+crypto fixed. It is the function a conformance proof targets: such a statement fixes the SRS, the
+chain's {api}`JAM.Params`, and then quantifies over the ancestors, the prior state and the block.
+`JAM/Model.lean`, which defines both, is the only model module that imports `JamCrypto`; proofs are
+stated over the parametric {api}`JAM.importBlockWith`, and {api}`JAM.importBlock_eq` states that the
+closed model is the core at {api}`JAM.crypto`.

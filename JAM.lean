@@ -29,6 +29,7 @@ import JAM.Safrole
 import JAM.State
 import JAM.StateDecode
 import JAM.BlockImport
+import JAM.Model
 import JAM.Refine
 import JAM.Auditing
 import JAM.Guarantee

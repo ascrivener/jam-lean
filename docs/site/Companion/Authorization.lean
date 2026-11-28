@@ -98,7 +98,7 @@ And the transition for all cores:
 
 {leanSource JAM.authorizations}
 
-In {api}`JAM.importBlock` the pairs come from the guarantees extrinsic,
+In {api}`JAM.importBlockWith` the pairs come from the guarantees extrinsic,
 `(g.report.core, g.report.authorizerHash)`, and the queue is the one accumulation returns.
 
 Here are both cores' pools after one block of a test vector, where one core's authorizer was used

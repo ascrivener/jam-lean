@@ -3,7 +3,7 @@
     "4.1": {
       "kind": "def",
       "name": "JAM.importBlock",
-      "note": "it also takes the constants, the crypto parameter and the retained ancestor headers, and returns an `ImportTrace` with σ′, or the reason the block is invalid"
+      "note": "the closed model: `JAM.importBlockWith` with JamCrypto's GP v0.8.1 crypto fixed (`JAM.crypto srs`); it also takes the constants and the retained ancestor headers, and returns an `ImportTrace` with σ′, or the reason the block is invalid"
     },
     "4.2": {
       "kind": "type",
@@ -20,92 +20,92 @@
     },
     "4.5": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- τ' = H_T; τ < H_T is Safrole's `badSlot`."
     },
     "4.6": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- β_H^† (eq. `betadagger`)."
     },
     "4.7": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- §6: Safrole, with Y(H_V) as the entropy contribution.",
       "note": "`safrole` returns γ′, η′, κ′ and λ′ together (fields of `saf'`)"
     },
     "4.8": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- §6: Safrole, with Y(H_V) as the entropy contribution.",
       "note": "`safrole` returns γ′, η′, κ′ and λ′ together (fields of `saf'`)"
     },
     "4.9": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- §6: Safrole, with Y(H_V) as the entropy contribution.",
       "note": "`safrole` returns γ′, η′, κ′ and λ′ together (fields of `saf'`)"
     },
     "4.10": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- §6: Safrole, with Y(H_V) as the entropy contribution.",
       "note": "`safrole` returns γ′, η′, κ′ and λ′ together (fields of `saf'`)"
     },
     "4.11": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- §10: ψ' and ρ^†.",
       "note": "ψ′ is `dOut.state` and ρ† is `dOut.assignments`"
     },
     "4.12": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- §10: ψ' and ρ^†.",
       "note": "ψ′ is `dOut.state` and ρ† is `dOut.assignments`"
     },
     "4.13": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- §11.2: assurances.",
       "note": "𝐑* is `avail` and ρ‡ is `rhoDD`"
     },
     "4.15": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- §11.2: assurances.",
       "note": "𝐑* is `avail` and ρ‡ is `rhoDD`"
     },
     "4.14": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- §11.3–§11.5: guarantees.",
       "note": "reads κ′, λ′, η′, ψ′ and more besides κ, as the text below says; ρ′ is `gOut.assignments`"
     },
     "4.16": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- §12: accumulation of **R**.",
       "note": "ω′, ξ′ are `acc.state.ready`, `acc.state.accumulated`; δ‡, χ′, ι′, φ′ are in `acc.state.pstate`; θ′ is `acc.outputs` and 𝐒 is `acc.stats`"
     },
     "4.17": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- §7: recent history."
     },
     "4.18": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- §12.4: preimages."
     },
     "4.19": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- §8: authorizations."
     },
     "4.20": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- §13: statistics.",
       "note": "π′ is `valStats'`, `valStatsLast'` here and the `coreStats` and `serviceStats` fields of σ′ below"
     },
@@ -115,13 +115,13 @@
     },
     "5.2": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "| some p => hdr (H.parent.toList == p.hash)",
       "note": "P(𝐇) is the last retained header of the `Chain`; the hash is `JAM.Header.hash`; with no retained headers, 𝐇_P is not checked"
     },
     "5.3": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "let anc := chain.ancestors ++ [H]",
       "note": "𝐀 is the retained headers with 𝐇 itself; the model assumes, without checking, that the retained headers form a parent chain; it is used only by `JAM.lookupAnchorKnown`"
     },
@@ -152,13 +152,13 @@
     },
     "5.9": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "hdr (H.priorStateRoot.toList == σ.root)",
       "note": "𝓜_σ is `JAM.State.root`"
     },
     "5.10": {
       "kind": "inline",
-      "name": "JAM.importBlock",
+      "name": "JAM.importBlockWith",
       "at": "-- §5, §6.4: the author and the seal."
     },
     "5.11": {

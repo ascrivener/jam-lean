@@ -36,7 +36,7 @@ def runLogged (params : Params) (entropy : List UInt8) (st : PartialState) (t s 
     call and its ω7 result, and the outcome. -/
 def showStep (p : Params) (σ : State) (roots : List (List (List UInt8) × List UInt8)) (chain : Chain)
     (st : Step) (xh : List UInt8) : IO Unit := do
-  let .ok (_, tr) := importBlock p (oracle roots) chain σ st.block
+  let .ok (_, tr) := importBlockWith p (oracle roots) chain σ st.block
     | IO.println "  import failed"; return
   let H := st.block.header
   let entropy := hashL ((σ.eta.getD 0 []) ++ JamCrypto.Bandersnatch.octetOutput H.vrfSig.toList)
@@ -70,7 +70,7 @@ def main (args : List String) : IO Unit := do
       IO.println s!"step {i}:"
       showStep p σ roots chain st xh
     if st.pre.root == st.post.root then continue
-    match importBlock p (oracle roots) chain σ st.block with
+    match importBlockWith p (oracle roots) chain σ st.block with
     | .ok (s', _) =>
       chain := { ancestors := chain.ancestors ++ [st.block.header] }
       if s'.root == st.post.root.toList then σ := s'

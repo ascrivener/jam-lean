@@ -210,7 +210,7 @@ moved marker fails the book's build).
 ## Reader aids: JAM in plain English and the glossary
 
 Two chapters are for newcomers. *JAM in plain English* (`Companion/PlainEnglish.lean`, before §3)
-follows one block through `JAM.importBlock`, step by step, in prose. If the order or the content
+follows one block through `JAM.importBlockWith`, step by step, in prose. If the order or the content
 of the block transition's steps changes, update it in the same PR. Its figure (`{figure
 "lifeOfWork"}`) is inline SVG in `Companion/Reader.lean`, drawn in `currentColor` so it follows the
 theme.

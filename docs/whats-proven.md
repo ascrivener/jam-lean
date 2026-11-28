@@ -1136,6 +1136,15 @@ What you trust beyond the kernel:
 
 ## Assumptions and limits
 
+- **The crypto of the closed model** (Adam, 2026-11-28). `JAM.importBlock` (`JAM/Model.lean`), the
+  closed model and the target of a conformance proof, is the parametric core `JAM.importBlockWith`
+  with the crypto fixed to `JAM.crypto srs`: JamCrypto's GP v0.8.1 primitives (Ed25519 under
+  ZIP 215, the Thin VRF, the Draft 35 ring root and ring VRF) in the reading of Draft 35's test
+  vectors (`JamCrypto.Reading.vectors`, an assumption: where the draft's prose and vectors
+  disagree, the vectors are followed). `srs` is the ring VRF's fixed public SRS. Theorems about Υ
+  are stated over `importBlockWith` for any crypto, so they hold for the closed model too
+  (`JAM.importBlock_eq`, rfl). Only `JAM/Model.lean` imports JamCrypto.
+
 - **No collision in C (the model's account representation).** Since storage-key stage 2 the model
   keys a service's storage entry **k** and request (h, z) by the 27 octets of ℋ(ℰ_4(2³²−1) ⌢ **k**)
   and ℋ(ℰ_4(z) ⌢ h) that their state keys C(s, ·) keep (GP §D.1), and carries a_o and a_i,

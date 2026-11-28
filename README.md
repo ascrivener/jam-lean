@@ -110,6 +110,14 @@ computes on `Nat`; `JamCrypto/Fast/` computes the same functions on fixed-limb f
 equal to its reference (see [Fast paths](#fast-paths)). See
 [`docs/jamcrypto.md`](docs/jamcrypto.md).
 
+**The closed state-transition function.** `JamCrypto.Model.importBlock srs` is Υ
+(`JAM.importBlock`) with the crypto fixed to `JamCrypto.Model.crypto srs`: the full GP v0.8.1
+crypto in plain Lean (Ed25519 under ZIP 215, the Bandersnatch Thin VRF, and the Draft 35 ring root
+and ring VRF in the reading of that draft's test vectors, `Reading.vectors`). It is the function a
+conformance proof targets. The only input it leaves besides the chain's data is `srs`, the ring
+VRF's fixed public KZG setup (`JamCryptoTest/data/`). The model still takes the crypto as a
+parameter and never imports `JamCrypto`; `JamCrypto.Model.importBlock_eq` states the two agree.
+
 Test-vector conventions (`map`/`write`/`set-reg` steps, how runs resume, the exit index the vectors
 call `pc`) live in `Tests/`, not in the model.
 

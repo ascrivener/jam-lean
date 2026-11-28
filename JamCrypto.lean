@@ -11,6 +11,7 @@ import JamCrypto.ThinVrf
 import JamCrypto.PedersenVrf
 import JamCrypto.DevKeys
 import JamCrypto.Fast
+import JamCrypto.Model
 
 /-!
 # JamCrypto: the crypto parameter of the model, in plain Lean
@@ -25,5 +26,7 @@ it with core and Std only, and the model never imports it
   BLS12-381;
 * the `JAM.Crypto` instance built from them (`JamCrypto.Crypto`), and development keys
   (`JamCrypto.DevKeys`);
+* the closed state-transition function: Υ with the full GP v0.8.1 crypto fixed
+  (`JamCrypto.Model.crypto`, `JamCrypto.Model.importBlock`), the target of a conformance proof;
 * faster implementations proved equal to the reference ones (`JamCrypto.Fast`).
 -/

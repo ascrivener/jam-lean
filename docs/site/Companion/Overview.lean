@@ -5,6 +5,7 @@ import Companion.Docstring
 import JAM.State
 import JAM.Block
 import JAM.BlockImport
+import JamCrypto.Model
 
 open Verso.Genre Manual
 open Companion
@@ -62,7 +63,9 @@ Besides $`\sigma` and $`\mathbf{B}`, it takes three arguments the paper leaves i
 
 * the chain's constants, a {api}`JAM.Params` (see {ref "primitives-constants"}[§3, constants]);
 * the cryptography, a {api}`JAM.Crypto`: signature and VRF verification, and the ring root. The
-  model keeps these as a parameter and never implements them itself;
+  model keeps these as a parameter and never implements them itself. `JamCrypto` implements them,
+  and {api}`JamCrypto.Model.importBlock` is $`\Upsilon` with the GP v0.8.1 crypto fixed, the closed
+  function a conformance proof targets ({ref "bandersnatch-closed"}[Appendix G]);
 * the ancestor headers the importer has kept, a {api}`JAM.Chain`. The paper's ancestor set
   $`\mathbf{A}` (eq. {eq}`5.3`) is not part of $`\sigma`, and guarantees ({ref "reports"}[§11]) need it.
 

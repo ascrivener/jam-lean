@@ -9,6 +9,7 @@ import JamCrypto.ThinVrf
 import JamCrypto.Reading
 import JamCrypto.Fast.Crypto
 import JamCrypto.Fast.Ring
+import JamCrypto.Model
 
 open Verso.Genre Manual
 open Companion
@@ -148,6 +149,26 @@ checked against RFC 9380's own vectors (Appendix K.3); the rest is tested only f
 consistency (signing then verifying, and the properties of the derived points). The ring VRF under
 `.prose` is not exercised by any accepted proof: `JamCrypto` has no ring prover, and the tests only
 check that the draft's own ring proofs fail under `.prose`.
+
+# The closed state-transition function
+%%%
+tag := "bandersnatch-closed"
+%%%
+
+{api}`JamCrypto.Model.crypto` fixes every choice above: the v0.8.1 path, Ed25519 under ZIP 215, the
+Thin VRF, and the Draft 35 ring root and ring VRF over the 2048 domain, in the `.vectors` reading
+(the one the published vectors and the fuzzer's blocks follow). Every field of the result is
+computed by `JamCrypto`; the only input left is the ring VRF's public KZG setup, the SRS published
+with the VRF specification:
+
+{leanSource JamCrypto.Model.crypto}
+
+{api}`JamCrypto.Model.importBlock` is $`\Upsilon` ({api}`JAM.importBlock`) with that crypto fixed.
+It is the closed function a conformance proof targets: such a statement fixes the SRS, the chain's
+{api}`JAM.Params`, and then quantifies over the ancestors, the prior state and the block. The model
+itself still takes the crypto as a parameter and never imports `JamCrypto`;
+{api}`JamCrypto.Model.importBlock_eq` states that the closed function is the parametric one at
+{api}`JamCrypto.Model.crypto`.
 
 # Fast implementations, proved equal to the reference
 %%%

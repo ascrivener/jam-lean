@@ -73,6 +73,7 @@ target modelHighlights : Unit := do
     `JAM.Trie, `JAM.State, `JAM.Account, `PVM.Logic.Steps, `PVM.Logic.Words,
     `JAM.Merkle, `JAM.History, `JAM.Erasure, `JAM.Crypto,
     `JamCrypto.Crypto, `JamCrypto.Ring, `JamCrypto.ThinVrf, `JamCrypto.Reading, `JamCrypto.Fast.Ring,
+    `JamCrypto.Model,
     `PVM.Instr, `PVM.Exec, `PVM.Invocation, `JAM.Host.General, `JAM.Accumulate,
     `JAM.Accumulation, `JAM.Preimages, `JAM.Theorems.Confinement,
     `JAM.StateDecode, `PVM.CostExpr, `PVM.Tables]

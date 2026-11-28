@@ -2,6 +2,7 @@ import JAM.BlockImport
 import Tests.TraceState
 import Tests.V080
 import JamCrypto.Bandersnatch
+import JamCrypto.Model
 
 /-!
 # Block-import trace runner (davxy/jam-test-vectors `traces/`, GP v0.8.0)
@@ -17,6 +18,10 @@ key by key. A step whose post-state root equals its pre-state root is a block th
 reject; the runner then expects an error and keeps σ. If the model's σ does not match a step's
 post-state, the runner reports it (or, at a step listed in `knownDeviations`, counts it as a
 known deviation) and continues from the trace's post-state, which `decodeState` always decodes.
+
+The closed state-transition function `JamCrypto.Model.importBlock` (Υ with the GP v0.8.1 crypto
+fixed) is also run once, on the first block of the first trace present, and checked to give the same
+result as the parametric call `JAM.importBlock` with the composition it fixes (`closedAgrees`).
 
 Every raw state of the trace (genesis, and each step's pre- and post-state) is also checked by
 `roundTrip`: decoded and serialized again, it must give the same key-values and root.
@@ -230,6 +235,41 @@ def laCtx (lookupRoot : ByteArray) : RefineContext :=
 #guard !lookupAnchorKnown [laAnchor, laChild] (laCtx (h32 0xaa))
 #guard !lookupAnchorKnown [laAnchor, laChild] { laCtx (h32 0xbb) with anchorStateRoot := h32 0xbb, lookupAnchorStateRoot := h32 0xaa }
 
+/-- `JamCrypto.Model.importBlock srs` agrees with `JAM.importBlock` at the composed crypto
+    `withSignatures (Ring.crypto srs V c)` (v0.8.1, `Reading.vectors`) on the first block of trace
+    `name`: the same error, or post-states with the same root. They are equal by definition
+    (`JamCrypto.Model.importBlock_eq`, `crypto_eq_compose`); this checks that the closed function
+    runs on a vector. -/
+def closedAgrees (dir : System.FilePath) (name : String) : IO Bool := do
+  let p := V080.tiny080
+  let tdir := dir / name
+  let (gh, graw) ← match Decoder.run (genesis p) (← IO.FS.readBinFile (tdir / "genesis.bin")) >>=
+      fun (h, r) => do return (h, ← upgradeRaw r) with
+    | .ok g => pure g
+    | .error e => throw (IO.userError s!"{name}/genesis.bin: {e}")
+  let σ ← match decodeState p graw.kvs with
+    | .ok s => pure s
+    | .error e => throw (IO.userError s!"{name}: genesis state: {e}")
+  let files := ((← tdir.readDir).map (·.fileName)).filter
+    (fun f => f.endsWith ".bin" && f != "genesis.bin") |>.qsort (· < ·)
+  let some (f : String) := files[0]? | return true
+  let (st, _) ← readStep (tdir / f)
+  let srs ← JamCrypto.Ring.Srs.load "JamCryptoTest/data/bls12-381-srs-2-11-uncompressed-zcash.bin"
+  let chain : Chain := { ancestors := [gh] }
+  let composed := JamCrypto.withSignatures
+    (JamCrypto.Ring.crypto srs 6 (oracle []) (gp := .v081) (rd := .vectors))
+    (gp := .v081) (rd := .vectors)
+  let outcome (r : Except BlockError (State × ImportTrace)) : String :=
+    match r with
+    | .ok (s', _) => s!"ok {hexS s'.root}"
+    | .error e => s!"error {repr e}"
+  let closed := outcome (JamCrypto.Model.importBlock srs p chain σ st.block)
+  let param := outcome (importBlock p composed chain σ st.block)
+  IO.println s!"{name}/{f}: closed Υ (JamCrypto.Model.importBlock): {closed}"
+  if closed == param then return true
+  IO.println s!"  differs from the parametric call: {param}"
+  return false
+
 def main (args : List String) : IO UInt32 := do
   let dir : System.FilePath := args.headD "vendor/jam-traces/traces"
   let all := ["fallback", "safrole", "storage", "storage_light", "preimages", "preimages_light",
@@ -251,4 +291,6 @@ def main (args : List String) : IO UInt32 := do
     if let some i := s.stoppedAt then
       IO.println s!"  stopped at step {i}: the trace's state could not be decoded"
     if !blockImportSuspended && s.passed + s.rejectedOk + s.deviations != s.steps then bad := true
+  if let some n := names.head? then
+    unless ← closedAgrees dir n do bad := true
   return if bad then 1 else 0

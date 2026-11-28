@@ -1122,3 +1122,13 @@ resolved, or that describes a check now suspended, is marked as such.
 
 Written from the Gray Paper and the test vectors only. No other PVM or JAM implementation was
 consulted.
+
+## Contributing
+
+Pull requests are welcome from anyone. Read [CONTRIBUTING.md](CONTRIBUTING.md) first: the paper is
+the only source, readings are disclosed, and contributors who are on a JAM implementation team say
+so in the PR.
+
+## Licence
+
+[Apache License 2.0](LICENSE).

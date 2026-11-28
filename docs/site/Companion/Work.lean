@@ -78,15 +78,43 @@ its extrinsics $`\mathbf{x}`, each given by hash and length:
 
 {leanSource JAM.WorkItem}
 
+An item imports and exports *segments*, blobs of $`\mathsf{W}_G` octets:
+
+{gpeq "14.1"}
+
+The model has no separate type for $`\mathbb{J}`: a segment is an octet list of length $`\mathsf{W}_G`
+({api}`JAM.Constants.Csegmentsize`), checked where an auditor reads one ({api}`JAM.Guarantee.checkImports`).
+
 An import names its segment either by a segment root, from $`\mathbb{H}`, or by the hash of the work-package that
 exported it, from the tagged $`\mathbb{H}^{\boxplus}`. The model's {api}`JAM.SegmentRoot` has one constructor for each.
 
 {leanSource JAM.SegmentRoot}
 
-The paper bounds every work-package: at most $`\mathsf{J}` dependencies {eq}`14.4`, at most $`\mathsf{W}_X` exports,
-$`\mathsf{W}_M` imports and $`\mathsf{T}` extrinsics {eq}`14.5`, at most $`\mathsf{W}_I` octets of input data {eq}`14.6`–{eq}`14.8`, and gas
-limits summing to at most $`\mathsf{G}_A` and $`\mathsf{G}_R` {eq}`14.10`. The model's types do not carry these bounds, and
-its $`\Xi` does not check them (see {ref "work-readings"}[Readings chosen]).
+The paper bounds every work-package: at most $`\mathsf{J}` dependencies,
+
+{gpeq "14.4"}
+
+at most $`\mathsf{W}_X` exports, $`\mathsf{W}_M` imports and $`\mathsf{T}` extrinsics,
+
+{gpeq "14.5"}
+
+at most $`\mathsf{W}_I` octets of input data, an imported segment counting $`\mathsf{W}_F` octets for itself and its proof,
+
+{gpeq "14.6, 14.7, 14.8"}
+
+so that a bundle has at most $`\mathsf{W}_B` octets,
+
+{gpeq "14.9"}
+
+and gas limits summing to at most $`\mathsf{G}_A` and $`\mathsf{G}_R`:
+
+{gpeq "14.10"}
+
+The model's types do not carry these bounds, and its $`\Xi` does not check them (see
+{ref "work-readings"}[Readings chosen]). The chain checks the corresponding bounds on each work report instead
+({ref "reports"}[§11], {eq}`11.3` and {eq}`11.33`), and the model has the constants $`\mathsf{W}_F`, $`\mathsf{W}_I` and
+$`\mathsf{W}_B` as their values ({api}`JAM.Constants.Csegmentfootprint`, {api}`JAM.Constants.Cmaxinputsize`,
+{api}`JAM.Constants.Cmaxbundlesize`), not derived from the formulas.
 
 # Item to digest (§14.3)
 %%%
@@ -188,11 +216,18 @@ are exactly the imported package hashes, and no item exports anything.
 
 {mathdoc JAM.Guarantee.refineItems_exports}
 
+The one-pass computation is $`I` itself: output $`j` is $`I(\mathbf{p}, j)` with $`\ell` and $`z` as the paper defines them.
+
+{mathdoc JAM.Guarantee.refineItems_getElem}
+
 {mathdoc JAM.Guarantee.computeReport_noExports}
 
 The paper also asks a guarantor to choose $`\mathbf{l}` so that every pair $`h \mapsto e` in it is the hash and segment root
-of some work-package (eq. {eq}`14.15`). That is a condition on the guarantor's choice of $`\mathbf{l}`, and the model's
-$`\Xi` does not check it.
+of some work-package:
+
+{gpeq "14.15"}
+
+That is a condition on the guarantor's choice of $`\mathbf{l}`, and the model's $`\Xi` does not check it.
 
 # The data of an item (§14.4)
 %%%
@@ -333,12 +368,11 @@ model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/do
   extrinsic preimages and over whole segment sequences, which are not arguments of $`\Xi`. The model takes
   them from a {api}`JAM.Guarantee.DataSource`, and its $`\Xi` takes the resulting data of every item as an argument,
   as its $`\Psi_R` already takes the extrinsic data of every item. $`L_\mathbf{l}(h^{\boxplus})` is undefined when $`h` is not a key
-  of $`\mathbf{l}`, and $`\mathbf{b}[n]` names nothing when $`n \ge |\mathbf{b}|`: the model returns `none` in both cases. $`\mathcal{H}(\mathbf{p})`
-  is read as $`\mathcal{H}(\mathcal{E}(\mathbf{p}))`.
-* *The running size $`z` (note v0.8.1-A17).* $`z` sums the outputs of the earlier items as $`I` returns them, so an
-  output that $`I` replaced by $`\circleddash` or $`\circledcirc` adds nothing. The model carries $`z` this way through
-  {api}`JAM.Guarantee.refineItems`. Counting $`\Psi_R`'s raw outputs instead would let one oversized item push
-  every later item over $`\mathsf{W}_R`.
+  of $`\mathbf{l}`, and $`\mathbf{b}[n]` names nothing when $`n \ge |\mathbf{b}|`: the model returns `none` in both cases. (That $`\mathcal{H}(\mathbf{p})`
+  is $`\mathcal{H}(\mathcal{E}(\mathbf{p}))` is not a reading: §3.8 passes the inputs of a hash function through $`\mathcal{E}`.)
+* *The running size $`z` (note v0.8.1-A17).* $`z` is defined through $`I` itself: it sums the outputs of the earlier items
+  as $`I` returns them, so an output that $`I` replaced by $`\circleddash` or $`\circledcirc` adds nothing. The model follows the
+  formula ({api}`JAM.Guarantee.refineItems`, {api}`JAM.Guarantee.refineItems_getElem`).
 * *The bundle checks (note v0.8.1-A18).* {ref "auditing"}[§17.2] gives the checks on a bundle only in prose. The model decodes
   the bundle (rejecting trailing octets) and checks one data entry per item, each extrinsic's hash
   and length, each segment's size $`\mathsf{W}_G` and its justification against $`L_\mathbf{l}(r)` at index $`n`, and that the keys

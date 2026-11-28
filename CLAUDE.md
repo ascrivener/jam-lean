@@ -96,6 +96,8 @@ rebuilds only what changed since then instead of building cold for 4.5–5 h.
     (`scripts/gen_equations.py`), run `scripts/check-equations.py --changed OLD.json` and recheck
     the chapters it lists (the build names each `{transcribed}` display whose equation changed);
   - finally, read both repositories' front pages as a visitor would.
+- **Contributions** (2026-11-28): licensed Apache-2.0; PRs are accepted from anyone, and
+  contributors on a JAM implementation team disclose it in the PR (`CONTRIBUTING.md`, PR template).
 - **Crypto** stays a parameter. SHA-512 is in plain Lean.
 - **JamCrypto** (moved from jam-lean-target, 2026-11-25) implements the crypto parameter in plain
   Lean. The model never imports it.

@@ -209,10 +209,17 @@ report by computing it again with $`\Xi` ({ref "work"}[§14]):
 
 {gpeq "17.16"}
 
-The model does not define $`e_n` as one function: the evaluation is an input to the judgment below. Its
-parts are in `JAM/Guarantee.lean`: decoding and checking the bundle
-({api}`JAM.Guarantee.verifyBundle`) and $`\Xi` ({api}`JAM.Guarantee.computeReport`), described in the
-{ref "work"}[§14 chapter].
+In the model $`e_n(\mathbf{r})` is {api}`JAM.Auditing.evaluation`, given the candidate bundle $`C(\mathbf{r})` and the account
+state that $`\Xi` reads. Rebuilding $`C(\mathbf{r})` from erasure-coded chunks is not part of it. The model decides
+"some $`\mathbf{p}` has $`B(\mathbf{p}, \mathbf{r}_\mathbf{l}) = C(\mathbf{r})`" by decoding and checking the bundle
+({api}`JAM.Guarantee.verifyBundle`, "a failure to decode or verify the bundle implies an invalid work-report") and
+requiring that the decoded package and data assemble back to exactly $`C(\mathbf{r})` ({api}`JAM.Guarantee.bundle`). It
+then compares $`\mathbf{r}` with $`\Xi(\mathbf{p}, \mathbf{r}_c, \mathbf{r}_\mathbf{l}, (\mathbf{r}_\mathbf{s})_n)` ({api}`JAM.Guarantee.computeReport`, described in the
+{ref "work"}[§14 chapter]) field by field, and $`\nabla` counts as unequal:
+
+{leanSource JAM.Auditing.evaluation}
+
+Its result is the input `valid` of the judgment below.
 
 The validator then signs a judgment on each report:
 
@@ -327,7 +334,8 @@ model's [notes on the paper](https://github.com/ascrivener/jam-lean/blob/main/do
 * *The order of $`\mathbf{x}_n` (note v0.8.1-A9).* The encoding of a set lists its elements in order. The elements of
   $`\mathbf{x}_n` are octet strings $`\mathcal{E}_2(\mathbf{r}_c) \frown \mathcal{H}(\mathbf{r})`, and the model orders them lexicographically. Since $`\mathcal{E}_2` is
   little-endian, this is not core order.
-* *Hashes of items (note v0.8.1-A9).* $`\mathcal{H}(\mathbf{r})` and $`\mathcal{H}(\mathbf{H})` are read as $`\mathcal{H}(\mathcal{E}(\mathbf{r}))` and $`\mathcal{H}(\mathcal{E}(\mathbf{H}))`.
+* *Hashes of items.* $`\mathcal{H}(\mathbf{r})` and $`\mathcal{H}(\mathbf{H})` are $`\mathcal{H}(\mathcal{E}(\mathbf{r}))` and $`\mathcal{H}(\mathcal{E}(\mathbf{H}))`. This is not a reading:
+  §3.8 passes the inputs of a hash function through $`\mathcal{E}`.
 * *Negative judgments in later tranches (note v0.8.1-A10).* The prose says a validator that has seen a
   negative judgment must always judge the report, but {eq}`17.15` has only the no-show condition. The
   model gives both: {api}`JAM.Auditing.laterTranche` is the equation, and
